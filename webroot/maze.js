@@ -20,6 +20,55 @@ function log(message, data = null) {
     }
 }
 
+// Add this function to update visibility
+function updateVisibility() {
+    const { x, y } = gameState.playerPosition;
+    const newVisible = new Set();
+    
+    // Add current position and adjacent tiles to visible set
+    [
+        [0, 0],   // Current tile
+        [0, 1],   // Right
+        [0, -1],  // Left
+        [1, 0],   // Down
+        [-1, 0],  // Up
+        [1, 1],   // Bottom-right
+        [1, -1],  // Bottom-left
+        [-1, 1],  // Top-right
+        [-1, -1]  // Top-left
+    ].forEach(([dx, dy]) => {
+        const newX = x + dx;
+        const newY = y + dy;
+        if (newX >= 0 && newX < gameState.maze[0].length && 
+            newY >= 0 && newY < gameState.maze.length) {
+            newVisible.add(`${newX},${newY}`);
+            gameState.exploredTiles.add(`${newX},${newY}`);
+        }
+    });
+
+    // Update visibility classes for all tiles
+    gameState.maze.forEach((row, y) => {
+        row.forEach((_, x) => {
+            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cell) {
+                const key = `${x},${y}`;
+                if (newVisible.has(key)) {
+                    cell.classList.remove('fog', 'explored');
+                    cell.classList.add('visible');
+                } else if (gameState.exploredTiles.has(key)) {
+                    cell.classList.remove('fog', 'visible');
+                    cell.classList.add('explored');
+                } else {
+                    cell.classList.remove('visible', 'explored');
+                    cell.classList.add('fog');
+                }
+            }
+        });
+    });
+
+    gameState.visibleTiles = newVisible;
+}
+
 function sendReadyMessage() {
     if (initializationAttempts >= MAX_ATTEMPTS) {
         log('Max initialization attempts reached');
@@ -67,24 +116,28 @@ window.addEventListener('message', (event) => {
 
 // Add to initializeGame function
 function initializeGame(data) {
-    log('Initializing game with maze size:', data.maze.length + 'x' + data.maze[0].length);
-    
+    log('Initializing game with data:', data);
+
+    if (!data.maze) {
+        log('No maze data received');
+        return;
+    }
+
     gameState = {
         username: data.username || 'Developer',
         karma: data.karma || 1000,
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
-        isGameOver: false
+        isGameOver: false,
+        exploredTiles: new Set(),
+        visibleTiles: new Set()
     };
-
-    log('Game state initialized:', gameState);
 
     document.getElementById('username').textContent = gameState.username;
     document.getElementById('karma').textContent = gameState.karma;
-    document.getElementById('retryButton').style.display = 'none'; // Hide retry button on new game
-    document.getElementById('message').style.display = 'none'; // Hide any previous messages
     
     renderMaze();
+    updateVisibility();
 }
 
 function findStartPosition(maze) {
@@ -112,7 +165,9 @@ function renderMaze() {
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
             const cellElement = document.createElement('div');
-            cellElement.className = `cell ${cell}`;
+            cellElement.className = `cell ${cell} fog`; // Start with fog
+            cellElement.dataset.x = x;
+            cellElement.dataset.y = y;
             
             if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
                 cellElement.classList.add('player');
@@ -122,10 +177,16 @@ function renderMaze() {
             grid.appendChild(cellElement);
         });
     });
+
+    // Update visibility after rendering
+    updateVisibility();
 }
 
 function handleCellClick(x, y) {
     if (gameState.isGameOver) return;
+    
+    const key = `${x},${y}`;
+    if (!gameState.visibleTiles.has(key)) return; // Can't click fog of war tiles
 
     const dx = Math.abs(x - gameState.playerPosition.x);
     const dy = Math.abs(y - gameState.playerPosition.y);
@@ -146,6 +207,7 @@ function handleCellClick(x, y) {
 function movePlayer(x, y) {
     gameState.playerPosition = { x, y };
     renderMaze();
+    updateVisibility();
 
     window.parent.postMessage({
         type: 'movePlayer',

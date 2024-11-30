@@ -43,6 +43,7 @@
             margin-bottom: 20px;
             overflow: hidden;
             flex: 1;
+            margin: 0 auto;
         }
 
         .cell {
@@ -112,6 +113,27 @@
         .error {
             background: #640000;
         }
+        .cell {
+            /* Add to existing cell styles */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fog {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .explored {
+            opacity: 0.5;
+            visibility: visible;
+        }        
     </style>
 </head>
 <body>

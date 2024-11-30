@@ -113,7 +113,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
           if (maze[y + dy]?.[x + dx] === 'wall') wallCount++;
         });
         
-        if (wallCount >= 2 && Math.random() < 0.15) {
+        if (wallCount >= 2 && Math.random() < 0.15) { // Door frequency
           maze[y][x] = 'door';
         }
       }
@@ -161,7 +161,7 @@ Devvit.addCustomPostType({
 
     // Load or initialize game state
     const [gameState, setGameState] = useState<GameState>(() => ({
-      maze: generateMaze(16, 8), 
+      maze: generateMaze(14, 8), 
       playerPosition: { x: 1, y: 1 },
       unlockedDoors: []
     }));
@@ -179,7 +179,7 @@ Devvit.addCustomPostType({
       
       if (message.type === 'retry') {
           // Generate new maze
-          const newMaze = generateMaze(16, 8);
+          const newMaze = generateMaze(14, 8);
           setGameState({
               maze: newMaze,
               playerPosition: { x: 1, y: 1 },
@@ -245,7 +245,7 @@ Devvit.addCustomPostType({
       console.log('Starting game...');
       
       // Generate a new maze
-      const newMaze = generateMaze(16, 8);
+      const newMaze = generateMaze(14, 8);
       console.log('Generated new maze:', newMaze);
       
       // Update game state
