@@ -65,6 +65,7 @@ window.addEventListener('message', (event) => {
     }
 });
 
+// Add to initializeGame function
 function initializeGame(data) {
     log('Initializing game with maze size:', data.maze.length + 'x' + data.maze[0].length);
     
@@ -80,6 +81,8 @@ function initializeGame(data) {
 
     document.getElementById('username').textContent = gameState.username;
     document.getElementById('karma').textContent = gameState.karma;
+    document.getElementById('retryButton').style.display = 'none'; // Hide retry button on new game
+    document.getElementById('message').style.display = 'none'; // Hide any previous messages
     
     renderMaze();
 }
@@ -165,9 +168,17 @@ function unlockDoor(x, y) {
     }, '*');
 }
 
+function retryGame() {
+    // Send retry message to parent
+    window.parent.postMessage({
+        type: 'retry'
+    }, '*');
+}
+
 function handleWin() {
     gameState.isGameOver = true;
     showMessage('Congratulations! You reached the exit!', 'success');
+    document.getElementById('retryButton').style.display = 'block';
 
     window.parent.postMessage({
         type: 'gameOver',
@@ -190,9 +201,21 @@ function updateKarma(newKarma) {
     document.getElementById('karma').textContent = newKarma;
 }
 
-// Initialize once the page is loaded
+
+
+// Add this with your other initialization code
 window.addEventListener('load', () => {
     log('Page loaded, sending ready message');
     sendReadyMessage();
     renderMaze();
+
+    // Add retry button event listener
+    const retryButton = document.getElementById('retryButton');
+    if (retryButton) {
+        retryButton.addEventListener('click', () => {
+            window.parent.postMessage({
+                type: 'retry'
+            }, '*');
+        });
+    }
 });
