@@ -23,46 +23,56 @@ type WebViewMessage =
 // Define types for maze structure
 type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit';
 type Position = { x: number; y: number };
+type GameState = {
+  maze: MazeCell[][];
+  playerPosition: Position;
+  unlockedDoors: Position[];
+};
+type UserData = {
+  username: string;
+  karma: number;
+};
 
 // Maze generation function
 function generateMaze(width: number, height: number): MazeCell[][] {
     // Initialize maze with walls
     const maze: MazeCell[][] = Array(height).fill(null)
-        .map(() => Array(width).fill('wall'));
+        .map(() => Array(width).fill('wall') as MazeCell[]);
     
     // Create a random path using depth-first search
-    const stack: [number, number][] = [];
+    const stack: Array<[number, number]> = [];
     const start: [number, number] = [1, 1];
     
     maze[start[1]][start[0]] = 'start';
     stack.push(start);
 
     while (stack.length > 0) {
-        const [x, y] = stack[stack.length - 1];
-        const neighbors: [number, number][] = [
-            [x + 2, y],
-            [x - 2, y],
-            [x, y + 2],
-            [x, y - 2]
-        ].filter(([nx, ny]) => 
-            nx > 0 && nx < width - 1 && 
-            ny > 0 && ny < height - 1 && 
-            maze[ny][nx] === 'wall'
-        );
+        const current = stack[stack.length - 1];
+        if (!current) break;
+        
+        const [x, y] = current;
+        const neighbors: Array<[number, number]> = [];
+        
+        if (x + 2 < width - 1) neighbors.push([x + 2, y]);
+        if (x - 2 > 0) neighbors.push([x - 2, y]);
+        if (y + 2 < height - 1) neighbors.push([x, y + 2]);
+        if (y - 2 > 0) neighbors.push([x, y - 2]);
 
-        if (neighbors.length === 0) {
+        const validNeighbors = neighbors.filter(([nx, ny]) => maze[ny][nx] === 'wall');
+
+        if (validNeighbors.length === 0) {
             stack.pop();
             continue;
         }
 
-        const [nx, ny] = neighbors[Math.floor(Math.random() * neighbors.length)];
+        const [nx, ny] = validNeighbors[Math.floor(Math.random() * validNeighbors.length)];
         maze[ny][nx] = 'path';
         maze[y + Math.sign(ny - y)][x + Math.sign(nx - x)] = 'path';
         stack.push([nx, ny]);
     }
 
-    // Add doors (convert some paths to doors)
-    const doorCount = Math.floor((width * height) * 0.1); // 10% of cells become doors
+    // Add doors
+    const doorCount = Math.floor((width * height) * 0.1);
     let doorsPlaced = 0;
     
     while (doorsPlaced < doorCount) {
@@ -75,7 +85,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
         }
     }
 
-    // Place exit (find the furthest point from start)
+    // Place exit
     let maxDistance = 0;
     let exitPos: [number, number] = [width - 2, height - 2];
     
@@ -107,74 +117,98 @@ Devvit.addCustomPostType({
   height: 'tall',
   render: (context) => {
     // Get current user and their karma
-    const [userData] = useState(async () => {
+    const [userData, setUserData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
-        username: currUser?.username ?? 'anon',
-        karma: currUser?.totalKarma ?? 0
+        username: currUser?.username ?? 'developer',
+        karma: 1000 // Default karma for testing
       };
     });
 
     // Load or initialize game state
-    const [gameState, setGameState] = useState(async () => {
-      const savedState = await context.redis.get(`maze_${context.postId}`);
-      return savedState ? JSON.parse(savedState) : {
-        maze: generateMaze(8, 8),
-        playerPosition: { x: 1, y: 1 },
-        unlockedDoors: []
-      };
-    });
+    const [gameState, setGameState] = useState<GameState>(() => ({
+      maze: generateMaze(8, 8),
+      playerPosition: { x: 1, y: 1 },
+      unlockedDoors: []
+    }));
 
     // Track webview visibility
     const [webviewVisible, setWebviewVisible] = useState(false);
 
     // Handle messages from the webview
     const onMessage = async (msg: WebViewMessage) => {
+      if (!gameState || !userData) return;
+
       switch (msg.type) {
         case 'movePlayer':
-          // Update player position in game state
-          const newState = {
+          const newMoveState = {
             ...gameState,
             playerPosition: msg.data.position
           };
-          setGameState(newState);
-          await context.redis.set(`maze_${context.postId}`, JSON.stringify(newState));
+          setGameState(newMoveState);
+          await context.redis.set(`maze_${context.postId}`, JSON.stringify(newMoveState));
           break;
         
         case 'unlockDoor':
-          // Handle door unlocking with karma
           if (userData.karma >= msg.data.karmaSpent) {
-            const newState = {
+            const newUnlockState = {
               ...gameState,
               unlockedDoors: [...gameState.unlockedDoors, msg.data.position]
             };
-            setGameState(newState);
-            await context.redis.set(`maze_${context.postId}`, JSON.stringify(newState));
+            setGameState(newUnlockState);
+            await context.redis.set(`maze_${context.postId}`, JSON.stringify(newUnlockState));
           }
           break;
         
         case 'gameOver':
-          // Handle game completion
           await context.redis.del(`maze_${context.postId}`);
           break;
-
-        default:
-          throw new Error(`Unknown message type: ${msg satisfies never}`);
       }
     };
 
-    // Initialize and show the game
     const onStartGame = () => {
-      setWebviewVisible(true);
-      // Send initial game data to webview
-      context.ui.webView.postMessage('mazeGame', {
+      if (!userData) {
+        console.error('User data not available');
+        return;
+      }
+    
+      if (!gameState.maze) {
+        console.error('Maze not available');
+        return;
+      }
+    
+      const message: WebViewMessage = {
         type: 'initialData',
         data: {
           username: userData.username,
           karma: userData.karma,
           maze: gameState.maze
-        },
+        }
+      };
+    
+      console.log('Initial State:', {
+        userData,
+        gameState,
+        message
       });
+    
+      setWebviewVisible(true);
+    
+      // Send message multiple times to ensure delivery
+      const sendMessage = () => {
+        try {
+          console.log('Attempting to send data to webview...');
+          context.ui.webView.postMessage('mazeGame', message);
+          console.log('Data sent successfully');
+        } catch (error) {
+          console.error('Failed to send data:', error);
+        }
+      };
+    
+      // Try sending immediately and after a delay
+      sendMessage();
+      setTimeout(sendMessage, 500);
+      setTimeout(sendMessage, 1000);
     };
 
     // Render the game interface
@@ -194,14 +228,14 @@ Devvit.addCustomPostType({
               <text size="medium">Username:</text>
               <text size="medium" weight="bold">
                 {' '}
-                {userData.username}
+                {userData?.username ?? 'anon'}
               </text>
             </hstack>
             <hstack>
               <text size="medium">Available Karma:</text>
               <text size="medium" weight="bold">
                 {' '}
-                {userData.karma}
+                {userData?.karma ?? 0}
               </text>
             </hstack>
           </vstack>
