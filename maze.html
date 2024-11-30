@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karma Maze</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 8px;
+        }
+
+        #maze-grid {
+            display: grid;
+            gap: 2px;
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .path {
+            background: #4a4a4a;
+        }
+
+        .wall {
+            background: #1a1a1a;
+            cursor: not-allowed;
+        }
+
+        .door {
+            background: #594a00;
+        }
+
+        .door:hover {
+            background: #8c7300;
+        }
+
+        .start {
+            background: #006400;
+        }
+
+        .exit {
+            background: #640000;
+        }
+
+        .player {
+            background: #0064c8;
+        }
+
+        #message {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .success {
+            background: #006400;
+        }
+
+        .error {
+            background: #640000;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="stats">
+            <div>Player: <span id="username">Loading...</span></div>
+            <div>Karma: <span id="karma">0</span></div>
+        </div>
+        <div id="maze-grid"></div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let gameState = {
+            username: '',
+            karma: 0,
+            maze: [],
+            playerPosition: { x: 0, y: 0 },
+            isGameOver: false
+        };
+
+        // Cost to unlock a door
+        const DOOR_COST = 50;
+
+        // Initialize the game when we receive data from the parent
+        window.addEventListener('message', (event) => {
+            const message = event.data;
+            
+            switch (message.type) {
+                case 'initialData':
+                    initializeGame(message.data);
+                    break;
+                case 'updateKarma':
+                    updateKarma(message.data.karma);
+                    break;
+            }
+        });
+
+        function initializeGame(data) {
+            gameState = {
+                username: data.username,
+                karma: data.karma,
+                maze: data.maze,
+                playerPosition: findStartPosition(data.maze),
+                isGameOver: false
+            };
+
+            document.getElementById('username').textContent = gameState.username;
+            document.getElementById('karma').textContent = gameState.karma;
+            renderMaze();
+        }
+
+        function findStartPosition(maze) {
+            for (let y = 0; y < maze.length; y++) {
+                for (let x = 0; x < maze[y].length; x++) {
+                    if (maze[y][x] === 'start') {
+                        return { x, y };
+                    }
+                }
+            }
+            return { x: 0, y: 0 };
+        }
+
+        function renderMaze() {
+            const grid = document.getElementById('maze-grid');
+            grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, 40px)`;
+            grid.innerHTML = '';
+
+            gameState.maze.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = `cell ${cell}`;
+                    
+                    if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
+                        cellElement.classList.add('player');
+                    }
+
+                    cellElement.onclick = () => handleCellClick(x, y);
+                    grid.appendChild(cellElement);
+                });
+            });
+        }
+
+        function handleCellClick(x, y) {
+            if (gameState.isGameOver) return;
+
+            const dx = Math.abs(x - gameState.playerPosition.x);
+            const dy = Math.abs(y - gameState.playerPosition.y);
+            
+            // Check if the clicked cell is adjacent to the player
+            if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                const targetCell = gameState.maze[y][x];
+
+                if (targetCell === 'path' || targetCell === 'start') {
+                    movePlayer(x, y);
+                } else if (targetCell === 'door' && gameState.karma >= DOOR_COST) {
+                    unlockDoor(x, y);
+                } else if (targetCell === 'exit') {
+                    handleWin();
+                }
+            }
+        }
+
+        function movePlayer(x, y) {
+            gameState.playerPosition = { x, y };
+            renderMaze();
+
+            // Notify parent about the move
+            window.parent.postMessage({
+                type: 'movePlayer',
+                data: { position: { x, y } }
+            }, '*');
+        }
+
+        function unlockDoor(x, y) {
+            gameState.karma -= DOOR_COST;
+            gameState.maze[y][x] = 'path';
+            document.getElementById('karma').textContent = gameState.karma;
+            renderMaze();
+
+            // Notify parent about the door unlock
+            window.parent.postMessage({
+                type: 'unlockDoor',
+                data: { 
+                    position: { x, y },
+                    karmaSpent: DOOR_COST
+                }
+            }, '*');
+        }
+
+        function handleWin() {
+            gameState.isGameOver = true;
+            showMessage('Congratulations! You reached the exit!', 'success');
+
+            // Notify parent about the win
+            window.parent.postMessage({
+                type: 'gameOver',
+                data: { 
+                    won: true,
+                    remainingKarma: gameState.karma
+                }
+            }, '*');
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = type;
+            messageEl.style.display = 'block';
+        }
+
+        // Initialize with empty state until we receive data from parent
+        renderMaze();
+    </script>
+</body>
+</html>
