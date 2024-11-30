@@ -1,3 +1,6 @@
+let initializationAttempts = 0;
+const MAX_ATTEMPTS = 5;
+
 let gameState = {
     username: '',
     karma: 0,
@@ -8,50 +11,63 @@ let gameState = {
 
 const DOOR_COST = 50;
 
-function debugLog(message, data = null) {
+function log(message, data = null) {
+    const logMessage = data ? `${message} ${JSON.stringify(data)}` : message;
+    console.log(logMessage);
     const debug = document.getElementById('debug');
-    const text = data ? `${message}: ${JSON.stringify(data)}` : message;
-    console.log(text);
     if (debug) {
-        debug.textContent = text;
+        debug.textContent = logMessage;
     }
 }
 
-window.addEventListener('message', (event) => {
-    debugLog('Received message event', event.data);
+function sendReadyMessage() {
+    if (initializationAttempts >= MAX_ATTEMPTS) {
+        log('Max initialization attempts reached');
+        return;
+    }
+
+    log('Sending ready message, attempt:', initializationAttempts + 1);
+    window.parent.postMessage({ type: 'ready' }, '*');
     
-    const message = event.data;
+    // Try again in a second if we haven't received data
+    setTimeout(() => {
+        if (!gameState.maze || gameState.maze.length === 0) {
+            initializationAttempts++;
+            sendReadyMessage();
+        }
+    }, 1000);
+}
+
+window.addEventListener('message', (event) => {
+    log('Received message:', event.data);
+    
+    const message = event.data?.data?.message || event.data;
     if (!message || !message.type) {
-        debugLog('Invalid message received');
+        log('Invalid message received:', message);
         return;
     }
     
     switch (message.type) {
         case 'initialData':
-            if (!message.data) {
-                debugLog('No data in initialData message');
+            if (!message.data || !message.data.maze) {
+                log('No maze data in message:', message);
                 return;
             }
-            debugLog('Initializing game with data', message.data);
+            log('Initializing game with data:', message.data);
             initializeGame(message.data);
             break;
         case 'updateKarma':
-            debugLog('Updating karma', message.data);
+            log('Updating karma:', message.data);
             updateKarma(message.data.karma);
             break;
         default:
-            debugLog('Unknown message type', message.type);
+            log('Unknown message type:', message.type);
     }
 });
 
 function initializeGame(data) {
-    debugLog('InitializeGame called with:', data);
-
-    if (!data.maze) {
-        debugLog('No maze data received');
-        return;
-    }
-
+    log('Initializing game with maze size:', data.maze.length + 'x' + data.maze[0].length);
+    
     gameState = {
         username: data.username || 'Developer',
         karma: data.karma || 1000,
@@ -60,7 +76,7 @@ function initializeGame(data) {
         isGameOver: false
     };
 
-    debugLog('Game state initialized:', gameState);
+    log('Game state initialized:', gameState);
 
     document.getElementById('username').textContent = gameState.username;
     document.getElementById('karma').textContent = gameState.karma;
@@ -82,10 +98,11 @@ function findStartPosition(maze) {
 function renderMaze() {
     const grid = document.getElementById('maze-grid');
     if (!gameState.maze || !gameState.maze[0]) {
-        debugLog('No maze data available to render');
+        log('No maze data available to render');
         return;
     }
 
+    log('Rendering maze');
     grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, 40px)`;
     grid.innerHTML = '';
 
@@ -168,9 +185,14 @@ function showMessage(text, type) {
     messageEl.style.display = 'block';
 }
 
+function updateKarma(newKarma) {
+    gameState.karma = newKarma;
+    document.getElementById('karma').textContent = newKarma;
+}
+
 // Initialize once the page is loaded
 window.addEventListener('load', () => {
-    debugLog('Page loaded and ready');
+    log('Page loaded, sending ready message');
+    sendReadyMessage();
     renderMaze();
-    window.parent.postMessage({ type: 'ready' }, '*');
 });

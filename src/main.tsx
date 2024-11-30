@@ -18,6 +18,9 @@ type WebViewMessage =
   | {
       type: 'gameOver';
       data: { won: boolean; remainingKarma: number };
+    }
+  | {
+      type: 'ready';
     };
 
 // Define types for maze structure
@@ -32,6 +35,8 @@ type UserData = {
   username: string;
   karma: number;
 };
+
+let hasStarted = false;
 
 // Maze generation function
 function generateMaze(width: number, height: number): MazeCell[][] {
@@ -102,7 +107,6 @@ function generateMaze(width: number, height: number): MazeCell[][] {
     }
     
     maze[exitPos[1]][exitPos[0]] = 'exit';
-
     return maze;
 }
 
@@ -137,8 +141,38 @@ Devvit.addCustomPostType({
 
     // Handle messages from the webview
     const onMessage = async (msg: WebViewMessage) => {
-      if (!gameState || !userData) return;
-
+      console.log('Received message from webview:', msg);
+    
+      if (msg.type === 'ready') {
+        console.log('Webview is ready, sending initial data');
+        if (!userData) {
+          console.error('No user data available');
+          return;
+        }
+    
+        const message: WebViewMessage = {
+          type: 'initialData',
+          data: {
+            username: userData.username,
+            karma: userData.karma,
+            maze: gameState.maze
+          }
+        };
+    
+        try {
+          console.log('Sending initial data to webview:', message);
+          context.ui.webView.postMessage('mazeGame', message);
+        } catch (error) {
+          console.error('Error sending data:', error);
+        }
+        return;
+      }
+    
+      if (!gameState || !userData) {
+        console.error('Missing game state or user data');
+        return;
+      }
+    
       switch (msg.type) {
         case 'movePlayer':
           const newMoveState = {
@@ -166,49 +200,45 @@ Devvit.addCustomPostType({
       }
     };
 
+    // Initialize and show the game
     const onStartGame = () => {
       if (!userData) {
-        console.error('User data not available');
+        console.error('No user data available');
         return;
       }
     
-      if (!gameState.maze) {
-        console.error('Maze not available');
-        return;
-      }
+      console.log('Starting game...');
+      
+      // Generate a new maze
+      const newMaze = generateMaze(8, 8);
+      console.log('Generated new maze:', newMaze);
+      
+      // Update game state
+      setGameState({
+        maze: newMaze,
+        playerPosition: { x: 1, y: 1 },
+        unlockedDoors: []
+      });
     
+      // Make webview visible immediately
+      setWebviewVisible(true);
+      
+      // Send initial data immediately
       const message: WebViewMessage = {
         type: 'initialData',
         data: {
           username: userData.username,
           karma: userData.karma,
-          maze: gameState.maze
+          maze: newMaze
         }
       };
     
-      console.log('Initial State:', {
-        userData,
-        gameState,
-        message
-      });
-    
-      setWebviewVisible(true);
-    
-      // Send message multiple times to ensure delivery
-      const sendMessage = () => {
-        try {
-          console.log('Attempting to send data to webview...');
-          context.ui.webView.postMessage('mazeGame', message);
-          console.log('Data sent successfully');
-        } catch (error) {
-          console.error('Failed to send data:', error);
-        }
-      };
-    
-      // Try sending immediately and after a delay
-      sendMessage();
-      setTimeout(sendMessage, 500);
-      setTimeout(sendMessage, 1000);
+      try {
+        console.log('Sending initial data:', message);
+        context.ui.webView.postMessage('mazeGame', message);
+      } catch (error) {
+        console.error('Error sending data:', error);
+      }
     };
 
     // Render the game interface
