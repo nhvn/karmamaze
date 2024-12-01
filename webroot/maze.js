@@ -455,7 +455,7 @@ function activateMap() {
     
     // Expand visibility to surrounding areas (larger radius)
     const { x, y } = gameState.playerPosition;
-    const viewRadius = 3;  // Increase view distance to 3 tiles in each direction
+    const viewRadius = 2;  // Increase view distance to 2 tiles in each direction
     
     // Add all cells within view radius to visible and explored sets
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {

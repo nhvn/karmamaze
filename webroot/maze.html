@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karma Maze</title>
     <style>
+        /* General Body Styles */
         body {
             margin: 0;
             padding: 20px;
@@ -16,6 +17,7 @@
             box-sizing: border-box;
         }
 
+        /* Game Container */
         #game-container {
             max-width: 800px;
             margin: 0 auto;
@@ -25,6 +27,7 @@
             overflow: hidden;
         }
 
+        /* Stats Section */
         #stats {
             display: flex;
             justify-content: space-between;
@@ -34,6 +37,7 @@
             border-radius: 8px;
         }
 
+        /* Maze Grid */
         #maze-grid {
             display: grid;
             gap: 2px;
@@ -42,10 +46,10 @@
             border-radius: 8px;
             margin-bottom: 20px;
             overflow: hidden;
-            /* flex: 1; */
             margin: 0 auto;
         }
 
+        /* Cell Styles */
         .cell {
             width: 40px;
             height: 40px;
@@ -55,31 +59,41 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
 
+        /* Cell States */
         .path {
             background: #4a4a4a;
         }
-
         .wall {
             background: #1a1a1a;
             cursor: not-allowed;
         }
-
         .door {
             background: #594a00;
         }
-
         .door:hover {
             background: #8c7300;
         }
-
-        .start {
+        .player {
+            background: #0064c8 !important;
+        }
+        .explored {
+            opacity: 0.5;
+            visibility: visible;
+        }
+        .revealed-exit {
             background: #4a4a4a;
-            position: relative; /* Needed to position the ::after pseudo-element */
-            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
         }
 
+        /* Start and Exit Cells */
+        .start, .exit, .fake-exit, .exit1, .fake-exit1 {
+            background: #4a4a4a;
+            position: relative;
+            overflow: hidden;
+        }
         .start::after {
             content: ''; /* Required for pseudo-elements */
             position: absolute;
@@ -90,63 +104,47 @@
             background: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)); /* Left-to-right fading shadow */
             pointer-events: none; /* Prevent interaction with the shadow */
         }
-
-        .exit, .fake-exit {
-            background: #4a4a4a;
-            position: relative; /* Needed to position the ::after pseudo-element */
-            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
-        }
-
-        .exit::after, .fake-exit::after {
-            content: ''; /* Required for pseudo-elements */
+        .exit::after, .fake-exit::after, .exit1::after, .fake-exit1::after {
+            content: '';
             position: absolute;
             top: 0;
-            right: 0; /* Start from the right edge */
-            width: 100%; /* Span the full width for a smooth gradient */
-            height: 100%; /* Full height of the cell */
-            background: linear-gradient(to left, rgba(153, 153, 153, 0.5), rgba(0, 0, 0, 0)); /* Fading shadow */
-            pointer-events: none; /* Prevent interaction with the shadow */
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to left, rgba(153, 153, 153, 0.5), rgba(0, 0, 0, 0));
+            pointer-events: none;
         }
 
-        .exit1 {
-            background: #4a4a4a;
-            position: relative; /* Needed to position the ::after pseudo-element */
-            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
+        /* Fog Effect */
+        .fog {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        .visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .fog.crystal-ball, .fog.key-powerup, .fog.map {
+            opacity: 0.4;
+            visibility: visible;
         }
 
-        .exit1::after {
-            content: ''; /* Required for pseudo-elements */
-            position: absolute;
-            top: 0;
-            left: 0; /* Start from the left edge */
-            width: 100%; /* Span the full width for a smooth gradient */
-            height: 100%; /* Full height of the cell */
-            background: linear-gradient(to left, rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0)); /* Green fading shadow */
-            pointer-events: none; /* Prevent interaction with the shadow */
+        /* Powerups */
+        .powerup-glow, .crystal-ball, .key-powerup, .map {
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+        .crystal-ball {
+            background: rgba(153, 50, 204, 0.8);
+        }
+        .key-powerup {
+            background: rgba(255, 215, 0, 0.8);
+        }
+        .map {
+            background: rgba(210, 105, 30, 0.8);
         }
 
-        .fake-exit1 {
-            background: #4a4a4a;
-            position: relative; /* Needed to position the ::after pseudo-element */
-            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
-        }
-
-        .fake-exit1::after {
-            content: ''; /* Required for pseudo-elements */
-            position: absolute;
-            top: 0;
-            left: 0; /* Start from the left edge */
-            width: 100%; /* Span the full width for a smooth gradient */
-            height: 100%; /* Full height of the cell */
-            background: linear-gradient(to left, rgba(255, 17, 0, 0.5), rgba(0, 255, 0, 0)); /* Green fading shadow */
-            pointer-events: none; /* Prevent interaction with the shadow */
-        }
-
-
-        .player {
-            background: #0064c8;
-        }
-
+        /* Message Pop-up */
         #message {
             position: fixed;
             left: 50%;
@@ -171,13 +169,7 @@
             }
         }
 
-        .success {
-            background: rgba(0, 100, 0, 0.9);
-            color: white;
-            padding: 20px 40px;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
+        /* Buttons */
         .button-container {
             display: flex;
             gap: 10px;
@@ -191,63 +183,24 @@
             font-size: 14px;
             padding: 8px 16px;
         }
-
         #retryButton:hover, #newGameButton:hover {
             background: #5a5a5a;
         }
         .success {
+            background: rgba(0, 100, 0, 0.9);
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .success {
             background: #006400;
         }
-
         .error {
             background: #640000;
         }
-        .cell {
-            /* Add to existing cell styles */
-            position: relative;
-            overflow: hidden;
-        }
 
-        .fog {
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease;
-        }
-
-        .visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .powerup-glow {
-            animation: powerupGlow 2s ease-in-out infinite alternate;
-            z-index: 1;
-        }
-
-        @keyframes powerupGlow {
-            from {
-                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073;
-            }
-            to {
-                box-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6;
-            }
-        }
-
-        .explored {
-            opacity: 0.5;
-            visibility: visible;
-        }
-
-        .fog.crystal-ball {
-            opacity: 0.4;
-            visibility: visible;
-        }
-
-        .crystal-ball {
-            background: rgba(153, 50, 204, 0.8);
-            animation: glow 1.5s ease-in-out infinite alternate;
-        }
-
+        /* Animations */
         @keyframes glow {
             from {
                 box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #9932CC;
@@ -256,39 +209,21 @@
                 box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #9932CC;
             }
         }
-
-        .key-powerup {
-            background: rgba(255, 215, 0, 0.8); /* Gold color for keys */
-            animation: glow 1.5s ease-in-out infinite alternate;
+        @keyframes powerupGlow {
+            from {
+                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073;
+            }
+            to {
+                box-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6;
+            }
         }
-
-        .fog.key-powerup {
-            opacity: 0.4;
-            visibility: visible;
-        }
-
-        .revealed-exit {
-            background: #4a4a4a;
-        }
-        
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-4px); }
             75% { transform: translateX(4px); }
         }
-
         .shaking {
             animation: shake 0.05s linear;
-        }
-        .map {
-            background: rgba(210, 105, 30, 0.8); /* Brown color for map */
-            animation: glow 1.5s ease-in-out infinite alternate;
-        }
-
-        /* If map is in fog, still make it slightly visible */
-        .fog.map {
-            opacity: 0.4;
-            visibility: visible;
         }
     </style>
 </head>
