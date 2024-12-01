@@ -20,54 +20,63 @@ function log(message, data = null) {
     }
 }
 
-// Add this function to update visibility
+// DEVELOPMENT MODE - show everything
 function updateVisibility() {
-    const { x, y } = gameState.playerPosition;
-    const newVisible = new Set();
-    
-    // Add current position and adjacent tiles to visible set
-    [
-        [0, 0],   // Current tile
-        [0, 1],   // Right
-        [0, -1],  // Left
-        [1, 0],   // Down
-        [-1, 0],  // Up
-        [1, 1],   // Bottom-right
-        [1, -1],  // Bottom-left
-        [-1, 1],  // Top-right
-        [-1, -1]  // Top-left
-    ].forEach(([dx, dy]) => {
-        const newX = x + dx;
-        const newY = y + dy;
-        if (newX >= 0 && newX < gameState.maze[0].length && 
-            newY >= 0 && newY < gameState.maze.length) {
-            newVisible.add(`${newX},${newY}`);
-            gameState.exploredTiles.add(`${newX},${newY}`);
-        }
-    });
-
-    // Update visibility classes for all tiles
     gameState.maze.forEach((row, y) => {
         row.forEach((_, x) => {
             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
             if (cell) {
-                const key = `${x},${y}`;
-                if (newVisible.has(key)) {
-                    cell.classList.remove('fog', 'explored');
-                    cell.classList.add('visible');
-                } else if (gameState.exploredTiles.has(key)) {
-                    cell.classList.remove('fog', 'visible');
-                    cell.classList.add('explored');
-                } else {
-                    cell.classList.remove('visible', 'explored');
-                    cell.classList.add('fog');
-                }
+                cell.classList.remove('fog', 'explored');
+                cell.classList.add('visible');
+                gameState.visibleTiles.add(`${x},${y}`);
             }
         });
     });
-
-    gameState.visibleTiles = newVisible;
 }
+
+// PRODUCTION MODE - fog activated
+// function updateVisibility() {
+//     const { x, y } = gameState.playerPosition;
+//     const newVisible = new Set();
+    
+//     // Add current position and adjacent tiles to visible set
+//     [
+//         [0, 0],   // Current tile
+//         [0, 1],   // Right
+//         [0, -1],  // Left
+//         [1, 0],   // Down
+//         [-1, 0],  // Up
+//         [1, 1],   // Bottom-right
+//         [1, -1],  // Bottom-left
+//         [-1, 1],  // Top-right
+//         [-1, -1]  // Top-left
+//     ].forEach(([dx, dy]) => {
+//         const newX = x + dx;
+//         const newY = y + dy;
+//         if (newX >= 0 && newX < gameState.maze[0].length && 
+//             newY >= 0 && newY < gameState.maze.length) {
+//             newVisible.add(`${newX},${newY}`);
+//         }
+//     });
+
+
+//     gameState.maze.forEach((row, y) => {
+//         row.forEach((_, x) => {
+//             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+//             if (cell) {
+//                 const key = `${x},${y}`;
+//                 cell.classList.remove('fog', 'explored', 'visible');
+//                 if (newVisible.has(key)) {
+//                     cell.classList.add('visible');
+//                 } else {
+//                     cell.classList.add('fog');
+//                 }
+//             }
+//         });
+//     });
+
+//     gameState.visibleTiles = newVisible;
+// }
 
 function sendReadyMessage() {
     if (initializationAttempts >= MAX_ATTEMPTS) {
@@ -122,6 +131,11 @@ function initializeGame(data) {
         log('No maze data received');
         return;
     }
+
+    // Clear any existing win message
+    const messageEl = document.getElementById('message');
+    messageEl.style.display = 'none';
+    messageEl.textContent = '';
 
     gameState = {
         username: data.username || 'Developer',
