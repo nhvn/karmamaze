@@ -120,7 +120,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
           if (maze[y + dy]?.[x + dx] === 'wall') wallCount++;
         });
         
-        if (wallCount >= 2 && Math.random() < 0.15) {
+        if (wallCount >= 2 && Math.random() < 0.20) {
           maze[y][x] = 'door';
         }
       }
@@ -152,6 +152,15 @@ function generateLevel2Maze(width: number, height: number): MazeCell[][] {
   // Find existing exit and start positions
   let startPos = { x: 0, y: 0 };
   let exitPos = { x: 0, y: 0 };
+
+  // Clear all outer walls (except leftmost and rightmost columns)
+  for (let y = 0; y < height; y++) {
+      if (y === 0 || y === height - 1) {
+          for (let x = 1; x < width - 1; x++) {
+              maze[y][x] = 'path'; // Convert outer walls to paths except edges
+          }
+      }
+  }
 
   // Find start and exit positions
   for (let y = 0; y < height; y++) {
@@ -243,7 +252,7 @@ Devvit.addCustomPostType({
               type: 'initialData',
               data: {
                   username: userData?.username ?? 'Developer',
-                  keys: 2,
+                  keys: 1,
                   maze: newMaze,
                   level: 2
               }
@@ -306,7 +315,7 @@ Devvit.addCustomPostType({
         type: 'initialData',
         data: {
           username: userData.username,
-          keys: 2,
+          keys: 1,
           maze: newMaze,
           level: currentLevel
         }

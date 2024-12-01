@@ -259,7 +259,17 @@
 
         .revealed-exit {
             background: #4a4a4a;
-        }    
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .shaking {
+            animation: shake 0.05s linear;
+        }
     </style>
 </head>
 <body>

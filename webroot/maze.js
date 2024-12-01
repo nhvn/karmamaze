@@ -2,13 +2,16 @@ let initializationAttempts = 0;
 const MAX_ATTEMPTS = 5;
 
 let gameState = {
-    keys: 0,
-    maze: [], // Initialize with an empty maze or appropriate value
-    playerPosition: { x: 0, y: 0 }, // Placeholder for the start position
+    username: '',
+    keys: 1,
+    maze: [],
+    playerPosition: { x: 0, y: 0 },
     isGameOver: false,
     visibleTiles: new Set(),
     exploredTiles: new Set(),
-    crystalBallUsed: false
+    crystalBallUsed: false,
+    doorHits: new Map(),
+    doorOpacity: new Map()
 };
 
 
@@ -137,6 +140,7 @@ window.addEventListener('message', (event) => {
     }
 });
 
+
 // Add keyboard controls
 window.addEventListener('keydown', (event) => {
     if (gameState.isGameOver) return;
@@ -144,50 +148,45 @@ window.addEventListener('keydown', (event) => {
     let newX = gameState.playerPosition.x;
     let newY = gameState.playerPosition.y;
 
-    // Handle both WASD and arrow keys
     switch (event.key.toLowerCase()) {
         case 'w':
-        // case 'arrowup':
             newY--;
             break;
         case 's':
-        // case 'arrowdown':
             newY++;
             break;
         case 'a':
-        // case 'arrowleft':
             newX--;
             break;
         case 'd':
-        // case 'arrowright':
             newX++;
             break;
         default:
-            return; // Exit for any other key
+            return;
     }
 
-    // Check if the new position is valid
     if (newX >= 0 && newX < gameState.maze[0].length && 
         newY >= 0 && newY < gameState.maze.length) {
         const targetCell = gameState.maze[newY][newX];
 
         if (targetCell === 'crystal-ball') {
-            // First move the player
             movePlayer(newX, newY);
-            // Then activate the crystal ball and remove it
             activateCrystalBall();
             gameState.maze[newY][newX] = 'path';
             renderMaze();
-        } else if (targetCell === 'path' || targetCell === 'start') {
+        } else if (targetCell === 'path' || targetCell === 'start' || targetCell === 'exit' || targetCell === 'fake-exit') {
             movePlayer(newX, newY);
-        } else if (targetCell === 'door' && gameState.keys > 0) {
-            unlockDoor(newX, newY);
-        } else if (targetCell === 'exit' || targetCell === 'fake-exit') {
-            if (targetCell === 'exit') {
-                handleWin();
-            } else {
-                handleTrap();
+            // Check if we should trigger end game after moving to exit
+            if ((targetCell === 'exit' || targetCell === 'fake-exit') && 
+                newX === gameState.maze[0].length - 1) { // Only trigger if at rightmost edge
+                if (targetCell === 'exit') {
+                    handleWin();
+                } else {
+                    handleTrap();
+                }
             }
+        } else if (targetCell === 'door') {
+            handleDoor(newX, newY);
         }
     }
 });
@@ -210,16 +209,17 @@ function initializeGame(data) {
     messageEl.style.display = 'none';
     messageEl.textContent = '';
 
-    gameState = {
-        username: data.username || 'Developer',
-        keys: 2,
-        maze: data.maze,
-        playerPosition: findStartPosition(data.maze),
-        isGameOver: false,
-        visibleTiles: new Set(),
-        exploredTiles: new Set(),
-        crystalBallUsed: false
-    };
+    // Update existing gameState instead of creating new one
+    gameState.username = data.username || 'Developer';
+    gameState.keys = 1;
+    gameState.maze = data.maze;
+    gameState.playerPosition = findStartPosition(data.maze);
+    gameState.isGameOver = false;
+    gameState.visibleTiles = new Set();
+    gameState.exploredTiles = new Set();
+    gameState.crystalBallUsed = false;
+    gameState.doorHits = new Map();
+    gameState.doorOpacity = new Map();
 
     document.getElementById('username').textContent = gameState.username;
     document.getElementById('keys').textContent = gameState.keys;
@@ -229,17 +229,17 @@ function initializeGame(data) {
 }
 
 function retryLevel() {
-    // Reset game state with the same maze
-    console.log('Retry button clicked');
     gameState = {
         ...gameState,
-        keys: 2,
-        maze: JSON.parse(JSON.stringify(initialMaze)), // Deep copy of initial maze
+        keys: 1,
+        maze: JSON.parse(JSON.stringify(initialMaze)),
         playerPosition: findStartPosition(initialMaze),
         isGameOver: false,
         visibleTiles: new Set(),
         exploredTiles: new Set(),
-        crystalBallUsed: false  // Reset crystal ball flag
+        crystalBallUsed: false,
+        doorHits: new Map(),  // Reset door hits
+        doorOpacity: new Map(),
     };
 
     // Clear any messages
@@ -289,16 +289,23 @@ function renderMaze() {
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
             
-            // Only show green exit if crystal ball was used
-            if (cell === 'exit' && gameState.crystalBallUsed) { // We'll add this flag
+            // Apply stored opacity for doors
+            if (cell === 'door') {
+                const doorKey = `${x},${y}`;
+                const opacity = gameState.doorOpacity.get(doorKey);
+                if (opacity !== undefined) {
+                    cellElement.style.opacity = opacity;
+                }
+            }
+            
+            // Rest of your existing render logic...
+            if (cell === 'exit' && gameState.crystalBallUsed) {
                 cellElement.classList.add('exit1');
                 cellElement.classList.add('revealed-exit');
-                // cellElement.classList.add('fake-exit1');
             }
 
-            // Check if it's a fake exit cell
             if (cell === 'fake-exit' && gameState.crystalBallUsed) {
-                cellElement.classList.add('fake-exit1'); // Fake exit revealed with red
+                cellElement.classList.add('fake-exit1');
             }
 
             if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
@@ -313,38 +320,101 @@ function renderMaze() {
     updateVisibility();
 }
 
-function handleCellClick(x, y) {
-    // log(`Cell clicked at: x=${x}, y=${y}`);
-    if (gameState.isGameOver) return;
-    
-    const key = `${x},${y}`;
-    if (!gameState.visibleTiles.has(key)) return;
-
-    const dx = Math.abs(x - gameState.playerPosition.x);
-    const dy = Math.abs(y - gameState.playerPosition.y);
-    
-    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        const targetCell = gameState.maze[y][x];
-
-        if (targetCell === 'crystal-ball') {
-            // First move the player
-            movePlayer(x, y);
-            // Then activate the crystal ball and remove it
-            activateCrystalBall();
-            gameState.maze[y][x] = 'path';
-            renderMaze();
-        } else if (targetCell === 'path' || targetCell === 'start') {
-            movePlayer(x, y);
-        } else if (targetCell === 'door' && gameState.keys > 0) {
-            unlockDoor(x, y);
-        } else if (targetCell === 'exit' || targetCell === 'fake-exit') {
-            if (targetCell === 'exit') {
-                handleWin();
-            } else {
-                handleTrap();
-            }
-        }
+function handleDoor(x, y) {
+    if (gameState.keys > 0) {
+        unlockDoor(x, y);
+        return;
     }
+
+    // Get or initialize hit count for this door
+    const doorKey = `${x},${y}`;
+    const hits = gameState.doorHits.get(doorKey) || 0;
+    gameState.doorHits.set(doorKey, hits + 1);
+
+    // Calculate opacity (from 1 to 0.3)
+    const opacity = 1 - ((hits + 1) / 12) * 0.7;
+    gameState.doorOpacity.set(doorKey, opacity);
+
+    // Shake the door
+    const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+    if (doorElement) {
+        doorElement.classList.add('shaking');
+        doorElement.style.opacity = opacity;
+        
+        setTimeout(() => {
+            doorElement.classList.remove('shaking');
+        }, 100);
+    }
+
+    // Break door after 12 hits
+    if (hits + 1 >= 12) {
+        gameState.maze[y][x] = 'path';
+        gameState.doorHits.delete(doorKey);
+        gameState.doorOpacity.delete(doorKey);
+        // showMessage('Door broken!', 'success');
+        renderMaze();
+    } else {
+        // showMessage(`Door weakening... (${12 - (hits + 1)} more hits needed)`, 'error');
+    }
+}
+
+// Add this helper function for color interpolation
+function interpolateColor(startColor, endColor, percentage) {
+    // Convert hex to RGB
+    const start = {
+        r: parseInt(startColor.slice(1,3), 16),
+        g: parseInt(startColor.slice(3,5), 16),
+        b: parseInt(startColor.slice(5,7), 16)
+    };
+    
+    const end = {
+        r: parseInt(endColor.slice(1,3), 16),
+        g: parseInt(endColor.slice(3,5), 16),
+        b: parseInt(endColor.slice(5,7), 16)
+    };
+
+    // Interpolate
+    const r = Math.round(start.r + (end.r - start.r) * percentage);
+    const g = Math.round(start.g + (end.g - start.g) * percentage);
+    const b = Math.round(start.b + (end.b - start.b) * percentage);
+
+    // Convert back to hex
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+function initializeGame(data) {
+    log('Initializing game with data:', data);
+
+    if (!data.maze) {
+        log('No maze data received');
+        return;
+    }
+
+    // Store initial maze when first received
+    initialMaze = JSON.parse(JSON.stringify(data.maze)); // Deep copy
+
+    // Clear any existing win message
+    const messageEl = document.getElementById('message');
+    messageEl.style.display = 'none';
+    messageEl.textContent = '';
+
+    // Update existing gameState instead of creating new one
+    gameState.username = data.username || 'Developer';
+    gameState.keys = 1;
+    gameState.maze = data.maze;
+    gameState.playerPosition = findStartPosition(data.maze);
+    gameState.isGameOver = false;
+    gameState.visibleTiles = new Set();
+    gameState.exploredTiles = new Set();
+    gameState.crystalBallUsed = false;
+    gameState.doorHits = new Map();
+    gameState.doorOpacity = new Map();
+
+    document.getElementById('username').textContent = gameState.username;
+    document.getElementById('keys').textContent = gameState.keys;
+    
+    renderMaze();
+    updateVisibility();
 }
 
 function activateCrystalBall() {
