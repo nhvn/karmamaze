@@ -149,13 +149,17 @@ function generateMaze(width: number, height: number): MazeCell[][] {
 function generateLevel2Maze(width: number, height: number): MazeCell[][] {
   const maze = generateMaze(width, height); // Use existing maze generator as base
   
-  // Find existing exit and mark its position
-  let realExitPos = { x: 0, y: 0 };
+  // Find existing exit and start positions
+  let startPos = { x: 0, y: 0 };
+  let exitPos = { x: 0, y: 0 };
+
+  // Find start and exit positions
   for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-          if (maze[y][x] === 'exit') {
-              realExitPos = { x, y };
-              break;
+          if (maze[y][x] === 'start') {
+              startPos = { x, y };
+          } else if (maze[y][x] === 'exit') {
+              exitPos = { x, y };
           }
       }
   }
@@ -164,18 +168,23 @@ function generateLevel2Maze(width: number, height: number): MazeCell[][] {
   let fakeExitPlaced = false;
   while (!fakeExitPlaced) {
       const y = Math.floor(Math.random() * (height - 2)) + 1;
-      if (y !== realExitPos.y && maze[y][width-1] === 'wall') {
+      if (y !== exitPos.y && maze[y][width-1] === 'wall') {
           maze[y][width-1] = 'fake-exit';
           fakeExitPlaced = true;
       }
   }
 
-  // Place crystal ball in a random path location
+  // Place crystal ball in a valid path location
   let crystalBallPlaced = false;
   while (!crystalBallPlaced) {
       const x = Math.floor(Math.random() * (width - 2)) + 1;
       const y = Math.floor(Math.random() * (height - 2)) + 1;
-      if (maze[y][x] === 'path') {
+      // Only place on path tiles, not walls or doors
+      if (maze[y][x] === 'path' && 
+          // Make sure it's not right next to the start
+          !(x === startPos.x && y === startPos.y) && 
+          // Make sure it's not right next to the exit
+          !(x === exitPos.x && y === exitPos.y)) {
           maze[y][x] = 'crystal-ball';
           crystalBallPlaced = true;
       }

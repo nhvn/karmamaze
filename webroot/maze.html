@@ -159,10 +159,30 @@
             visibility: visible;
         }
 
+        .powerup-glow {
+            animation: powerupGlow 2s ease-in-out infinite alternate;
+            z-index: 1;
+        }
+
+        @keyframes powerupGlow {
+            from {
+                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073;
+            }
+            to {
+                box-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6;
+            }
+        }
+
         .explored {
             opacity: 0.5;
             visibility: visible;
         }
+
+        .fog.crystal-ball {
+            opacity: 0.4;
+            visibility: visible;
+        }
+
         .crystal-ball {
             background: #9932CC;
             animation: glow 1.5s ease-in-out infinite alternate;
@@ -182,17 +202,8 @@
         }
 
         .revealed-exit {
-            animation: reveal 1.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes reveal {
-            from {
-                box-shadow: 0 0 5px #00ff00;
-            }
-            to {
-                box-shadow: 0 0 20px #00ff00;
-            }
-        }        
+            background: #4a4a4a;
+        }    
     </style>
 </head>
 <body>

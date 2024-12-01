@@ -2,16 +2,15 @@ let initializationAttempts = 0;
 const MAX_ATTEMPTS = 5;
 
 let gameState = {
-    username: '',
-    keys: 2,
-    maze: [],
-    playerPosition: { x: 0, y: 0 },
+    keys: 0,
+    maze: [], // Initialize with an empty maze or appropriate value
+    playerPosition: { x: 0, y: 0 }, // Placeholder for the start position
     isGameOver: false,
-    visibleTiles: new Set(),  // Add this
-    exploredTiles: new Set()  // Add this
+    visibleTiles: new Set(),
+    exploredTiles: new Set(),
+    crystalBallUsed: false
 };
 
-const DOOR_COST = 50;
 
 function log(message, data = null) {
     const logMessage = data ? `${message} ${JSON.stringify(data)}` : message;
@@ -23,67 +22,75 @@ function log(message, data = null) {
 }
 
 // DEVELOPMENT MODE - show everything
-function updateVisibility() {
-    if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
-    
-    gameState.maze.forEach((row, y) => {
-        row.forEach((_, x) => {
-            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            if (cell) {
-                cell.classList.remove('fog', 'explored');
-                cell.classList.add('visible');
-                gameState.visibleTiles.add(`${x},${y}`);
-            }
-        });
-    });
-}
-
-// PRODUCTION MODE - fog activated
 // function updateVisibility() {
-//     const { x, y } = gameState.playerPosition;
-//     const newVisible = new Set();
+//     if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
     
-//     // Add current position and adjacent tiles to visible set
-//     [
-//         [0, 0],   // Current tile
-//         [0, 1],   // Right
-//         [0, -1],  // Left
-//         [1, 0],   // Down
-//         [-1, 0],  // Up
-//         [1, 1],   // Bottom-right
-//         [1, -1],  // Bottom-left
-//         [-1, 1],  // Top-right
-//         [-1, -1]  // Top-left
-//     ].forEach(([dx, dy]) => {
-//         const newX = x + dx;
-//         const newY = y + dy;
-//         if (newX >= 0 && newX < gameState.maze[0].length && 
-//             newY >= 0 && newY < gameState.maze.length) {
-//             newVisible.add(`${newX},${newY}`);
-//         }
-//     });
-
-
-//     // Update visibility classes for all tiles
 //     gameState.maze.forEach((row, y) => {
 //         row.forEach((_, x) => {
 //             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
 //             if (cell) {
-//                 const key = `${x},${y}`;
-//                 if (newVisible.has(key)) {
-//                     cell.classList.remove('fog', 'explored');
-//                     cell.classList.add('visible');
-//                 } else if (gameState.exploredTiles.has(key)) {
-//                     cell.classList.remove('fog', 'visible');
-//                     cell.classList.add('explored');
-//                 } else {
-//                     cell.classList.remove('visible', 'explored');
-//                     cell.classList.add('fog');
-//                 }
+//                 cell.classList.remove('fog', 'explored');
+//                 cell.classList.add('visible');
+//                 gameState.visibleTiles.add(`${x},${y}`);
 //             }
 //         });
 //     });
 // }
+
+// PRODUCTION MODE - use this instead
+function updateVisibility() {
+    const { x, y } = gameState.playerPosition;
+    const newVisible = new Set();
+    
+    // Add current position and adjacent tiles to visible set
+    [
+        [0, 0],   // Current tile
+        [0, 1],   // Right
+        [0, -1],  // Left
+        [1, 0],   // Down
+        [-1, 0],  // Up
+        [1, 1],   // Bottom-right
+        [1, -1],  // Bottom-left
+        [-1, 1],  // Top-right
+        [-1, -1]  // Top-left
+    ].forEach(([dx, dy]) => {
+        const newX = x + dx;
+        const newY = y + dy;
+        if (newX >= 0 && newX < gameState.maze[0].length && 
+            newY >= 0 && newY < gameState.maze.length) {
+            newVisible.add(`${newX},${newY}`);
+            gameState.exploredTiles.add(`${newX},${newY}`);  // Add to explored tiles
+        }
+    });
+
+    // Update visibility classes for all tiles
+    gameState.maze.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cellElement) {
+                const key = `${x},${y}`;
+                
+                // Always show powerups with glow
+                if (cell === 'crystal-ball') {
+                    cellElement.classList.add('powerup-glow');
+                }
+
+                if (newVisible.has(key)) {
+                    cellElement.classList.remove('fog', 'explored');
+                    cellElement.classList.add('visible');
+                } else if (gameState.exploredTiles.has(key)) {
+                    cellElement.classList.remove('fog', 'visible');
+                    cellElement.classList.add('explored');
+                } else {
+                    cellElement.classList.remove('visible', 'explored');
+                    cellElement.classList.add('fog');
+                }
+            }
+        });
+    });
+
+    gameState.visibleTiles = newVisible;
+}
 
 function sendReadyMessage() {
     if (initializationAttempts >= MAX_ATTEMPTS) {
@@ -140,15 +147,19 @@ window.addEventListener('keydown', (event) => {
     // Handle both WASD and arrow keys
     switch (event.key.toLowerCase()) {
         case 'w':
+        // case 'arrowup':
             newY--;
             break;
         case 's':
+        // case 'arrowdown':
             newY++;
             break;
         case 'a':
+        // case 'arrowleft':
             newX--;
             break;
         case 'd':
+        // case 'arrowright':
             newX++;
             break;
         default:
@@ -160,12 +171,23 @@ window.addEventListener('keydown', (event) => {
         newY >= 0 && newY < gameState.maze.length) {
         const targetCell = gameState.maze[newY][newX];
 
-        if (targetCell === 'path' || targetCell === 'start') {
+        if (targetCell === 'crystal-ball') {
+            // First move the player
+            movePlayer(newX, newY);
+            // Then activate the crystal ball and remove it
+            activateCrystalBall();
+            gameState.maze[newY][newX] = 'path';
+            renderMaze();
+        } else if (targetCell === 'path' || targetCell === 'start') {
             movePlayer(newX, newY);
         } else if (targetCell === 'door' && gameState.keys > 0) {
             unlockDoor(newX, newY);
-        } else if (targetCell === 'exit') {
-            handleWin();
+        } else if (targetCell === 'exit' || targetCell === 'fake-exit') {
+            if (targetCell === 'exit') {
+                handleWin();
+            } else {
+                handleTrap();
+            }
         }
     }
 });
@@ -188,15 +210,16 @@ function initializeGame(data) {
     messageEl.style.display = 'none';
     messageEl.textContent = '';
 
-    gameState = {
-        username: data.username || 'Developer',
-        keys: 2,
-        maze: data.maze,
-        playerPosition: findStartPosition(data.maze),
-        isGameOver: false,
-        visibleTiles: new Set(),
-        exploredTiles: new Set()
-    };
+    // gameState = {
+    //     username: data.username || 'Developer',
+    //     keys: 2,
+    //     maze: data.maze,
+    //     playerPosition: findStartPosition(data.maze),
+    //     isGameOver: false,
+    //     visibleTiles: new Set(),
+    //     exploredTiles: new Set(),
+    //     crystalBallUsed: false
+    // };
 
     document.getElementById('username').textContent = gameState.username;
     document.getElementById('keys').textContent = gameState.keys;
@@ -207,6 +230,7 @@ function initializeGame(data) {
 
 function retryLevel() {
     // Reset game state with the same maze
+    console.log('Retry button clicked');
     gameState = {
         ...gameState,
         keys: 2,
@@ -214,7 +238,8 @@ function retryLevel() {
         playerPosition: findStartPosition(initialMaze),
         isGameOver: false,
         visibleTiles: new Set(),
-        exploredTiles: new Set()
+        exploredTiles: new Set(),
+        crystalBallUsed: false  // Reset crystal ball flag
     };
 
     // Clear any messages
@@ -229,6 +254,7 @@ function retryLevel() {
 }
 
 function newGame() {
+    console.log('New Game button clicked');
     window.parent.postMessage({
         type: 'newGame'
     }, '*');
@@ -259,10 +285,16 @@ function renderMaze() {
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
             const cellElement = document.createElement('div');
-            cellElement.className = `cell ${cell} fog`; // Start with fog
+            cellElement.className = `cell ${cell} fog`;
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
             
+            // Only show green exit if crystal ball was used
+            if (cell === 'exit' && gameState.crystalBallUsed) { // We'll add this flag
+                cellElement.style.background = '#00ff00';
+                cellElement.classList.add('revealed-exit');
+            }
+
             if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
                 cellElement.classList.add('player');
             }
@@ -272,15 +304,15 @@ function renderMaze() {
         });
     });
 
-    // Update visibility after rendering
     updateVisibility();
 }
 
 function handleCellClick(x, y) {
+    // log(`Cell clicked at: x=${x}, y=${y}`);
     if (gameState.isGameOver) return;
     
     const key = `${x},${y}`;
-    if (!gameState.visibleTiles.has(key)) return; // Can't click fog of war tiles
+    if (!gameState.visibleTiles.has(key)) return;
 
     const dx = Math.abs(x - gameState.playerPosition.x);
     const dy = Math.abs(y - gameState.playerPosition.y);
@@ -288,14 +320,75 @@ function handleCellClick(x, y) {
     if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
         const targetCell = gameState.maze[y][x];
 
-        if (targetCell === 'path' || targetCell === 'start') {
+        if (targetCell === 'crystal-ball') {
+            // First move the player
+            movePlayer(x, y);
+            // Then activate the crystal ball and remove it
+            activateCrystalBall();
+            gameState.maze[y][x] = 'path';
+            renderMaze();
+        } else if (targetCell === 'path' || targetCell === 'start') {
             movePlayer(x, y);
         } else if (targetCell === 'door' && gameState.keys > 0) {
             unlockDoor(x, y);
-        } else if (targetCell === 'exit') {
-            handleWin();
+        } else if (targetCell === 'exit' || targetCell === 'fake-exit') {
+            if (targetCell === 'exit') {
+                handleWin();
+            } else {
+                handleTrap();
+            }
         }
     }
+}
+
+// function checkForAdjacentCrystalBall(playerX, playerY) {
+//     // Check all adjacent tiles
+//     const directions = [
+//         [-1, 0], [1, 0], [0, -1], [0, 1]  // left, right, up, down
+//     ];
+
+//     for (const [dx, dy] of directions) {
+//         const x = playerX + dx;
+//         const y = playerY + dy;
+
+//         // Check if position is valid and contains crystal ball
+//         if (x >= 0 && x < gameState.maze[0].length &&
+//             y >= 0 && y < gameState.maze.length &&
+//             gameState.maze[y][x] === 'crystal-ball') {
+//             // Found a crystal ball, activate it
+//             activateCrystalBall();
+//             gameState.maze[y][x] = 'path';  // Convert crystal ball to path
+//             renderMaze();
+//             return;
+//         }
+//     }
+// }
+
+function activateCrystalBall() {
+    gameState.crystalBallUsed = true;  // Set the flag
+    // Find and reveal the true exit
+    gameState.maze.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell === 'exit') {
+                const exitCell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                if (exitCell) {
+                    exitCell.style.background = '#00ff00';
+                    exitCell.classList.add('revealed-exit');
+                    gameState.visibleTiles.add(`${x},${y}`);
+                }
+            }
+        });
+    });
+
+    showMessage('Crystal ball revealed the true exit!', 'success');
+    setTimeout(() => {
+        document.getElementById('message').style.display = 'none';
+    }, 2000);
+}
+
+function handleTrap() {
+    gameState.isGameOver = true;
+    showMessage('Oh no, it\'s a trap!', 'error', true);  // Added true parameter for permanent message
 }
 
 function movePlayer(x, y) {
@@ -352,14 +445,40 @@ function handleWin() {
     }, '*');
 }
 
-function showMessage(text, type) {
+function showMessage(text, type, permanent = false) {
     const messageEl = document.getElementById('message');
-    messageEl.textContent = text;
+    
+    // Clear existing content
+    messageEl.innerHTML = '';
+    
+    // Add text
+    const textDiv = document.createElement('div');
+    textDiv.textContent = text;
+    messageEl.appendChild(textDiv);
+    
+    // Add button if it's a trap message
+    if (type === 'error' && permanent) {
+        const button = document.createElement('button');
+        button.textContent = 'Try Again';
+        button.onclick = () => {
+            retryLevel();
+            messageEl.style.display = 'none';
+        };
+        button.style.marginTop = '10px';
+        button.style.padding = '8px 16px';
+        button.style.background = '#4a4a4a';
+        button.style.color = 'white';
+        button.style.border = 'none';
+        button.style.borderRadius = '4px';
+        button.style.cursor = 'pointer';
+        messageEl.appendChild(button);
+    }
+    
     messageEl.className = type;
     messageEl.style.display = 'block';
     
-    // Hide the message after 2 seconds if it's an error
-    if (type === 'error') {
+    // Only auto-hide non-permanent messages
+    if (!permanent && type === 'error') {
         setTimeout(() => {
             messageEl.style.display = 'none';
         }, 2000);
@@ -380,13 +499,18 @@ window.addEventListener('load', () => {
     sendReadyMessage();
     renderMaze();
 
-    // Add retry button event listener
+    // Make sure retry button uses retryLevel not retryGame
     const retryButton = document.getElementById('retryButton');
     if (retryButton) {
-        retryButton.addEventListener('click', retryLevel);
+        retryButton.addEventListener('click', () => {
+            retryLevel();  // Use retryLevel function
+            const messageEl = document.getElementById('message');
+            if (messageEl) {
+                messageEl.style.display = 'none';  // Hide the message after retry
+            }
+        });
     }
 
-    // Add new game button event listener
     const newGameButton = document.getElementById('newGameButton');
     if (newGameButton) {
         newGameButton.addEventListener('click', newGame);
