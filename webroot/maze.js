@@ -3,10 +3,12 @@ const MAX_ATTEMPTS = 5;
 
 let gameState = {
     username: '',
-    karma: 0,
+    keys: 2,
     maze: [],
     playerPosition: { x: 0, y: 0 },
-    isGameOver: false
+    isGameOver: false,
+    visibleTiles: new Set(),  // Add this
+    exploredTiles: new Set()  // Add this
 };
 
 const DOOR_COST = 50;
@@ -22,6 +24,8 @@ function log(message, data = null) {
 
 // DEVELOPMENT MODE - show everything
 function updateVisibility() {
+    if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
+    
     gameState.maze.forEach((row, y) => {
         row.forEach((_, x) => {
             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
@@ -114,9 +118,9 @@ window.addEventListener('message', (event) => {
             log('Initializing game with data:', message.data);
             initializeGame(message.data);
             break;
-        case 'updateKarma':
-            log('Updating karma:', message.data);
-            updateKarma(message.data.karma);
+        case 'updateKeys':  // Changed from updateKarma
+            log('Updating keys:', message.data);
+            updateKeys(message.data.keys);  // Changed from karma
             break;
         default:
             log('Unknown message type:', message.type);
@@ -134,21 +138,31 @@ function initializeGame(data) {
 
     // Clear any existing win message
     const messageEl = document.getElementById('message');
-    messageEl.style.display = 'none';
-    messageEl.textContent = '';
+    if (messageEl) {
+        messageEl.style.display = 'none';
+        messageEl.textContent = '';
+    }
 
+    // Update the existing gameState instead of creating a new one
     gameState = {
         username: data.username || 'Developer',
-        karma: data.karma || 1000,
+        keys: data.keys || 2,
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
         isGameOver: false,
-        exploredTiles: new Set(),
-        visibleTiles: new Set()
+        visibleTiles: new Set(),
+        exploredTiles: new Set()
     };
 
-    document.getElementById('username').textContent = gameState.username;
-    document.getElementById('karma').textContent = gameState.karma;
+    const usernameEl = document.getElementById('username');
+    const keysEl = document.getElementById('keys');
+
+    if (usernameEl) {
+        usernameEl.textContent = gameState.username;
+    }
+    if (keysEl) {
+        keysEl.textContent = gameState.keys;
+    }
     
     renderMaze();
     updateVisibility();
@@ -210,7 +224,7 @@ function handleCellClick(x, y) {
 
         if (targetCell === 'path' || targetCell === 'start') {
             movePlayer(x, y);
-        } else if (targetCell === 'door' && gameState.karma >= DOOR_COST) {
+        } else if (targetCell === 'door' && gameState.keys > 0) {
             unlockDoor(x, y);
         } else if (targetCell === 'exit') {
             handleWin();
@@ -230,16 +244,23 @@ function movePlayer(x, y) {
 }
 
 function unlockDoor(x, y) {
-    gameState.karma -= DOOR_COST;
+    if (gameState.keys <= 0) {
+        showMessage('No keys remaining!', 'error');  // Add error message
+        return;  // Don't proceed if no keys
+    }
+
+    gameState.keys--;
     gameState.maze[y][x] = 'path';
-    document.getElementById('karma').textContent = gameState.karma;
+    const keysEl = document.getElementById('keys');  // Changed from karma to keys
+    if (keysEl) {
+        keysEl.textContent = gameState.keys;
+    }
     renderMaze();
 
     window.parent.postMessage({
         type: 'unlockDoor',
         data: { 
-            position: { x, y },
-            karmaSpent: DOOR_COST
+            position: { x, y }
         }
     }, '*');
 }
@@ -253,14 +274,14 @@ function retryGame() {
 
 function handleWin() {
     gameState.isGameOver = true;
-    showMessage('Congratulations! You reached the exit!', 'success');
+    showMessage('You win!', 'success');
     document.getElementById('retryButton').style.display = 'block';
 
     window.parent.postMessage({
         type: 'gameOver',
         data: { 
             won: true,
-            remainingKarma: gameState.karma
+            remainingKeys: gameState.keys  // Changed from karma to keys
         }
     }, '*');
 }
@@ -270,14 +291,22 @@ function showMessage(text, type) {
     messageEl.textContent = text;
     messageEl.className = type;
     messageEl.style.display = 'block';
+    
+    // Hide the message after 2 seconds if it's an error
+    if (type === 'error') {
+        setTimeout(() => {
+            messageEl.style.display = 'none';
+        }, 2000);
+    }
 }
 
-function updateKarma(newKarma) {
-    gameState.karma = newKarma;
-    document.getElementById('karma').textContent = newKarma;
+function updateKeys(newKeys) {
+    gameState.keys = newKeys;
+    const keysEl = document.getElementById('keys');  // Changed from karma to keys
+    if (keysEl) {
+        keysEl.textContent = newKeys;
+    }
 }
-
-
 
 // Add this with your other initialization code
 window.addEventListener('load', () => {

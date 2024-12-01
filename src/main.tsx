@@ -5,7 +5,7 @@ import { Devvit, useState } from '@devvit/public-api';
 type WebViewMessage =
   | {
       type: 'initialData';
-      data: { username: string; karma: number; maze: MazeCell[][] };
+      data: { username: string; keys: number; maze: MazeCell[][] };
     }
   | {
       type: 'movePlayer';
@@ -13,11 +13,11 @@ type WebViewMessage =
     }
   | {
       type: 'unlockDoor';
-      data: { position: Position; karmaSpent: number };
+      data: { position: Position };
     }
   | {
       type: 'gameOver';
-      data: { won: boolean; remainingKarma: number };
+      data: { won: boolean };
     }
   | {
       type: 'retry';
@@ -33,7 +33,6 @@ type GameState = {
 };
 type UserData = {
   username: string;
-  karma: number;
 };
 
 function isPathReachable(maze: MazeCell[][], start: Position, end: Position): boolean {
@@ -98,7 +97,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
       // Skip start and exit areas
       if ((x === 1 && y === startY) || (x === width - 2 && y === exitY)) continue;
       
-      if (Math.random() < 0.35) { // 35% chance for walls
+      if (Math.random() < 0.35) {
         maze[y][x] = 'wall';
       }
     }
@@ -113,7 +112,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
           if (maze[y + dy]?.[x + dx] === 'wall') wallCount++;
         });
         
-        if (wallCount >= 2 && Math.random() < 0.15) { // Door frequency
+        if (wallCount >= 2 && Math.random() < 0.15) {
           maze[y][x] = 'door';
         }
       }
@@ -123,7 +122,6 @@ function generateMaze(width: number, height: number): MazeCell[][] {
   // Ensure path to exit exists
   let pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
   while (!pathExists) {
-    // Clear a path if none exists
     let x = width - 2;
     let y = exitY;
     
@@ -145,40 +143,33 @@ Devvit.configure({
   redis: true,
 });
 
-// Add the Karma Maze game as a custom post type
 Devvit.addCustomPostType({
-  name: 'Karma Maze',
+  name: 'Key Maze',
   height: 'tall',
   render: (context) => {
-    // Get current user and their karma
     const [userData, setUserData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
-        username: currUser?.username ?? 'developer',
-        karma: 1000 // Default karma for testing
+        username: currUser?.username ?? 'developer'
       };
     });
 
-    // Load or initialize game state
     const [gameState, setGameState] = useState<GameState>(() => ({
       maze: generateMaze(14, 8), 
       playerPosition: { x: 1, y: 1 },
       unlockedDoors: []
     }));
 
-    // Track webview visibility
     const [webviewVisible, setWebviewVisible] = useState(false);
 
     const onMessage = async (msg: WebViewMessage) => {
       console.log('Received message from webview:', msg);
       
-      // Handle devvit message wrapper
       const message = ('data' in msg && 'message' in msg.data) 
           ? (msg.data as any).message 
           : msg;
       
       if (message.type === 'retry') {
-          // Generate new maze
           const newMaze = generateMaze(14, 8);
           setGameState({
               maze: newMaze,
@@ -186,12 +177,11 @@ Devvit.addCustomPostType({
               unlockedDoors: []
           });
   
-          // Send new game data
           const initMessage: WebViewMessage = {
               type: 'initialData',
               data: {
                   username: userData?.username ?? 'Developer',
-                  karma: userData?.karma ?? 1000,
+                  keys: 2,
                   maze: newMaze
               }
           };
@@ -215,27 +205,20 @@ Devvit.addCustomPostType({
               break;
           
           case 'unlockDoor':
-              if (userData.karma >= message.data.karmaSpent) {
-                  const newUnlockState = {
-                      ...gameState,
-                      unlockedDoors: [...gameState.unlockedDoors, message.data.position]
-                  };
-                  setGameState(newUnlockState);
-                  await context.redis.set(`maze_${context.postId}`, JSON.stringify(newUnlockState));
-              }
+              const newUnlockState = {
+                  ...gameState,
+                  unlockedDoors: [...gameState.unlockedDoors, message.data.position]
+              };
+              setGameState(newUnlockState);
+              await context.redis.set(`maze_${context.postId}`, JSON.stringify(newUnlockState));
               break;
           
           case 'gameOver':
               await context.redis.del(`maze_${context.postId}`);
               break;
-  
-          default:
-              console.log('Unknown message type:', message.type);
-              break;
       }
-  };
+    };
 
-    // Initialize and show the game
     const onStartGame = () => {
       if (!userData) {
         console.error('No user data available');
@@ -244,26 +227,22 @@ Devvit.addCustomPostType({
     
       console.log('Starting game...');
       
-      // Generate a new maze
       const newMaze = generateMaze(14, 8);
       console.log('Generated new maze:', newMaze);
       
-      // Update game state
       setGameState({
         maze: newMaze,
         playerPosition: { x: 1, y: 1 },
         unlockedDoors: []
       });
     
-      // Make webview visible immediately
       setWebviewVisible(true);
       
-      // Send initial data immediately
       const message: WebViewMessage = {
         type: 'initialData',
         data: {
           username: userData.username,
-          karma: userData.karma,
+          keys: 2,
           maze: newMaze
         }
       };
@@ -276,7 +255,6 @@ Devvit.addCustomPostType({
       }
     };
 
-    // Render the game interface
     return (
       <vstack grow padding="small">
         <vstack
@@ -285,28 +263,21 @@ Devvit.addCustomPostType({
           alignment="middle center"
         >
           <text size="xlarge" weight="bold">
-            Karma Maze
+            Key Maze
           </text>
           <spacer />
           <vstack alignment="start middle">
             <hstack>
-              <text size="medium">Username:</text>
+              <text size="medium">Player:</text>
               <text size="medium" weight="bold">
                 {' '}
                 {userData?.username ?? 'anon'}
               </text>
             </hstack>
-            <hstack>
-              <text size="medium">Available Karma:</text>
-              <text size="medium" weight="bold">
-                {' '}
-                {userData?.karma ?? 0}
-              </text>
-            </hstack>
           </vstack>
           <spacer />
           <text size="medium">
-            Navigate through the maze using your karma to unlock doors. Can you reach the exit?
+            Navigate through the maze using keys to unlock doors. Can you reach the exit?
           </text>
           <spacer />
           <button onPress={onStartGame}>Start Game</button>
@@ -327,22 +298,27 @@ Devvit.addCustomPostType({
   },
 });
 
-// Add menu item to create new game
 Devvit.addMenuItem({
   location: 'subreddit',
-  label: 'Start Karma Maze',
+  label: 'Start Key Maze',
   onPress: async (_, context) => {
-    const currentSubreddit = await context.reddit.getCurrentSubreddit();
+    const currentSubreddit = await context.reddit.getCurrentSubreddit(); // Not getCurrentUser
+    if (!currentSubreddit) {
+      console.error('No subreddit found');
+      
+      return;
+    }
+    
     await context.reddit.submitPost({
-      title: 'Karma Maze Challenge',
+      title: 'Key Maze Challenge',
       subredditName: currentSubreddit.name,
       preview: (
         <vstack>
-          <text>Loading Karma Maze...</text>
+          <text>Loading Key Maze...</text>
         </vstack>
       ),
     });
-    context.ui.showToast(`Created new Karma Maze in ${currentSubreddit.name}`);
+    context.ui.showToast(`Created new Key Maze in ${currentSubreddit.name}`);
   },
 });
 
