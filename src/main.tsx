@@ -32,7 +32,7 @@ type WebViewMessage =
     };
 
 // Define types for maze structure
-type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball';
+type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball' | 'map' | 'key-powerup';
 type Position = { x: number; y: number };
 type GameState = {
   maze: MazeCell[][];
@@ -120,7 +120,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
           if (maze[y + dy]?.[x + dx] === 'wall') wallCount++;
         });
         
-        if (wallCount >= 2 && Math.random() < 0.20) {
+        if (wallCount >= 1 && Math.random() < 0.30) {
           maze[y][x] = 'door';
         }
       }
@@ -196,6 +196,41 @@ function generateLevel2Maze(width: number, height: number): MazeCell[][] {
           !(x === exitPos.x && y === exitPos.y)) {
           maze[y][x] = 'crystal-ball';
           crystalBallPlaced = true;
+      }
+  }
+
+  let mapPlaced = false;
+  while (!mapPlaced) {
+      const x = Math.floor(Math.random() * (width - 2)) + 1;
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      const currentCell = maze[y][x];
+      
+      // Only place on path tiles, not walls or doors
+      if (currentCell === 'path' && 
+          // Make sure it's not right next to the start
+          !(x === startPos.x && y === startPos.y) && 
+          // Make sure it's not right next to the exit
+          !(x === exitPos.x && y === exitPos.y)) {
+          maze[y][x] = 'map';
+          mapPlaced = true;
+      }
+  }
+
+  // Place key powerup in a valid path location
+  let keyPowerupPlaced = false;
+  while (!keyPowerupPlaced) {
+      const x = Math.floor(Math.random() * (width - 2)) + 1;
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      const currentCell = maze[y][x];
+      
+      // Only place on path tiles, not walls or doors
+      if (currentCell === 'path' && 
+          // Make sure it's not right next to the start
+          !(x === startPos.x && y === startPos.y) && 
+          // Make sure it's not right next to the exit
+          !(x === exitPos.x && y === exitPos.y)) {
+          maze[y][x] = 'key-powerup';
+          keyPowerupPlaced = true;
       }
   }
 

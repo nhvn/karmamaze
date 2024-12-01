@@ -257,6 +257,16 @@
             }
         }
 
+        .key-powerup {
+            background: rgba(255, 215, 0, 0.8); /* Gold color for keys */
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        .fog.key-powerup {
+            opacity: 0.4;
+            visibility: visible;
+        }
+
         .revealed-exit {
             background: #4a4a4a;
         }
@@ -269,6 +279,16 @@
 
         .shaking {
             animation: shake 0.05s linear;
+        }
+        .map {
+            background: rgba(210, 105, 30, 0.8); /* Brown color for map */
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        /* If map is in fog, still make it slightly visible */
+        .fog.map {
+            opacity: 0.4;
+            visibility: visible;
         }
     </style>
 </head>
