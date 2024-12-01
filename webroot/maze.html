@@ -41,7 +41,7 @@
         #maze-grid {
             display: grid;
             gap: 2px;
-            background: #2d2d2d;
+            /* background: #2d2d2d; */
             padding: 10px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -111,8 +111,16 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to left, rgba(153, 153, 153, 0.5), rgba(0, 0, 0, 0));
             pointer-events: none;
+        }
+        .exit::after, .fake-exit::after {
+            background: linear-gradient(to left, rgba(153, 153, 153, 0.5), rgba(0, 0, 0, 0));
+        }
+        .exit1::after {
+            background: linear-gradient(to left, rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0));
+        }
+        .fake-exit1::after {
+            background: linear-gradient(to left, rgba(255, 17, 0, 0.5), rgba(0, 255, 0, 0));
         }
 
         /* Fog Effect */
@@ -166,6 +174,39 @@
             to {
                 opacity: 1;
                 transform: translate(-50%, -50%);
+            }
+        }
+        #top-right-messages {
+            position: fixed;
+            top: 20%;
+            right: 5%;
+            z-index: 1000;
+            text-align: right;
+            display: flex;
+            flex-direction: column-reverse; /* New messages appear at the bottom */
+            gap: 5px; /* Spacing between messages */
+            pointer-events: none;
+        }
+        .top-right-message {
+            color: white;
+            font-size: 14px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease, transform 0.8s ease; /* Smooth transitions */
+        }
+        .top-right-message.fade-out {
+            opacity: 0;
+            transform: translateY(-10px); /* Moves up slightly before disappearing */
+        }
+
+        /* Fade-out animation */
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-10px);
             }
         }
 
@@ -231,7 +272,7 @@
     <div id="game-container">
         <div id="stats">
             <div><span id="username">Waiting...</span></div>
-            <div>Keys: <span id="keys">Waiting...</span></div>
+            <!-- <div>Keys: <span id="keys">Waiting...</span></div> -->
             <div class="button-container">
                 <button id="retryButton">Retry Level</button>
                 <button id="newGameButton">New Game</button>
@@ -239,6 +280,7 @@
         </div>
         <div id="maze-grid"></div>
         <div id="message"></div>
+        <div id="top-right-messages"></div>
     </div>
     <script src="maze.js"></script>
 </body>

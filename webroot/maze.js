@@ -428,50 +428,46 @@ function initializeGame(data) {
     updateVisibility();
 }
 
-function activateCrystalBall() {
-    gameState.crystalBallUsed = true;  // Set the flag
-    // Find and reveal the true exit
-    gameState.maze.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            if (cell === 'exit') {
-                const exitCell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-                if (exitCell) {
-                    // exitCell.style.background = 'rgba(0, 255, 0, 0.9)';
-                    exitCell.classList.add('revealed-exit');
-                    gameState.visibleTiles.add(`${x},${y}`);
-                }
-            }
-        });
-    });
+function showTopRightMessage(message) {
+    const messageContainer = document.getElementById('top-right-messages');
 
-    showMessage('Crystal ball revealed the true exit!', 'success');
+    // Create a new message element
+    const messageEl = document.createElement('div');
+    messageEl.classList.add('top-right-message');
+    messageEl.textContent = message;
+
+    // Append the message to the container
+    messageContainer.appendChild(messageEl);
+
+    // Start fade-out after a delay
     setTimeout(() => {
-        document.getElementById('message').style.display = 'none';
-    }, 2000);
+        messageEl.classList.add('fade-out');
+    }, 2000); // Show message for 2 seconds
+
+    // Remove the message completely after fade-out transition
+    setTimeout(() => {
+        messageEl.remove();
+    }, 2300); // Matches fade-out duration (2s display + 0.3s fade)
 }
 
+// Updated functions with the new message display
 function activateMap() {
-    gameState.mapUsed = true;  // Add flag to track map usage
-    
-    // Expand visibility to surrounding areas (larger radius)
+    gameState.mapUsed = true;
+
     const { x, y } = gameState.playerPosition;
-    const viewRadius = 2;  // Increase view distance to 2 tiles in each direction
-    
-    // Add all cells within view radius to visible and explored sets
+    const viewRadius = 2;
+
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
         for (let dx = -viewRadius; dx <= viewRadius; dx++) {
             const newX = x + dx;
             const newY = y + dy;
-            
-            // Check if coordinates are within maze bounds
+
             if (newX >= 0 && newX < gameState.maze[0].length &&
                 newY >= 0 && newY < gameState.maze.length) {
-                // Add to both visible and explored sets
                 const key = `${newX},${newY}`;
                 gameState.visibleTiles.add(key);
                 gameState.exploredTiles.add(key);
-                
-                // Update cell visibility
+
                 const cell = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
                 if (cell) {
                     cell.classList.remove('fog');
@@ -480,28 +476,37 @@ function activateMap() {
             }
         }
     }
-    
-    // Show success message
-    showMessage('Map revealed surrounding area!', 'success');
-    setTimeout(() => {
-        document.getElementById('message').style.display = 'none';
-    }, 2000);
+
+    showTopRightMessage('Map revealed surrounding area!');
 }
 
 function activateKeyPowerup() {
-    gameState.keys += 3;  // Add 3 keys
-    
-    // Update the keys display
+    gameState.keys += 3;
+
     const keysEl = document.getElementById('keys');
     if (keysEl) {
         keysEl.textContent = gameState.keys;
     }
-    
-    // Show success message
-    showMessage('Found 3 additional keys!', 'success');
-    setTimeout(() => {
-        document.getElementById('message').style.display = 'none';
-    }, 2000);
+
+    showTopRightMessage('Found 3 additional keys!');
+}
+
+function activateCrystalBall() {
+    gameState.crystalBallUsed = true;
+
+    gameState.maze.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            if (cell === 'exit') {
+                const exitCell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                if (exitCell) {
+                    exitCell.classList.add('revealed-exit');
+                    gameState.visibleTiles.add(`${x},${y}`);
+                }
+            }
+        });
+    });
+
+    showTopRightMessage('Crystal ball revealed the true exit!');
 }
 
 function handleTrap() {
