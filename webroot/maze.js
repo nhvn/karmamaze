@@ -22,75 +22,75 @@ function log(message, data = null) {
 }
 
 // DEVELOPMENT MODE - show everything
-// function updateVisibility() {
-//     if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
-    
-//     gameState.maze.forEach((row, y) => {
-//         row.forEach((_, x) => {
-//             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-//             if (cell) {
-//                 cell.classList.remove('fog', 'explored');
-//                 cell.classList.add('visible');
-//                 gameState.visibleTiles.add(`${x},${y}`);
-//             }
-//         });
-//     });
-// }
-
-// PRODUCTION MODE - use this instead
 function updateVisibility() {
-    const { x, y } = gameState.playerPosition;
-    const newVisible = new Set();
+    if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
     
-    // Add current position and adjacent tiles to visible set
-    [
-        [0, 0],   // Current tile
-        [0, 1],   // Right
-        [0, -1],  // Left
-        [1, 0],   // Down
-        [-1, 0],  // Up
-        [1, 1],   // Bottom-right
-        [1, -1],  // Bottom-left
-        [-1, 1],  // Top-right
-        [-1, -1]  // Top-left
-    ].forEach(([dx, dy]) => {
-        const newX = x + dx;
-        const newY = y + dy;
-        if (newX >= 0 && newX < gameState.maze[0].length && 
-            newY >= 0 && newY < gameState.maze.length) {
-            newVisible.add(`${newX},${newY}`);
-            gameState.exploredTiles.add(`${newX},${newY}`);  // Add to explored tiles
-        }
-    });
-
-    // Update visibility classes for all tiles
     gameState.maze.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            if (cellElement) {
-                const key = `${x},${y}`;
-                
-                // Always show powerups with glow
-                if (cell === 'crystal-ball') {
-                    cellElement.classList.add('powerup-glow');
-                }
-
-                if (newVisible.has(key)) {
-                    cellElement.classList.remove('fog', 'explored');
-                    cellElement.classList.add('visible');
-                } else if (gameState.exploredTiles.has(key)) {
-                    cellElement.classList.remove('fog', 'visible');
-                    cellElement.classList.add('explored');
-                } else {
-                    cellElement.classList.remove('visible', 'explored');
-                    cellElement.classList.add('fog');
-                }
+        row.forEach((_, x) => {
+            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cell) {
+                cell.classList.remove('fog', 'explored');
+                cell.classList.add('visible');
+                gameState.visibleTiles.add(`${x},${y}`);
             }
         });
     });
-
-    gameState.visibleTiles = newVisible;
 }
+
+// PRODUCTION MODE - use this instead
+// function updateVisibility() {
+//     const { x, y } = gameState.playerPosition;
+//     const newVisible = new Set();
+    
+//     // Add current position and adjacent tiles to visible set
+//     [
+//         [0, 0],   // Current tile
+//         [0, 1],   // Right
+//         [0, -1],  // Left
+//         [1, 0],   // Down
+//         [-1, 0],  // Up
+//         [1, 1],   // Bottom-right
+//         [1, -1],  // Bottom-left
+//         [-1, 1],  // Top-right
+//         [-1, -1]  // Top-left
+//     ].forEach(([dx, dy]) => {
+//         const newX = x + dx;
+//         const newY = y + dy;
+//         if (newX >= 0 && newX < gameState.maze[0].length && 
+//             newY >= 0 && newY < gameState.maze.length) {
+//             newVisible.add(`${newX},${newY}`);
+//             gameState.exploredTiles.add(`${newX},${newY}`);  // Add to explored tiles
+//         }
+//     });
+
+//     // Update visibility classes for all tiles
+//     gameState.maze.forEach((row, y) => {
+//         row.forEach((cell, x) => {
+//             const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+//             if (cellElement) {
+//                 const key = `${x},${y}`;
+                
+//                 // Always show powerups with glow
+//                 if (cell === 'crystal-ball') {
+//                     cellElement.classList.add('powerup-glow');
+//                 }
+
+//                 if (newVisible.has(key)) {
+//                     cellElement.classList.remove('fog', 'explored');
+//                     cellElement.classList.add('visible');
+//                 } else if (gameState.exploredTiles.has(key)) {
+//                     cellElement.classList.remove('fog', 'visible');
+//                     cellElement.classList.add('explored');
+//                 } else {
+//                     cellElement.classList.remove('visible', 'explored');
+//                     cellElement.classList.add('fog');
+//                 }
+//             }
+//         });
+//     });
+
+//     gameState.visibleTiles = newVisible;
+// }
 
 function sendReadyMessage() {
     if (initializationAttempts >= MAX_ATTEMPTS) {
@@ -210,16 +210,16 @@ function initializeGame(data) {
     messageEl.style.display = 'none';
     messageEl.textContent = '';
 
-    // gameState = {
-    //     username: data.username || 'Developer',
-    //     keys: 2,
-    //     maze: data.maze,
-    //     playerPosition: findStartPosition(data.maze),
-    //     isGameOver: false,
-    //     visibleTiles: new Set(),
-    //     exploredTiles: new Set(),
-    //     crystalBallUsed: false
-    // };
+    gameState = {
+        username: data.username || 'Developer',
+        keys: 2,
+        maze: data.maze,
+        playerPosition: findStartPosition(data.maze),
+        isGameOver: false,
+        visibleTiles: new Set(),
+        exploredTiles: new Set(),
+        crystalBallUsed: false
+    };
 
     document.getElementById('username').textContent = gameState.username;
     document.getElementById('keys').textContent = gameState.keys;
@@ -291,8 +291,14 @@ function renderMaze() {
             
             // Only show green exit if crystal ball was used
             if (cell === 'exit' && gameState.crystalBallUsed) { // We'll add this flag
-                cellElement.style.background = '#00ff00';
+                cellElement.classList.add('exit1');
                 cellElement.classList.add('revealed-exit');
+                // cellElement.classList.add('fake-exit1');
+            }
+
+            // Check if it's a fake exit cell
+            if (cell === 'fake-exit' && gameState.crystalBallUsed) {
+                cellElement.classList.add('fake-exit1'); // Fake exit revealed with red
             }
 
             if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
@@ -341,29 +347,6 @@ function handleCellClick(x, y) {
     }
 }
 
-// function checkForAdjacentCrystalBall(playerX, playerY) {
-//     // Check all adjacent tiles
-//     const directions = [
-//         [-1, 0], [1, 0], [0, -1], [0, 1]  // left, right, up, down
-//     ];
-
-//     for (const [dx, dy] of directions) {
-//         const x = playerX + dx;
-//         const y = playerY + dy;
-
-//         // Check if position is valid and contains crystal ball
-//         if (x >= 0 && x < gameState.maze[0].length &&
-//             y >= 0 && y < gameState.maze.length &&
-//             gameState.maze[y][x] === 'crystal-ball') {
-//             // Found a crystal ball, activate it
-//             activateCrystalBall();
-//             gameState.maze[y][x] = 'path';  // Convert crystal ball to path
-//             renderMaze();
-//             return;
-//         }
-//     }
-// }
-
 function activateCrystalBall() {
     gameState.crystalBallUsed = true;  // Set the flag
     // Find and reveal the true exit
@@ -372,7 +355,7 @@ function activateCrystalBall() {
             if (cell === 'exit') {
                 const exitCell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
                 if (exitCell) {
-                    exitCell.style.background = '#00ff00';
+                    // exitCell.style.background = 'rgba(0, 255, 0, 0.9)';
                     exitCell.classList.add('revealed-exit');
                     gameState.visibleTiles.add(`${x},${y}`);
                 }

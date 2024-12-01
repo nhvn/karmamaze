@@ -75,13 +75,73 @@
         }
 
         .start {
-            /* background: #006400; */
             background: #4a4a4a;
+            position: relative; /* Needed to position the ::after pseudo-element */
+            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
         }
 
-        .exit {
-            background: #640000;
+        .start::after {
+            content: ''; /* Required for pseudo-elements */
+            position: absolute;
+            top: 0;
+            left: 0; /* Start from the left edge */
+            width: 100%; /* Span the full width for a smooth gradient */
+            height: 100%; /* Full height of the cell */
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)); /* Left-to-right fading shadow */
+            pointer-events: none; /* Prevent interaction with the shadow */
         }
+
+        .exit, .fake-exit {
+            background: #4a4a4a;
+            position: relative; /* Needed to position the ::after pseudo-element */
+            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
+        }
+
+        .exit::after, .fake-exit::after {
+            content: ''; /* Required for pseudo-elements */
+            position: absolute;
+            top: 0;
+            right: 0; /* Start from the right edge */
+            width: 100%; /* Span the full width for a smooth gradient */
+            height: 100%; /* Full height of the cell */
+            background: linear-gradient(to left, rgba(153, 153, 153, 0.5), rgba(0, 0, 0, 0)); /* Fading shadow */
+            pointer-events: none; /* Prevent interaction with the shadow */
+        }
+
+        .exit1 {
+            background: #4a4a4a;
+            position: relative; /* Needed to position the ::after pseudo-element */
+            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
+        }
+
+        .exit1::after {
+            content: ''; /* Required for pseudo-elements */
+            position: absolute;
+            top: 0;
+            left: 0; /* Start from the left edge */
+            width: 100%; /* Span the full width for a smooth gradient */
+            height: 100%; /* Full height of the cell */
+            background: linear-gradient(to left, rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0)); /* Green fading shadow */
+            pointer-events: none; /* Prevent interaction with the shadow */
+        }
+
+        .fake-exit1 {
+            background: #4a4a4a;
+            position: relative; /* Needed to position the ::after pseudo-element */
+            overflow: hidden; /* Ensures the pseudo-element doesn’t overflow the cell */
+        }
+
+        .fake-exit1::after {
+            content: ''; /* Required for pseudo-elements */
+            position: absolute;
+            top: 0;
+            left: 0; /* Start from the left edge */
+            width: 100%; /* Span the full width for a smooth gradient */
+            height: 100%; /* Full height of the cell */
+            background: linear-gradient(to left, rgba(255, 17, 0, 0.5), rgba(0, 255, 0, 0)); /* Green fading shadow */
+            pointer-events: none; /* Prevent interaction with the shadow */
+        }
+
 
         .player {
             background: #0064c8;
@@ -184,12 +244,8 @@
         }
 
         .crystal-ball {
-            background: #9932CC;
+            background: rgba(153, 50, 204, 0.8);
             animation: glow 1.5s ease-in-out infinite alternate;
-        }
-
-        .fake-exit {
-            background: #640000;  /* Same as real exit initially */
         }
 
         @keyframes glow {
