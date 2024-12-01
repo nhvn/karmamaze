@@ -75,7 +75,8 @@
         }
 
         .start {
-            background: #006400;
+            /* background: #006400; */
+            background: #4a4a4a;
         }
 
         .exit {
@@ -117,17 +118,21 @@
             font-size: 1.2em;
             font-weight: bold;
         }
-        #retryButton {
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        #retryButton, #newGameButton {
             background: #4a4a4a;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            margin-left: 16px;
+            padding: 8px 16px;
         }
 
-        #retryButton:hover {
+        #retryButton:hover, #newGameButton:hover {
             background: #5a5a5a;
         }
         .success {
@@ -157,16 +162,48 @@
         .explored {
             opacity: 0.5;
             visibility: visible;
+        }
+        .crystal-ball {
+            background: #9932CC;
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        .fake-exit {
+            background: #640000;  /* Same as real exit initially */
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #9932CC;
+            }
+            to {
+                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #9932CC;
+            }
+        }
+
+        .revealed-exit {
+            animation: reveal 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes reveal {
+            from {
+                box-shadow: 0 0 5px #00ff00;
+            }
+            to {
+                box-shadow: 0 0 20px #00ff00;
+            }
         }        
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="stats">
-            <div>Player: <span id="username">Waiting...</span></div>
+            <div><span id="username">Waiting...</span></div>
             <div>Keys: <span id="keys">Waiting...</span></div>
-            <button id="retryButton">Retry</button>
-            <div id="debug"></div>
+            <div class="button-container">
+                <button id="retryButton">Retry Level</button>
+                <button id="newGameButton">New Game</button>
+            </div>
         </div>
         <div id="maze-grid"></div>
         <div id="message"></div>

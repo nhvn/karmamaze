@@ -5,7 +5,12 @@ import { Devvit, useState } from '@devvit/public-api';
 type WebViewMessage =
   | {
       type: 'initialData';
-      data: { username: string; keys: number; maze: MazeCell[][] };
+      data: { 
+        username: string; 
+        keys: number; 
+        maze: MazeCell[][]; 
+        level: number;
+      };
     }
   | {
       type: 'movePlayer';
@@ -21,10 +26,13 @@ type WebViewMessage =
     }
   | {
       type: 'retry';
+    }
+  | {
+      type: 'newGame';
     };
 
 // Define types for maze structure
-type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit';
+type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball';
 type Position = { x: number; y: number };
 type GameState = {
   maze: MazeCell[][];
@@ -138,15 +146,55 @@ function generateMaze(width: number, height: number): MazeCell[][] {
   return maze;
 }
 
+function generateLevel2Maze(width: number, height: number): MazeCell[][] {
+  const maze = generateMaze(width, height); // Use existing maze generator as base
+  
+  // Find existing exit and mark its position
+  let realExitPos = { x: 0, y: 0 };
+  for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+          if (maze[y][x] === 'exit') {
+              realExitPos = { x, y };
+              break;
+          }
+      }
+  }
+
+  // Add fake exit
+  let fakeExitPlaced = false;
+  while (!fakeExitPlaced) {
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      if (y !== realExitPos.y && maze[y][width-1] === 'wall') {
+          maze[y][width-1] = 'fake-exit';
+          fakeExitPlaced = true;
+      }
+  }
+
+  // Place crystal ball in a random path location
+  let crystalBallPlaced = false;
+  while (!crystalBallPlaced) {
+      const x = Math.floor(Math.random() * (width - 2)) + 1;
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      if (maze[y][x] === 'path') {
+          maze[y][x] = 'crystal-ball';
+          crystalBallPlaced = true;
+      }
+  }
+
+  return maze;
+}
+
 Devvit.configure({
   redditAPI: true,
   redis: true,
 });
 
+// Then your custom post type and other code follows
 Devvit.addCustomPostType({
   name: 'Key Maze',
   height: 'tall',
   render: (context) => {
+    const [currentLevel, setCurrentLevel] = useState(1);  // Add it here
     const [userData, setUserData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
@@ -169,6 +217,11 @@ Devvit.addCustomPostType({
           ? (msg.data as any).message 
           : msg;
       
+      if (message.type === 'newGame') {
+          setWebviewVisible(false);  // Return to level selection
+          return;
+      }
+      
       if (message.type === 'retry') {
           const newMaze = generateMaze(14, 8);
           setGameState({
@@ -182,7 +235,8 @@ Devvit.addCustomPostType({
               data: {
                   username: userData?.username ?? 'Developer',
                   keys: 2,
-                  maze: newMaze
+                  maze: newMaze,
+                  level: 2
               }
           };
           context.ui.webView.postMessage('mazeGame', initMessage);
@@ -225,9 +279,10 @@ Devvit.addCustomPostType({
         return;
       }
     
-      console.log('Starting game...');
+      console.log('Starting game... Level:', currentLevel);
       
-      const newMaze = generateMaze(14, 8);
+      // Generate maze based on level
+      const newMaze = currentLevel === 1 ? generateMaze(14, 8) : generateLevel2Maze(14, 8);
       console.log('Generated new maze:', newMaze);
       
       setGameState({
@@ -243,7 +298,8 @@ Devvit.addCustomPostType({
         data: {
           username: userData.username,
           keys: 2,
-          maze: newMaze
+          maze: newMaze,
+          level: currentLevel
         }
       };
     
@@ -268,7 +324,6 @@ Devvit.addCustomPostType({
           <spacer />
           <vstack alignment="start middle">
             <hstack>
-              <text size="medium">Player:</text>
               <text size="medium" weight="bold">
                 {' '}
                 {userData?.username ?? 'anon'}
@@ -277,10 +332,20 @@ Devvit.addCustomPostType({
           </vstack>
           <spacer />
           <text size="medium">
-            Navigate through the maze using keys to unlock doors. Can you reach the exit?
+            {currentLevel === 1 
+              ? 'Navigate through the maze using keys to unlock doors. Can you reach the exit?' 
+              : 'Find the crystal ball to reveal the true exit! Watch out for traps!'}
           </text>
           <spacer />
           <button onPress={onStartGame}>Start Game</button>
+          <hstack>
+              <text size="medium">Current Level: {currentLevel}</text>
+            </hstack>
+        <hstack>
+              {/* <text size="medium">Select Level:</text> */}
+              <button onPress={() => setCurrentLevel(1)}>Level 1</button>
+              <button onPress={() => setCurrentLevel(2)}>Level 2</button>
+            </hstack>
         </vstack>
         <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
           <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>

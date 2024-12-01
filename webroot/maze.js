@@ -64,22 +64,25 @@ function updateVisibility() {
 //     });
 
 
+//     // Update visibility classes for all tiles
 //     gameState.maze.forEach((row, y) => {
 //         row.forEach((_, x) => {
 //             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
 //             if (cell) {
 //                 const key = `${x},${y}`;
-//                 cell.classList.remove('fog', 'explored', 'visible');
 //                 if (newVisible.has(key)) {
+//                     cell.classList.remove('fog', 'explored');
 //                     cell.classList.add('visible');
+//                 } else if (gameState.exploredTiles.has(key)) {
+//                     cell.classList.remove('fog', 'visible');
+//                     cell.classList.add('explored');
 //                 } else {
+//                     cell.classList.remove('visible', 'explored');
 //                     cell.classList.add('fog');
 //                 }
 //             }
 //         });
 //     });
-
-//     gameState.visibleTiles = newVisible;
 // }
 
 function sendReadyMessage() {
@@ -127,7 +130,48 @@ window.addEventListener('message', (event) => {
     }
 });
 
-// Add to initializeGame function
+// Add keyboard controls
+window.addEventListener('keydown', (event) => {
+    if (gameState.isGameOver) return;
+
+    let newX = gameState.playerPosition.x;
+    let newY = gameState.playerPosition.y;
+
+    // Handle both WASD and arrow keys
+    switch (event.key.toLowerCase()) {
+        case 'w':
+            newY--;
+            break;
+        case 's':
+            newY++;
+            break;
+        case 'a':
+            newX--;
+            break;
+        case 'd':
+            newX++;
+            break;
+        default:
+            return; // Exit for any other key
+    }
+
+    // Check if the new position is valid
+    if (newX >= 0 && newX < gameState.maze[0].length && 
+        newY >= 0 && newY < gameState.maze.length) {
+        const targetCell = gameState.maze[newY][newX];
+
+        if (targetCell === 'path' || targetCell === 'start') {
+            movePlayer(newX, newY);
+        } else if (targetCell === 'door' && gameState.keys > 0) {
+            unlockDoor(newX, newY);
+        } else if (targetCell === 'exit') {
+            handleWin();
+        }
+    }
+});
+
+let initialMaze = null; // Store initial maze for retry
+
 function initializeGame(data) {
     log('Initializing game with data:', data);
 
@@ -136,17 +180,17 @@ function initializeGame(data) {
         return;
     }
 
+    // Store initial maze when first received
+    initialMaze = JSON.parse(JSON.stringify(data.maze)); // Deep copy
+
     // Clear any existing win message
     const messageEl = document.getElementById('message');
-    if (messageEl) {
-        messageEl.style.display = 'none';
-        messageEl.textContent = '';
-    }
+    messageEl.style.display = 'none';
+    messageEl.textContent = '';
 
-    // Update the existing gameState instead of creating a new one
     gameState = {
         username: data.username || 'Developer',
-        keys: data.keys || 2,
+        keys: 2,
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
         isGameOver: false,
@@ -154,18 +198,40 @@ function initializeGame(data) {
         exploredTiles: new Set()
     };
 
-    const usernameEl = document.getElementById('username');
-    const keysEl = document.getElementById('keys');
-
-    if (usernameEl) {
-        usernameEl.textContent = gameState.username;
-    }
-    if (keysEl) {
-        keysEl.textContent = gameState.keys;
-    }
+    document.getElementById('username').textContent = gameState.username;
+    document.getElementById('keys').textContent = gameState.keys;
     
     renderMaze();
     updateVisibility();
+}
+
+function retryLevel() {
+    // Reset game state with the same maze
+    gameState = {
+        ...gameState,
+        keys: 2,
+        maze: JSON.parse(JSON.stringify(initialMaze)), // Deep copy of initial maze
+        playerPosition: findStartPosition(initialMaze),
+        isGameOver: false,
+        visibleTiles: new Set(),
+        exploredTiles: new Set()
+    };
+
+    // Clear any messages
+    const messageEl = document.getElementById('message');
+    messageEl.style.display = 'none';
+    messageEl.textContent = '';
+
+    // Update display
+    document.getElementById('keys').textContent = gameState.keys;
+    renderMaze();
+    updateVisibility();
+}
+
+function newGame() {
+    window.parent.postMessage({
+        type: 'newGame'
+    }, '*');
 }
 
 function findStartPosition(maze) {
@@ -317,10 +383,12 @@ window.addEventListener('load', () => {
     // Add retry button event listener
     const retryButton = document.getElementById('retryButton');
     if (retryButton) {
-        retryButton.addEventListener('click', () => {
-            window.parent.postMessage({
-                type: 'retry'
-            }, '*');
-        });
+        retryButton.addEventListener('click', retryLevel);
+    }
+
+    // Add new game button event listener
+    const newGameButton = document.getElementById('newGameButton');
+    if (newGameButton) {
+        newGameButton.addEventListener('click', newGame);
     }
 });
