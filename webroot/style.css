@@ -15,27 +15,33 @@ body {
 }
 #game-container {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 60px auto 0; /* Add top margin to account for stats bar */
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 40px);
+  height: calc(100vh - 100px); /* Adjust height to account for stats bar */
   overflow: hidden;
 }
 
 /* Stats Section */
 #stats {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 10px;
-  background: #2d2d2d;
-  border-radius: 8px;
+  padding: 10px 45px;
+  /* background: #2d2d2d; */
+  box-sizing: border-box;
+  z-index: 100;
 }
 .powerup-stats {
   display: flex;
   gap: 15px;
   align-items: center;
+  margin-right: auto;
+  margin-left: 15px;
 }
 .key-stat {
   display: flex;
