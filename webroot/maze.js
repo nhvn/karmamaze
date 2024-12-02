@@ -583,14 +583,128 @@ function handleTrap() {
 }
 
 function movePlayer(x, y) {
+    const oldX = gameState.playerPosition.x;
+    const oldY = gameState.playerPosition.y;
+    
+    // Determine direction
+    let direction = '';
+    if (x > oldX) direction = 'move-right';
+    else if (x < oldX) direction = 'move-left';
+    else if (y > oldY) direction = 'move-down';
+    else if (y < oldY) direction = 'move-up';
+
+    // Update position
     gameState.playerPosition = { x, y };
-    renderMaze();
+    
+    // Render the maze with the movement class
+    renderMaze(direction);
     updateVisibility();
 
     window.parent.postMessage({
         type: 'movePlayer',
         data: { position: { x, y } }
     }, '*');
+}
+
+function handleCellClick(x, y) {
+    // Don't allow moves if game is over
+    if (gameState.isGameOver) return;
+
+    // Get current player position
+    const { x: playerX, y: playerY } = gameState.playerPosition;
+    
+    // Check if clicked cell is adjacent to player (including diagonals)
+    const dx = Math.abs(x - playerX);
+    const dy = Math.abs(y - playerY);
+    
+    // Only allow clicks on directly adjacent cells (not diagonal)
+    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+        const targetCell = gameState.maze[y][x];
+
+        // Use the same logic as keyboard movement
+        if (targetCell === 'crystal-ball') {
+            movePlayer(x, y);
+            activateCrystalBall();
+            gameState.maze[y][x] = 'path';
+            renderMaze();
+        } else if (targetCell === 'map') {
+            movePlayer(x, y);
+            activateMap();
+            gameState.maze[y][x] = 'path';
+            renderMaze();
+        } else if (targetCell === 'key-powerup') {
+            movePlayer(x, y);
+            activateKeyPowerup();
+            gameState.maze[y][x] = 'path';
+            renderMaze();
+        } else if (targetCell === 'path' || targetCell === 'start' || targetCell === 'exit' || targetCell === 'fake-exit') {
+            movePlayer(x, y);
+            // Check if we should trigger end game after moving to exit
+            if ((targetCell === 'exit' || targetCell === 'fake-exit') && 
+                x === gameState.maze[0].length - 1) {
+                if (targetCell === 'exit') {
+                    handleWin();
+                } else {
+                    handleTrap();
+                }
+            }
+        } else if (targetCell === 'door') {
+            handleDoor(x, y);
+        }
+    }
+}
+
+function renderMaze(movementClass = '') {
+    const grid = document.getElementById('maze-grid');
+    if (!gameState.maze || !gameState.maze[0]) {
+        log('No maze data available to render');
+        return;
+    }
+
+    log('Rendering maze');
+    grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, 40px)`;
+    grid.innerHTML = '';
+
+    gameState.maze.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            const cellElement = document.createElement('div');
+            cellElement.className = `cell ${cell} fog`;
+            cellElement.dataset.x = x;
+            cellElement.dataset.y = y;
+            
+            if (cell === 'door') {
+                const doorKey = `${x},${y}`;
+                const opacity = gameState.doorOpacity.get(doorKey);
+                if (opacity !== undefined) {
+                    cellElement.style.opacity = opacity;
+                }
+            }
+            
+            if (cell === 'exit' && gameState.crystalBallUsed) {
+                cellElement.classList.add('exit1');
+                cellElement.classList.add('revealed-exit');
+            }
+
+            if (cell === 'fake-exit' && gameState.crystalBallUsed) {
+                cellElement.classList.add('fake-exit1');
+            }
+
+            if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
+                cellElement.classList.add('player');
+                if (movementClass) {
+                    cellElement.classList.add(movementClass);
+                    setTimeout(() => {
+                        cellElement.classList.remove(movementClass);
+                    }, 200);
+                }
+            }
+
+            cellElement.onclick = () => handleCellClick(x, y);
+            grid.appendChild(cellElement);
+        });
+    });
+
+    updateVisibility();
 }
 
 function unlockDoor(x, y) {

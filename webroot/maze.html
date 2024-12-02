@@ -78,22 +78,100 @@
             background: #8c7300;
         }
         /* Update the player style */
-        .player {
-            position: relative;
-            background: #4a4a4a !important;
-        }
-        .player::after {
-            content: '';
-            position: absolute;
-            left: 4px;
-            top: 4px;
-            width: calc(100% - 8px);
-            height: calc(100% - 8px);
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-            z-index: 1;
-        }
+/* Player base styles */
+.player {
+    position: relative;
+    background: #4a4a4a !important;
+}
+
+/* The main white ball */
+.player::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    z-index: 2;
+}
+
+/* The trail effect */
+.player.move-right::before,
+.player.move-left::before,
+.player.move-up::before,
+.player.move-down::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.player.move-right::before {
+    animation: trailRight 0.2s ease-out;
+}
+
+.player.move-left::before {
+    animation: trailLeft 0.2s ease-out;
+}
+
+.player.move-up::before {
+    animation: trailUp 0.2s ease-out;
+}
+
+.player.move-down::before {
+    animation: trailDown 0.2s ease-out;
+}
+@keyframes trailRight {
+    0% {
+        transform: translateX(-30px) scaleX(3);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateX(0) scaleX(1);
+        opacity: 0;
+    }
+}
+
+@keyframes trailLeft {
+    0% {
+        transform: translateX(30px) scaleX(3);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateX(0) scaleX(1);
+        opacity: 0;
+    }
+}
+
+@keyframes trailUp {
+    0% {
+        transform: translateY(30px) scaleY(3);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(0) scaleY(1);
+        opacity: 0;
+    }
+}
+
+@keyframes trailDown {
+    0% {
+        transform: translateY(-30px) scaleY(3);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(0) scaleY(1);
+        opacity: 0;
+    }
+}
         .explored {
             opacity: 0.5;
             visibility: visible;
@@ -425,6 +503,39 @@
         .key-stat[data-count="0"] {
             display: none;
         }
+
+        /* Add this to your CSS */
+.cell.visible {
+    cursor: default;  /* Default cursor for all visible cells */
+}
+
+/* Show pointer cursor for cells that can be interacted with */
+.cell.visible.path,
+.cell.visible.door,
+.cell.visible.crystal-ball,
+.cell.visible.map,
+.cell.visible.key-powerup,
+.cell.visible.exit,
+.cell.visible.fake-exit {
+    cursor: pointer;
+}
+
+/* Optional: Add hover effect for clickable cells */
+.cell.visible.path:hover,
+.cell.visible.door:hover,
+.cell.visible.crystal-ball:hover,
+.cell.visible.map:hover,
+.cell.visible.key-powerup:hover,
+.cell.visible.exit:hover,
+.cell.visible.fake-exit:hover {
+    filter: brightness(1.2);
+}
+
+/* Disable hover effect for non-adjacent cells */
+.cell.visible.not-adjacent:hover {
+    filter: none;
+    cursor: default;
+}
     </style>
 </head>
 <body>
