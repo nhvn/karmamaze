@@ -14,6 +14,9 @@ let gameState = {
     doorOpacity: new Map()
 };
 
+console.log(gameState); // Ensure it has a `keys` property
+
+
 
 function log(message, data = null) {
     const logMessage = data ? `${message} ${JSON.stringify(data)}` : message;
@@ -203,6 +206,8 @@ let initialMaze = null; // Store initial maze for retry
 
 function initializeGame(data) {
     log('Initializing game with data:', data);
+    
+    gameState.level = data.level;
 
     if (!data.maze) {
         log('No maze data received');
@@ -210,12 +215,14 @@ function initializeGame(data) {
     }
 
     // Store initial maze when first received
-    initialMaze = JSON.parse(JSON.stringify(data.maze)); // Deep copy
+    initialMaze = JSON.parse(JSON.stringify(data.maze));
 
     // Clear any existing win message
     const messageEl = document.getElementById('message');
-    messageEl.style.display = 'none';
-    messageEl.textContent = '';
+    if (messageEl) {
+        messageEl.style.display = 'none';
+        messageEl.textContent = '';
+    }
 
     // Update existing gameState instead of creating new one
     gameState.username = data.username || 'Developer';
@@ -226,17 +233,43 @@ function initializeGame(data) {
     gameState.visibleTiles = new Set();
     gameState.exploredTiles = new Set();
     gameState.crystalBallUsed = false;
+    gameState.mapUsed = false;  // Add this line
     gameState.doorHits = new Map();
     gameState.doorOpacity = new Map();
 
-    document.getElementById('username').textContent = gameState.username;
-    document.getElementById('keys').textContent = gameState.keys;
+    // Update UI elements safely
+    const usernameEl = document.getElementById('username');
+    const keysEl = document.getElementById('keys');
+    const retryButton = document.getElementById('retryButton');
+    
+    if (usernameEl) {
+        usernameEl.textContent = gameState.username;
+    }
+    
+    if (keysEl) {
+        keysEl.textContent = gameState.keys;
+    }
+
+    if (retryButton) {
+        retryButton.style.display = 'none';
+    }
     
     renderMaze();
     updateVisibility();
 }
 
 function retryLevel() {
+    const messageEl = document.getElementById('message');
+    const retryButton = document.getElementById('retryButton');
+
+    if (messageEl) {
+        messageEl.style.display = 'none';
+    }
+
+    if (retryButton) {
+        retryButton.style.display = 'none';
+    }
+
     gameState = {
         ...gameState,
         keys: 1,
@@ -246,18 +279,16 @@ function retryLevel() {
         visibleTiles: new Set(),
         exploredTiles: new Set(),
         crystalBallUsed: false,
-        doorHits: new Map(),  // Reset door hits
+        doorHits: new Map(),
         doorOpacity: new Map(),
-        mapUsed: false  // Add this line
+        mapUsed: false
     };
 
-    // Clear any messages
-    const messageEl = document.getElementById('message');
-    messageEl.style.display = 'none';
-    messageEl.textContent = '';
+    const keysEl = document.getElementById('keys');
+    if (keysEl) {
+        keysEl.textContent = gameState.keys;
+    }
 
-    // Update display
-    document.getElementById('keys').textContent = gameState.keys;
     renderMaze();
     updateVisibility();
 }
@@ -406,8 +437,12 @@ function initializeGame(data) {
 
     // Clear any existing win message
     const messageEl = document.getElementById('message');
-    messageEl.style.display = 'none';
-    messageEl.textContent = '';
+    if (messageEl) {
+        messageEl.style.display = 'none';
+        messageEl.textContent = '';
+    } else {
+        console.warn('Element with ID "message" not found.');
+    }
 
     // Update existing gameState instead of creating new one
     gameState.username = data.username || 'Developer';
@@ -421,8 +456,21 @@ function initializeGame(data) {
     gameState.doorHits = new Map();
     gameState.doorOpacity = new Map();
 
-    document.getElementById('username').textContent = gameState.username;
-    document.getElementById('keys').textContent = gameState.keys;
+    // Add safety checks for DOM elements
+    const usernameEl = document.getElementById('username');
+    const keysEl = document.getElementById('keys');
+    
+    if (usernameEl) {
+        usernameEl.textContent = gameState.username;
+    } else {
+        console.warn('Element with ID "username" not found.');
+    }
+    
+    if (keysEl) {
+        keysEl.textContent = gameState.keys;
+    } else {
+        console.warn('Element with ID "keys" not found.');
+    }
     
     renderMaze();
     updateVisibility();
@@ -557,13 +605,16 @@ function retryGame() {
 function handleWin() {
     gameState.isGameOver = true;
     showMessage('You win!', 'success');
-    document.getElementById('retryButton').style.display = 'block';
+    const retryButton = document.getElementById('retryButton');
+    if (retryButton) {
+        retryButton.style.display = 'block';
+    }
 
     window.parent.postMessage({
         type: 'gameOver',
         data: { 
             won: true,
-            remainingKeys: gameState.keys  // Changed from karma to keys
+            remainingKeys: gameState.keys
         }
     }, '*');
 }
@@ -616,26 +667,31 @@ function updateKeys(newKeys) {
     }
 }
 
-// Add this with your other initialization code
 window.addEventListener('load', () => {
     log('Page loaded, sending ready message');
     sendReadyMessage();
     renderMaze();
 
-    // Make sure retry button uses retryLevel not retryGame
     const retryButton = document.getElementById('retryButton');
+    const newGameButton = document.getElementById('newGameButton');
+
     if (retryButton) {
-        retryButton.addEventListener('click', () => {
-            retryLevel();  // Use retryLevel function
+        // Remove any existing listeners first
+        retryButton.replaceWith(retryButton.cloneNode(true));
+        const newRetryButton = document.getElementById('retryButton');
+        newRetryButton.addEventListener('click', () => {
+            retryLevel();
             const messageEl = document.getElementById('message');
             if (messageEl) {
-                messageEl.style.display = 'none';  // Hide the message after retry
+                messageEl.style.display = 'none';
             }
         });
     }
 
-    const newGameButton = document.getElementById('newGameButton');
     if (newGameButton) {
-        newGameButton.addEventListener('click', newGame);
+        // Remove any existing listeners first
+        newGameButton.replaceWith(newGameButton.cloneNode(true));
+        const newGameBtn = document.getElementById('newGameButton');
+        newGameBtn.addEventListener('click', newGame);
     }
 });

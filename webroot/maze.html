@@ -77,8 +77,22 @@
         .door:hover {
             background: #8c7300;
         }
+        /* Update the player style */
         .player {
-            background: #0064c8 !important;
+            position: relative;
+            background: #4a4a4a !important;
+        }
+        .player::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            z-index: 1;
         }
         .explored {
             opacity: 0.5;
@@ -94,33 +108,50 @@
             position: relative;
             overflow: hidden;
         }
-        .start::after {
-            content: ''; /* Required for pseudo-elements */
-            position: absolute;
-            top: 0;
-            left: 0; /* Start from the left edge */
-            width: 100%; /* Span the full width for a smooth gradient */
-            height: 100%; /* Full height of the cell */
-            background: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)); /* Left-to-right fading shadow */
-            pointer-events: none; /* Prevent interaction with the shadow */
-        }
-        .exit::after, .fake-exit::after, .exit1::after, .fake-exit1::after {
+        /* Shadow overlays for all special cells */
+        .start::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
             pointer-events: none;
+            z-index: 2;  /* Put shadow over the ball */
         }
-        .exit::after, .fake-exit::after {
-            background: linear-gradient(to left, rgba(153, 153, 153, 0.5), rgba(0, 0, 0, 0));
+        .exit::before, .fake-exit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to left, rgba(153, 153, 153, 0.7), rgba(0, 0, 0, 0));
+            pointer-events: none;
+            z-index: 2;
         }
-        .exit1::after {
-            background: linear-gradient(to left, rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0));
+        .exit1::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to left, rgba(0, 255, 0, 0.7), rgba(0, 255, 0, 0));
+            pointer-events: none;
+            z-index: 2;
         }
-        .fake-exit1::after {
-            background: linear-gradient(to left, rgba(255, 17, 0, 0.5), rgba(0, 255, 0, 0));
+        .fake-exit1::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to left, rgba(255, 17, 0, 0.7), rgba(0, 255, 0, 0));
+            pointer-events: none;
+            z-index: 2;
         }
 
         /* Fog Effect */
@@ -139,17 +170,48 @@
         }
 
         /* Powerups */
-        .powerup-glow, .crystal-ball, .key-powerup, .map {
+        .crystal-ball, .map, .key-powerup {
+            position: relative;
+            background: #4a4a4a !important; /* Same as path background */
+        }
+        .crystal-ball::after, .map::after, .key-powerup::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;  /* Size of circle */
+            height: 20px;
+            border-radius: 50%;
+            animation: powerupPulse 2s infinite;
+        }
+        /* .powerup-glow, .crystal-ball, .key-powerup, .map {
             animation: glow 1.5s ease-in-out infinite alternate;
+        } */
+        .crystal-ball::after {
+            background: rgba(153, 50, 204, 0.8);  /* Purple for crystal ball */
+            box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
+                        0 0 20px rgba(153, 50, 204, 0.5);
         }
-        .crystal-ball {
-            background: rgba(153, 50, 204, 0.8);
+
+        .map::after {
+            background: rgba(0, 191, 255, 0.8);  /* Blue for map */
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
+                        0 0 20px rgba(0, 191, 255, 0.5);
         }
-        .key-powerup {
-            background: rgba(255, 215, 0, 0.8);
+
+        .key-powerup::after {
+            background: rgba(255, 215, 0, 0.8);  /* Gold for key */
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
+                        0 0 20px rgba(255, 215, 0, 0.5);
         }
-        .map {
-            background: rgba(210, 105, 30, 0.8);
+        /* Update fog handling for powerups */
+        .fog.crystal-ball::after, .fog.map::after, .fog.key-powerup::after {
+            opacity: 0.4;
+        }
+
+        .explored.crystal-ball::after, .explored.map::after, .explored.key-powerup::after {
+            opacity: 0.3;
         }
 
         /* Message Pop-up */
@@ -250,12 +312,26 @@
                 box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #9932CC;
             }
         }
-        @keyframes powerupGlow {
+        /* @keyframes powerupGlow {
             from {
                 box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073;
             }
             to {
                 box-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6;
+            }
+        } */
+        @keyframes powerupPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
             }
         }
         @keyframes shake {
