@@ -271,7 +271,7 @@ Devvit.addCustomPostType({
     });
 
     const [gameState, setGameState] = useState<GameState>(() => ({
-      maze: generateMaze(13, 9), 
+      maze: generateMaze(12, 9), 
       playerPosition: { x: 1, y: 1 },
       unlockedDoors: []
     }));
@@ -291,7 +291,7 @@ Devvit.addCustomPostType({
       }
       
       if (message.type === 'retry') {
-          const newMaze = generateMaze(13, 9);
+          const newMaze = generateMaze(12, 9);
           setGameState({
               maze: newMaze,
               playerPosition: { x: 1, y: 1 },
@@ -350,7 +350,7 @@ Devvit.addCustomPostType({
       console.log('Starting game... Level:', currentLevel);
       
       // Generate maze based on level
-      const newMaze = currentLevel === 1 ? generateMaze(13, 9) : generateLevel2Maze(13, 9);
+      const newMaze = currentLevel === 1 ? generateMaze(12, 9) : generateLevel2Maze(12, 9);
       console.log('Generated new maze:', newMaze);
       
       setGameState({
