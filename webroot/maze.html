@@ -172,44 +172,61 @@
         /* Powerups */
         .crystal-ball, .map, .key-powerup {
             position: relative;
-            background: #4a4a4a !important; /* Same as path background */
+            background: #4a4a4a !important;
         }
+
         .crystal-ball::after, .map::after, .key-powerup::after {
             content: '';
             position: absolute;
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;  /* Size of circle */
+            width: 20px;
             height: 20px;
             border-radius: 50%;
-            animation: powerupPulse 2s infinite;
         }
-        /* .powerup-glow, .crystal-ball, .key-powerup, .map {
-            animation: glow 1.5s ease-in-out infinite alternate;
-        } */
-        .crystal-ball::after {
-            background: rgba(153, 50, 204, 0.8);  /* Purple for crystal ball */
+
+        /* Visible powerups */
+        .visible.crystal-ball::after {
+            background: rgba(153, 50, 204, 0.8);
             box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
                         0 0 20px rgba(153, 50, 204, 0.5);
         }
 
-        .map::after {
-            background: rgba(0, 191, 255, 0.8);  /* Blue for map */
+        .visible.map::after {
+            background: rgba(0, 191, 255, 0.8);
             box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
                         0 0 20px rgba(0, 191, 255, 0.5);
         }
 
-        .key-powerup::after {
-            background: rgba(255, 215, 0, 0.8);  /* Gold for key */
+        .visible.key-powerup::after {
+            background: rgba(255, 215, 0, 0.8);
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
                         0 0 20px rgba(255, 215, 0, 0.5);
         }
-        /* Update fog handling for powerups */
-        .fog.crystal-ball::after, .fog.map::after, .fog.key-powerup::after {
-            opacity: 0.4;
+
+        /* Fog state */
+        .fog {
+            opacity: 0;
+            visibility: hidden;
         }
 
+        /* Override fog for powerups */
+        .fog.crystal-ball, .fog.map, .fog.key-powerup {
+            background: #1a1a1a !important;  /* Dark background in fog */
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .fog.crystal-ball::after, .fog.map::after, .fog.key-powerup::after {
+            width: 8px !important;
+            height: 8px !important;
+            background: rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3) !important;
+            animation: mysteryPulse 2s infinite;
+        }
+
+        /* Explored state */
         .explored.crystal-ball::after, .explored.map::after, .explored.key-powerup::after {
             opacity: 0.3;
         }
@@ -285,6 +302,7 @@
             cursor: pointer;
             font-size: 14px;
             padding: 8px 16px;
+            display: block !important;
         }
         #retryButton:hover, #newGameButton:hover {
             background: #5a5a5a;

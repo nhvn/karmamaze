@@ -226,32 +226,31 @@ function initializeGame(data) {
 
     // Update existing gameState instead of creating new one
     gameState.username = data.username || 'Developer';
-    gameState.keys = 1;
+    gameState.keys = data.level === 1 ? 3 : 1;  // Start with 3 keys in Level 1
     gameState.maze = data.maze;
     gameState.playerPosition = findStartPosition(data.maze);
     gameState.isGameOver = false;
     gameState.visibleTiles = new Set();
     gameState.exploredTiles = new Set();
     gameState.crystalBallUsed = false;
-    gameState.mapUsed = false;  // Add this line
+    gameState.mapUsed = false;
     gameState.doorHits = new Map();
     gameState.doorOpacity = new Map();
 
     // Update UI elements safely
     const usernameEl = document.getElementById('username');
-    const keysEl = document.getElementById('keys');
-    const retryButton = document.getElementById('retryButton');
+    const keyStat = document.querySelector('.key-stat');
     
     if (usernameEl) {
         usernameEl.textContent = gameState.username;
     }
     
-    if (keysEl) {
-        keysEl.textContent = gameState.keys;
-    }
-
-    if (retryButton) {
-        retryButton.style.display = 'none';
+    if (keyStat) {
+        keyStat.dataset.count = gameState.keys;
+        const keysEl = keyStat.querySelector('#keys');
+        if (keysEl) {
+            keysEl.textContent = gameState.keys;
+        }
     }
     
     renderMaze();
@@ -262,25 +261,17 @@ function retryLevel() {
     const messageEl = document.getElementById('message');
     const retryButton = document.getElementById('retryButton');
 
-    const mapIndicator = document.getElementById('map-indicator');
-    const crystalIndicator = document.getElementById('crystal-indicator');
-    const keyStat = document.querySelector('.key-stat');
-
-    if (mapIndicator) mapIndicator.style.display = 'none';
-    if (crystalIndicator) crystalIndicator.style.display = 'none';
-    if (keyStat) keyStat.dataset.count = '1';
-
     if (messageEl) {
         messageEl.style.display = 'none';
     }
 
-    if (retryButton) {
-        retryButton.style.display = 'none';
-    }
+    // if (retryButton) {
+    //     retryButton.style.display = 'none';
+    // }
 
     gameState = {
         ...gameState,
-        keys: 1,
+        keys: gameState.level === 1 ? 3 : 1,  // Reset to 3 keys for Level 1
         maze: JSON.parse(JSON.stringify(initialMaze)),
         playerPosition: findStartPosition(initialMaze),
         isGameOver: false,
@@ -292,9 +283,13 @@ function retryLevel() {
         mapUsed: false
     };
 
-    const keysEl = document.getElementById('keys');
-    if (keysEl) {
-        keysEl.textContent = gameState.keys;
+    const keyStat = document.querySelector('.key-stat');
+    if (keyStat) {
+        keyStat.dataset.count = gameState.keys;
+        const keysEl = keyStat.querySelector('#keys');
+        if (keysEl) {
+            keysEl.textContent = gameState.keys;
+        }
     }
 
     renderMaze();
@@ -572,7 +567,7 @@ function activateKeyPowerup() {
     // Update the keys display
     const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
-        keyStat.dataset.count = gameState.keys;
+        keyStat.dataset.count = gameState.keys;  // Update data attribute for visibility
         const keysEl = keyStat.querySelector('#keys');
         if (keysEl) {
             keysEl.textContent = gameState.keys;
@@ -606,7 +601,17 @@ function unlockDoor(x, y) {
 
     gameState.keys--;
     gameState.maze[y][x] = 'path';
-    updateKeys(gameState.keys);  // Update this to use updateKeys function
+    
+    // Update the key display
+    const keyStat = document.querySelector('.key-stat');
+    if (keyStat) {
+        keyStat.dataset.count = gameState.keys;  // Update data attribute for visibility
+        const keysEl = keyStat.querySelector('#keys');
+        if (keysEl) {
+            keysEl.textContent = gameState.keys;
+        }
+    }
+    
     renderMaze();
 
     window.parent.postMessage({

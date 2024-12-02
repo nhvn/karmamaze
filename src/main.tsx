@@ -350,7 +350,7 @@ Devvit.addCustomPostType({
         type: 'initialData',
         data: {
           username: userData.username,
-          keys: 1,
+          keys: currentLevel === 1 ? 3 : 1,  // Start with 3 keys in Level 1
           maze: newMaze,
           level: currentLevel
         }
