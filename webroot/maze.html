@@ -342,13 +342,89 @@
         .shaking {
             animation: shake 0.05s linear;
         }
+
+        /* UNSORTED */
+        /* Stats bar styling */
+        #stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 8px;
+        }
+
+        .powerup-stats {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .key-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .key-stat.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+
+        .powerup-indicator {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Orb styles */
+        .key-orb, .map-orb, .crystal-orb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .key-orb {
+            background: rgba(255, 215, 0, 0.8);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+        }
+
+        .map-orb {
+            background: rgba(0, 191, 255, 0.8);
+            box-shadow: 0 0 5px rgba(0, 191, 255, 0.8);
+        }
+
+        .crystal-orb {
+            background: rgba(153, 50, 204, 0.8);
+            box-shadow: 0 0 5px rgba(153, 50, 204, 0.8);
+        }
+
+        /* Hide key stat when count is 0 */
+        .key-stat[data-count="0"] {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="stats">
             <div><span id="username">Waiting...</span></div>
-            <!-- <div>Keys: <span id="keys">Waiting...</span></div> -->
+            <div class="powerup-stats">
+                <div class="key-stat">
+                    <div class="key-orb"></div>
+                    <span id="keys">Waiting...</span>
+                </div>
+                <div id="map-indicator" class="powerup-indicator" style="display: none;">
+                    <div class="map-orb"></div>
+                </div>
+                <div id="crystal-indicator" class="powerup-indicator" style="display: none;">
+                    <div class="crystal-orb"></div>
+                </div>
+            </div>
             <div class="button-container">
                 <button id="retryButton">Retry Level</button>
                 <button id="newGameButton">New Game</button>

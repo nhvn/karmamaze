@@ -262,6 +262,14 @@ function retryLevel() {
     const messageEl = document.getElementById('message');
     const retryButton = document.getElementById('retryButton');
 
+    const mapIndicator = document.getElementById('map-indicator');
+    const crystalIndicator = document.getElementById('crystal-indicator');
+    const keyStat = document.querySelector('.key-stat');
+
+    if (mapIndicator) mapIndicator.style.display = 'none';
+    if (crystalIndicator) crystalIndicator.style.display = 'none';
+    if (keyStat) keyStat.dataset.count = '1';
+
     if (messageEl) {
         messageEl.style.display = 'none';
     }
@@ -501,7 +509,12 @@ function showTopRightMessage(message) {
 // Updated functions with the new message display
 function activateMap() {
     gameState.mapUsed = true;
-
+    
+    // Show map indicator
+    const mapIndicator = document.getElementById('map-indicator');
+    if (mapIndicator) {
+        mapIndicator.style.display = 'flex';
+    }
     const { x, y } = gameState.playerPosition;
     const viewRadius = 2;
 
@@ -528,19 +541,15 @@ function activateMap() {
     showTopRightMessage('Map revealed surrounding area!');
 }
 
-function activateKeyPowerup() {
-    gameState.keys += 3;
-
-    const keysEl = document.getElementById('keys');
-    if (keysEl) {
-        keysEl.textContent = gameState.keys;
-    }
-
-    showTopRightMessage('Found 3 additional keys!');
-}
 
 function activateCrystalBall() {
     gameState.crystalBallUsed = true;
+    
+    // Show crystal ball indicator
+    const crystalIndicator = document.getElementById('crystal-indicator');
+    if (crystalIndicator) {
+        crystalIndicator.style.display = 'flex';
+    }
 
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
@@ -555,6 +564,22 @@ function activateCrystalBall() {
     });
 
     showTopRightMessage('Crystal ball revealed the true exit!');
+}
+
+function activateKeyPowerup() {
+    gameState.keys += 3;  // Add 3 keys
+    
+    // Update the keys display
+    const keyStat = document.querySelector('.key-stat');
+    if (keyStat) {
+        keyStat.dataset.count = gameState.keys;
+        const keysEl = keyStat.querySelector('#keys');
+        if (keysEl) {
+            keysEl.textContent = gameState.keys;
+        }
+    }
+    
+    showTopRightMessage('Found 3 additional keys!');
 }
 
 function handleTrap() {
@@ -575,16 +600,13 @@ function movePlayer(x, y) {
 
 function unlockDoor(x, y) {
     if (gameState.keys <= 0) {
-        showMessage('No keys remaining!', 'error');  // Add error message
-        return;  // Don't proceed if no keys
+        showMessage('No keys remaining!', 'error');
+        return;
     }
 
     gameState.keys--;
     gameState.maze[y][x] = 'path';
-    const keysEl = document.getElementById('keys');  // Changed from karma to keys
-    if (keysEl) {
-        keysEl.textContent = gameState.keys;
-    }
+    updateKeys(gameState.keys);  // Update this to use updateKeys function
     renderMaze();
 
     window.parent.postMessage({
@@ -661,9 +683,21 @@ function showMessage(text, type, permanent = false) {
 
 function updateKeys(newKeys) {
     gameState.keys = newKeys;
-    const keysEl = document.getElementById('keys');  // Changed from karma to keys
-    if (keysEl) {
-        keysEl.textContent = newKeys;
+    const keyStat = document.querySelector('.key-stat');
+    if (keyStat) {
+        // Update the count
+        keyStat.dataset.count = newKeys;
+        const keysEl = keyStat.querySelector('#keys');
+        if (keysEl) {
+            keysEl.textContent = newKeys;
+        }
+
+        // Show/hide based on key count
+        if (newKeys <= 0) {
+            keyStat.classList.add('hidden');
+        } else {
+            keyStat.classList.remove('hidden');
+        }
     }
 }
 
