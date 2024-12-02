@@ -77,101 +77,100 @@
         .door:hover {
             background: #8c7300;
         }
-        /* Update the player style */
-/* Player base styles */
-.player {
-    position: relative;
-    background: #4a4a4a !important;
-}
 
-/* The main white ball */
-.player::after {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 4px;
-    width: calc(100% - 8px);
-    height: calc(100% - 8px);
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-    z-index: 2;
-}
+        /* Player base styles */
+        .player {
+            position: relative;
+            background: #4a4a4a !important;
+        }
 
-/* The trail effect */
-.player.move-right::before,
-.player.move-left::before,
-.player.move-up::before,
-.player.move-down::before {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 4px;
-    width: calc(100% - 8px);
-    height: calc(100% - 8px);
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    z-index: 1;
-}
+        /* The main white ball */
+        .player::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            z-index: 2;
+        }
 
-.player.move-right::before {
-    animation: trailRight 0.2s ease-out;
-}
+        .player.move-right::before,
+        .player.move-left::before,
+        .player.move-up::before,
+        .player.move-down::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            z-index: 1;
+        }
 
-.player.move-left::before {
-    animation: trailLeft 0.2s ease-out;
-}
+        .player.move-right::before {
+            animation: trailRight 0.2s ease-out;
+        }
 
-.player.move-up::before {
-    animation: trailUp 0.2s ease-out;
-}
+        .player.move-left::before {
+            animation: trailLeft 0.2s ease-out;
+        }
 
-.player.move-down::before {
-    animation: trailDown 0.2s ease-out;
-}
-@keyframes trailRight {
-    0% {
-        transform: translateX(-30px) scaleX(3);
-        opacity: 0.6;
-    }
-    100% {
-        transform: translateX(0) scaleX(1);
-        opacity: 0;
-    }
-}
+        .player.move-up::before {
+            animation: trailUp 0.2s ease-out;
+        }
 
-@keyframes trailLeft {
-    0% {
-        transform: translateX(30px) scaleX(3);
-        opacity: 0.6;
-    }
-    100% {
-        transform: translateX(0) scaleX(1);
-        opacity: 0;
-    }
-}
+        .player.move-down::before {
+            animation: trailDown 0.2s ease-out;
+        }
+        @keyframes trailRight {
+            0% {
+                transform: translateX(-30px) scaleX(3);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(0) scaleX(1);
+                opacity: 0;
+            }
+        }
 
-@keyframes trailUp {
-    0% {
-        transform: translateY(30px) scaleY(3);
-        opacity: 0.6;
-    }
-    100% {
-        transform: translateY(0) scaleY(1);
-        opacity: 0;
-    }
-}
+        @keyframes trailLeft {
+            0% {
+                transform: translateX(30px) scaleX(3);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateX(0) scaleX(1);
+                opacity: 0;
+            }
+        }
 
-@keyframes trailDown {
-    0% {
-        transform: translateY(-30px) scaleY(3);
-        opacity: 0.6;
-    }
-    100% {
-        transform: translateY(0) scaleY(1);
-        opacity: 0;
-    }
-}
+        @keyframes trailUp {
+            0% {
+                transform: translateY(30px) scaleY(3);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(0) scaleY(1);
+                opacity: 0;
+            }
+        }
+
+        @keyframes trailDown {
+            0% {
+                transform: translateY(-30px) scaleY(3);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(0) scaleY(1);
+                opacity: 0;
+            }
+        }
         .explored {
             opacity: 0.5;
             visibility: visible;
@@ -336,7 +335,7 @@
         #top-right-messages {
             position: fixed;
             top: 20%;
-            right: 5%;
+            right: 3%;
             z-index: 1000;
             text-align: right;
             display: flex;
@@ -520,15 +519,9 @@
     cursor: pointer;
 }
 
-/* Optional: Add hover effect for clickable cells */
-.cell.visible.path:hover,
-.cell.visible.door:hover,
-.cell.visible.crystal-ball:hover,
-.cell.visible.map:hover,
-.cell.visible.key-powerup:hover,
-.cell.visible.exit:hover,
-.cell.visible.fake-exit:hover {
+.cell.adjacent:hover {
     filter: brightness(1.2);
+    cursor: pointer;
 }
 
 /* Disable hover effect for non-adjacent cells */

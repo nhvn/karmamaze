@@ -3,7 +3,7 @@ const MAX_ATTEMPTS = 5;
 
 let gameState = {
     username: '',
-    keys: 1,
+    keys: 2,
     maze: [],
     playerPosition: { x: 0, y: 0 },
     isGameOver: false,
@@ -28,72 +28,72 @@ function log(message, data = null) {
 }
 
 // DEVELOPMENT MODE - show everything
-// function updateVisibility() {
-//     if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
-    
-//     gameState.maze.forEach((row, y) => {
-//         row.forEach((_, x) => {
-//             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-//             if (cell) {
-//                 cell.classList.remove('fog', 'explored');
-//                 cell.classList.add('visible');
-//                 gameState.visibleTiles.add(`${x},${y}`);
-//             }
-//         });
-//     });
-// }
-
-// PRODUCTION MODE - use this instead
 function updateVisibility() {
-    const { x, y } = gameState.playerPosition;
-    const newVisible = new Set();
-    const viewRadius = gameState.mapUsed ? 2 : 1; // 2 gives 5x5, 1 gives 3x3
+    if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
     
-    // Add current position and adjacent tiles to visible set
-    for (let dy = -viewRadius; dy <= viewRadius; dy++) {
-        for (let dx = -viewRadius; dx <= viewRadius; dx++) {
-            const newX = x + dx;
-            const newY = y + dy;
-            if (newX >= 0 && newX < gameState.maze[0].length && 
-                newY >= 0 && newY < gameState.maze.length) {
-                newVisible.add(`${newX},${newY}`);
-                // Only add to explored tiles if map is active
-                if (gameState.level === 1 || gameState.mapUsed) {
-                    gameState.exploredTiles.add(`${newX},${newY}`);
-                }
-            }
-        }
-    }
-
-    // Update visibility classes for all tiles
     gameState.maze.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            if (cellElement) {
-                const key = `${x},${y}`;
-                
-                // Always show powerups with glow
-                if (cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup') {
-                    cellElement.classList.add('powerup-glow');
-                }
-
-                if (newVisible.has(key)) {
-                    cellElement.classList.remove('fog', 'explored');
-                    cellElement.classList.add('visible');
-                } else if ((gameState.level === 1 || gameState.mapUsed) && gameState.exploredTiles.has(key)) {
-                    // Show explored tiles if in Level 1 or if map is active in Level 2
-                    cellElement.classList.remove('fog', 'visible');
-                    cellElement.classList.add('explored');
-                } else {
-                    cellElement.classList.remove('visible', 'explored');
-                    cellElement.classList.add('fog');
-                }
+        row.forEach((_, x) => {
+            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cell) {
+                cell.classList.remove('fog', 'explored');
+                cell.classList.add('visible');
+                gameState.visibleTiles.add(`${x},${y}`);
             }
         });
     });
-
-    gameState.visibleTiles = newVisible;
 }
+
+// PRODUCTION MODE - use this instead
+// function updateVisibility() {
+//     const { x, y } = gameState.playerPosition;
+//     const newVisible = new Set();
+//     const viewRadius = gameState.mapUsed ? 2 : 1; // 2 gives 5x5, 1 gives 3x3
+    
+//     // Add current position and adjacent tiles to visible set
+//     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
+//         for (let dx = -viewRadius; dx <= viewRadius; dx++) {
+//             const newX = x + dx;
+//             const newY = y + dy;
+//             if (newX >= 0 && newX < gameState.maze[0].length && 
+//                 newY >= 0 && newY < gameState.maze.length) {
+//                 newVisible.add(`${newX},${newY}`);
+//                 // Only add to explored tiles if map is active
+//                 if (gameState.level === 1 || gameState.mapUsed) {
+//                     gameState.exploredTiles.add(`${newX},${newY}`);
+//                 }
+//             }
+//         }
+//     }
+
+//     // Update visibility classes for all tiles
+//     gameState.maze.forEach((row, y) => {
+//         row.forEach((cell, x) => {
+//             const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+//             if (cellElement) {
+//                 const key = `${x},${y}`;
+                
+//                 // Always show powerups with glow
+//                 if (cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup') {
+//                     cellElement.classList.add('powerup-glow');
+//                 }
+
+//                 if (newVisible.has(key)) {
+//                     cellElement.classList.remove('fog', 'explored');
+//                     cellElement.classList.add('visible');
+//                 } else if ((gameState.level === 1 || gameState.mapUsed) && gameState.exploredTiles.has(key)) {
+//                     // Show explored tiles if in Level 1 or if map is active in Level 2
+//                     cellElement.classList.remove('fog', 'visible');
+//                     cellElement.classList.add('explored');
+//                 } else {
+//                     cellElement.classList.remove('visible', 'explored');
+//                     cellElement.classList.add('fog');
+//                 }
+//             }
+//         });
+//     });
+
+//     gameState.visibleTiles = newVisible;
+// }
 
 function sendReadyMessage() {
     if (initializationAttempts >= MAX_ATTEMPTS) {
@@ -226,7 +226,7 @@ function initializeGame(data) {
 
     // Update existing gameState instead of creating new one
     gameState.username = data.username || 'Developer';
-    gameState.keys = data.level === 1 ? 3 : 1;  // Start with 3 keys in Level 1
+    gameState.keys = 2;
     gameState.maze = data.maze;
     gameState.playerPosition = findStartPosition(data.maze);
     gameState.isGameOver = false;
@@ -271,7 +271,7 @@ function retryLevel() {
 
     gameState = {
         ...gameState,
-        keys: gameState.level === 1 ? 3 : 1,  // Reset to 3 keys for Level 1
+        keys: 2,
         maze: JSON.parse(JSON.stringify(initialMaze)),
         playerPosition: findStartPosition(initialMaze),
         isGameOver: false,
@@ -361,6 +361,7 @@ function renderMaze() {
     });
 
     updateVisibility();
+    markAdjacentCells();
 }
 
 function handleDoor(x, y) {
@@ -449,7 +450,7 @@ function initializeGame(data) {
 
     // Update existing gameState instead of creating new one
     gameState.username = data.username || 'Developer';
-    gameState.keys = 1;
+    gameState.keys = 2;
     gameState.maze = data.maze;
     gameState.playerPosition = findStartPosition(data.maze);
     gameState.isGameOver = false;
@@ -533,7 +534,7 @@ function activateMap() {
         }
     }
 
-    showTopRightMessage('Map revealed surrounding area!');
+    showTopRightMessage('Found a map!');
 }
 
 
@@ -558,7 +559,7 @@ function activateCrystalBall() {
         });
     });
 
-    showTopRightMessage('Crystal ball revealed the true exit!');
+    showTopRightMessage('Found a crystal ball!');
 }
 
 function activateKeyPowerup() {
@@ -574,7 +575,7 @@ function activateKeyPowerup() {
         }
     }
     
-    showTopRightMessage('Found 3 additional keys!');
+    showTopRightMessage('Found keys!');
 }
 
 function handleTrap() {
@@ -599,6 +600,7 @@ function movePlayer(x, y) {
     // Render the maze with the movement class
     renderMaze(direction);
     updateVisibility();
+    markAdjacentCells();
 
     window.parent.postMessage({
         type: 'movePlayer',
@@ -758,6 +760,34 @@ function handleWin() {
             remainingKeys: gameState.keys
         }
     }, '*');
+}
+
+function markAdjacentCells() {
+    const { x: playerX, y: playerY } = gameState.playerPosition;
+    
+    // Remove adjacent class from all cells first
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('adjacent');
+    });
+    
+    // Add adjacent class to cells next to player
+    const adjacentPositions = [
+        [playerX, playerY - 1],  // Up
+        [playerX, playerY + 1],  // Down
+        [playerX - 1, playerY],  // Left
+        [playerX + 1, playerY]   // Right
+    ];
+    
+    adjacentPositions.forEach(([x, y]) => {
+        const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        if (cell && isWalkable(gameState.maze[y]?.[x])) {
+            cell.classList.add('adjacent');
+        }
+    });
+}
+
+function isWalkable(cellType) {
+    return ['path', 'door', 'crystal-ball', 'map', 'key-powerup', 'exit', 'fake-exit'].includes(cellType);
 }
 
 function showMessage(text, type, permanent = false) {

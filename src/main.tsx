@@ -256,7 +256,7 @@ Devvit.addCustomPostType({
     });
 
     const [gameState, setGameState] = useState<GameState>(() => ({
-      maze: generateMaze(14, 8), 
+      maze: generateMaze(12, 8), 
       playerPosition: { x: 1, y: 1 },
       unlockedDoors: []
     }));
@@ -276,7 +276,7 @@ Devvit.addCustomPostType({
       }
       
       if (message.type === 'retry') {
-          const newMaze = generateMaze(14, 8);
+          const newMaze = generateMaze(12, 8);
           setGameState({
               maze: newMaze,
               playerPosition: { x: 1, y: 1 },
@@ -287,7 +287,7 @@ Devvit.addCustomPostType({
               type: 'initialData',
               data: {
                   username: userData?.username ?? 'Developer',
-                  keys: 1,
+                  keys: 3,
                   maze: newMaze,
                   level: 2
               }
@@ -335,7 +335,7 @@ Devvit.addCustomPostType({
       console.log('Starting game... Level:', currentLevel);
       
       // Generate maze based on level
-      const newMaze = currentLevel === 1 ? generateMaze(14, 8) : generateLevel2Maze(14, 8);
+      const newMaze = currentLevel === 1 ? generateMaze(12, 8) : generateLevel2Maze(12, 8);
       console.log('Generated new maze:', newMaze);
       
       setGameState({
@@ -350,7 +350,7 @@ Devvit.addCustomPostType({
         type: 'initialData',
         data: {
           username: userData.username,
-          keys: currentLevel === 1 ? 3 : 1,  // Start with 3 keys in Level 1
+          keys: 2,
           maze: newMaze,
           level: currentLevel
         }
@@ -377,10 +377,10 @@ Devvit.addCustomPostType({
           <spacer />
           <vstack alignment="start middle">
             <hstack>
-              <text size="medium" weight="bold">
+              {/* <text size="medium" weight="bold">
                 {' '}
                 {userData?.username ?? 'anon'}
-              </text>
+              </text> */}
             </hstack>
           </vstack>
           <spacer />
