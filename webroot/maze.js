@@ -563,7 +563,7 @@ function activateCrystalBall() {
 }
 
 function activateKeyPowerup() {
-    gameState.keys += 3;  // Add 3 keys
+    gameState.keys += 5; 
     
     // Update the keys display
     const keyStat = document.querySelector('.key-stat');
