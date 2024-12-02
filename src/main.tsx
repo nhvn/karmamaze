@@ -148,90 +148,105 @@ function generateMaze(width: number, height: number): MazeCell[][] {
 
 function generateLevel2Maze(width: number, height: number): MazeCell[][] {
   const maze = generateMaze(width, height); // Use existing maze generator as base
-  
+
   // Find existing exit and start positions
   let startPos = { x: 0, y: 0 };
   let exitPos = { x: 0, y: 0 };
 
   // Clear all outer walls (except leftmost and rightmost columns)
   for (let y = 0; y < height; y++) {
-      if (y === 0 || y === height - 1) {
-          for (let x = 1; x < width - 1; x++) {
-              maze[y][x] = 'path'; // Convert outer walls to paths except edges
-          }
+    if (y === 0 || y === height - 1) {
+      for (let x = 1; x < width - 1; x++) {
+        maze[y][x] = 'path'; // Convert outer walls to paths except edges
       }
+    }
   }
 
   // Find start and exit positions
   for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-          if (maze[y][x] === 'start') {
-              startPos = { x, y };
-          } else if (maze[y][x] === 'exit') {
-              exitPos = { x, y };
-          }
+    for (let x = 0; x < width; x++) {
+      if (maze[y][x] === 'start') {
+        startPos = { x, y };
+      } else if (maze[y][x] === 'exit') {
+        exitPos = { x, y };
       }
+    }
   }
 
-  // Add fake exit
+  // Add first fake exit
   let fakeExitPlaced = false;
   while (!fakeExitPlaced) {
-      const y = Math.floor(Math.random() * (height - 2)) + 1;
-      if (y !== exitPos.y && maze[y][width-1] === 'wall') {
-          maze[y][width-1] = 'fake-exit';
-          fakeExitPlaced = true;
-      }
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    if (y !== exitPos.y && maze[y][width - 1] === 'wall') {
+      maze[y][width - 1] = 'fake-exit';
+      fakeExitPlaced = true;
+    }
+  }
+
+  // Add second fake exit
+  let secondFakeExitPlaced = false;
+  while (!secondFakeExitPlaced) {
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    if (
+      y !== exitPos.y &&
+      maze[y][width - 1] === 'wall' &&
+      maze[y][width - 1] !== 'fake-exit'
+    ) {
+      maze[y][width - 1] = 'fake-exit';
+      secondFakeExitPlaced = true;
+    }
   }
 
   // Place crystal ball in a valid path location
   let crystalBallPlaced = false;
   while (!crystalBallPlaced) {
-      const x = Math.floor(Math.random() * (width - 2)) + 1;
-      const y = Math.floor(Math.random() * (height - 2)) + 1;
-      // Only place on path tiles, not walls or doors
-      if (maze[y][x] === 'path' && 
-          // Make sure it's not right next to the start
-          !(x === startPos.x && y === startPos.y) && 
-          // Make sure it's not right next to the exit
-          !(x === exitPos.x && y === exitPos.y)) {
-          maze[y][x] = 'crystal-ball';
-          crystalBallPlaced = true;
-      }
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on path tiles, not walls or doors
+    if (
+      maze[y][x] === 'path' &&
+      !(x === startPos.x && y === startPos.y) && // Not near start
+      !(x === exitPos.x && y === exitPos.y)
+    ) {
+      maze[y][x] = 'crystal-ball';
+      crystalBallPlaced = true;
+    }
   }
 
+  // Place map in a valid path location
   let mapPlaced = false;
   while (!mapPlaced) {
-      const x = Math.floor(Math.random() * (width - 2)) + 1;
-      const y = Math.floor(Math.random() * (height - 2)) + 1;
-      const currentCell = maze[y][x];
-      
-      // Only place on path tiles, not walls or doors
-      if (currentCell === 'path' && 
-          // Make sure it's not right next to the start
-          !(x === startPos.x && y === startPos.y) && 
-          // Make sure it's not right next to the exit
-          !(x === exitPos.x && y === exitPos.y)) {
-          maze[y][x] = 'map';
-          mapPlaced = true;
-      }
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    const currentCell = maze[y][x];
+
+    // Only place on path tiles, not walls or doors
+    if (
+      currentCell === 'path' &&
+      !(x === startPos.x && y === startPos.y) && // Not near start
+      !(x === exitPos.x && y === exitPos.y)
+    ) {
+      maze[y][x] = 'map';
+      mapPlaced = true;
+    }
   }
 
   // Place key powerup in a valid path location
   let keyPowerupPlaced = false;
   while (!keyPowerupPlaced) {
-      const x = Math.floor(Math.random() * (width - 2)) + 1;
-      const y = Math.floor(Math.random() * (height - 2)) + 1;
-      const currentCell = maze[y][x];
-      
-      // Only place on path tiles, not walls or doors
-      if (currentCell === 'path' && 
-          // Make sure it's not right next to the start
-          !(x === startPos.x && y === startPos.y) && 
-          // Make sure it's not right next to the exit
-          !(x === exitPos.x && y === exitPos.y)) {
-          maze[y][x] = 'key-powerup';
-          keyPowerupPlaced = true;
-      }
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    const currentCell = maze[y][x];
+
+    // Only place on path tiles, not walls or doors
+    if (
+      currentCell === 'path' &&
+      !(x === startPos.x && y === startPos.y) && // Not near start
+      !(x === exitPos.x && y === exitPos.y)
+    ) {
+      maze[y][x] = 'key-powerup';
+      keyPowerupPlaced = true;
+    }
   }
 
   return maze;
@@ -256,7 +271,7 @@ Devvit.addCustomPostType({
     });
 
     const [gameState, setGameState] = useState<GameState>(() => ({
-      maze: generateMaze(12, 8), 
+      maze: generateMaze(13, 9), 
       playerPosition: { x: 1, y: 1 },
       unlockedDoors: []
     }));
@@ -276,7 +291,7 @@ Devvit.addCustomPostType({
       }
       
       if (message.type === 'retry') {
-          const newMaze = generateMaze(12, 8);
+          const newMaze = generateMaze(13, 9);
           setGameState({
               maze: newMaze,
               playerPosition: { x: 1, y: 1 },
@@ -335,7 +350,7 @@ Devvit.addCustomPostType({
       console.log('Starting game... Level:', currentLevel);
       
       // Generate maze based on level
-      const newMaze = currentLevel === 1 ? generateMaze(12, 8) : generateLevel2Maze(12, 8);
+      const newMaze = currentLevel === 1 ? generateMaze(13, 9) : generateLevel2Maze(13, 9);
       console.log('Generated new maze:', newMaze);
       
       setGameState({
