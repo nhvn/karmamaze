@@ -291,24 +291,24 @@ Devvit.addCustomPostType({
       }
       
       if (message.type === 'retry') {
-          const newMaze = generateMaze(12, 9);
-          setGameState({
-              maze: newMaze,
-              playerPosition: { x: 1, y: 1 },
-              unlockedDoors: []
-          });
-  
-          const initMessage: WebViewMessage = {
-              type: 'initialData',
-              data: {
-                  username: userData?.username ?? 'Developer',
-                  keys: 3,
-                  maze: newMaze,
-                  level: 2
-              }
-          };
-          context.ui.webView.postMessage('mazeGame', initMessage);
-          return;
+        const newMaze = currentLevel === 1 ? generateMaze(12, 9) : generateLevel2Maze(12, 9);
+        setGameState({
+            maze: newMaze,
+            playerPosition: { x: 1, y: 1 },
+            unlockedDoors: []
+        });
+    
+        const initMessage: WebViewMessage = {
+            type: 'initialData',
+            data: {
+                username: userData?.username ?? 'Developer',
+                keys: 3,
+                maze: newMaze,
+                level: currentLevel
+            }
+        };
+        context.ui.webView.postMessage('mazeGame', initMessage);
+        return;
       }
   
       if (!gameState || !userData) {

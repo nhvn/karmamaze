@@ -792,42 +792,34 @@ function isWalkable(cellType) {
 
 function showMessage(text, type, permanent = false) {
     const messageEl = document.getElementById('message');
-    
-    // Clear existing content
     messageEl.innerHTML = '';
     
-    // Add text
     const textDiv = document.createElement('div');
     textDiv.textContent = text;
     messageEl.appendChild(textDiv);
     
-    // Add button if it's a trap message
-    if (type === 'error' && permanent) {
-        const button = document.createElement('button');
-        button.textContent = 'Try Again';
-        button.onclick = () => {
+    if (type === 'success') {
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next Game';
+        nextButton.onclick = () => {
+            window.parent.postMessage({
+                type: 'retry',
+                data: { sameLevel: true }
+            }, '*');
+        };
+        messageEl.appendChild(nextButton);
+    } else if (type === 'error' && permanent) {
+        const retryButton = document.createElement('button');
+        retryButton.textContent = 'Try Again';
+        retryButton.onclick = () => {
             retryLevel();
             messageEl.style.display = 'none';
         };
-        button.style.marginTop = '10px';
-        button.style.padding = '8px 16px';
-        button.style.background = '#4a4a4a';
-        button.style.color = 'white';
-        button.style.border = 'none';
-        button.style.borderRadius = '4px';
-        button.style.cursor = 'pointer';
-        messageEl.appendChild(button);
+        messageEl.appendChild(retryButton);
     }
     
     messageEl.className = type;
     messageEl.style.display = 'block';
-    
-    // Only auto-hide non-permanent messages
-    if (!permanent && type === 'error') {
-        setTimeout(() => {
-            messageEl.style.display = 'none';
-        }, 2000);
-    }
 }
 
 function updateKeys(newKeys) {
