@@ -279,7 +279,7 @@ Devvit.addCustomPostType({
     const [webviewVisible, setWebviewVisible] = useState(false);
 
     const onMessage = async (msg: WebViewMessage) => {
-      console.log('Received message from webview:', msg);
+      // console.log('Received message from webview:', msg);
       
       const message = ('data' in msg && 'message' in msg.data) 
           ? (msg.data as any).message 

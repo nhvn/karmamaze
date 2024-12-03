@@ -1,5 +1,7 @@
 let initializationAttempts = 0;
 const MAX_ATTEMPTS = 5;
+let timerInterval;
+const GAME_TIME = 30;
 
 let gameState = {
     username: '',
@@ -205,6 +207,7 @@ window.addEventListener('keydown', (event) => {
 let initialMaze = null; // Store initial maze for retry
 
 function initializeGame(data) {
+    showLoading();
     log('Initializing game with data:', data);
     
     gameState.level = data.level;
@@ -255,19 +258,118 @@ function initializeGame(data) {
     
     renderMaze();
     updateVisibility();
+    startTimer();
+    hideLoading();
+}
+
+// Add loading functions
+function showLoading() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'flex';
+    }
+}
+
+function hideLoading() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+}
+
+// Add timer functionality
+function startTimer() {
+    let timeLeft = GAME_TIME;
+    
+    function updateTimer() {
+        const timerDisplay = document.getElementById('timer');
+        if (timerDisplay) {
+            timerDisplay.textContent = timeLeft.toString();
+        }
+        
+        if (timeLeft === 0) {
+            clearInterval(timerInterval);
+            handleTimeUp();
+        }
+        timeLeft--;
+    }
+    
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+    
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+}
+
+function handleTimeUp() {
+    gameState.isGameOver = true;
+    const messageEl = document.getElementById('message');
+    messageEl.innerHTML = '';
+    messageEl.dataset.gameWon = 'false';
+    messageEl.dataset.gameRetry = 'true';
+    
+    const textDiv = document.createElement('div');
+    textDiv.textContent = "Time's up! You've been caught!";
+    messageEl.appendChild(textDiv);
+    
+    const retryButton = document.createElement('button');
+    retryButton.textContent = 'Try Again (Or Press Enter)';
+    retryButton.onclick = () => {
+        retryLevel();
+        clearGameEndState();
+    };
+    messageEl.appendChild(retryButton);
+    
+    messageEl.className = 'error';
+    messageEl.style.display = 'block';
+}
+
+// Add keyboard listener for Enter key
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        const messageEl = document.getElementById('message');
+        if (!messageEl || messageEl.style.display === 'none') return;
+        
+        if (gameState.isGameOver && messageEl.dataset.gameWon === 'true') {
+            handleNextGame();
+            return;
+        }
+        
+        if (gameState.isGameOver && messageEl.dataset.gameRetry === 'true') {
+            retryLevel();
+            messageEl.style.display = 'none';
+            return;
+        }
+    }
+});
+
+function clearGameEndState() {
+    const messageEl = document.getElementById('message');
+    if (messageEl) {
+        messageEl.style.display = 'none'; // Hide the game-over message
+        messageEl.innerHTML = ''; // Clear its content
+    }
+
+    // Reset other game-related states if needed
+    gameState.isGameOver = false; 
+    console.log('Game end state cleared.');
 }
 
 function retryLevel() {
+    showLoading();
+    clearGameEndState();
     const messageEl = document.getElementById('message');
-    const retryButton = document.getElementById('retryButton');
 
     if (messageEl) {
         messageEl.style.display = 'none';
     }
-
-    // if (retryButton) {
-    //     retryButton.style.display = 'none';
-    // }
 
     gameState = {
         ...gameState,
@@ -283,6 +385,7 @@ function retryLevel() {
         mapUsed: false
     };
 
+    // Update UI
     const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
         keyStat.dataset.count = gameState.keys;
@@ -294,14 +397,18 @@ function retryLevel() {
 
     renderMaze();
     updateVisibility();
+    startTimer();
+    hideLoading();
 }
 
 function newGame() {
     console.log('New Game button clicked');
+    showLoading(); // Show loading indicator before sending the new game request
     window.parent.postMessage({
         type: 'newGame'
     }, '*');
 }
+
 
 function findStartPosition(maze) {
     for (let y = 0; y < maze.length; y++) {
@@ -426,60 +533,6 @@ function interpolateColor(startColor, endColor, percentage) {
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
-function initializeGame(data) {
-    log('Initializing game with data:', data);
-
-    gameState.level = data.level;
-
-    if (!data.maze) {
-        log('No maze data received');
-        return;
-    }
-
-    // Store initial maze when first received
-    initialMaze = JSON.parse(JSON.stringify(data.maze)); // Deep copy
-
-    // Clear any existing win message
-    const messageEl = document.getElementById('message');
-    if (messageEl) {
-        messageEl.style.display = 'none';
-        messageEl.textContent = '';
-    } else {
-        console.warn('Element with ID "message" not found.');
-    }
-
-    // Update existing gameState instead of creating new one
-    gameState.username = data.username || 'Developer';
-    gameState.keys = 2;
-    gameState.maze = data.maze;
-    gameState.playerPosition = findStartPosition(data.maze);
-    gameState.isGameOver = false;
-    gameState.visibleTiles = new Set();
-    gameState.exploredTiles = new Set();
-    gameState.crystalBallUsed = false;
-    gameState.doorHits = new Map();
-    gameState.doorOpacity = new Map();
-
-    // Add safety checks for DOM elements
-    const usernameEl = document.getElementById('username');
-    const keysEl = document.getElementById('keys');
-    
-    if (usernameEl) {
-        usernameEl.textContent = gameState.username;
-    } else {
-        console.warn('Element with ID "username" not found.');
-    }
-    
-    if (keysEl) {
-        keysEl.textContent = gameState.keys;
-    } else {
-        console.warn('Element with ID "keys" not found.');
-    }
-    
-    renderMaze();
-    updateVisibility();
-}
-
 function showTopRightMessage(message) {
     const messageContainer = document.getElementById('top-right-messages');
 
@@ -580,7 +633,8 @@ function activateKeyPowerup() {
 
 function handleTrap() {
     gameState.isGameOver = true;
-    showMessage('Oh no, it\'s a trap!', 'error', true);  // Added true parameter for permanent message
+    stopTimer();
+    showMessage('Oh no, it\'s a trap!', 'error', true);
 }
 
 function movePlayer(x, y) {
@@ -747,6 +801,7 @@ function retryGame() {
 
 function handleWin() {
     gameState.isGameOver = true;
+    stopTimer();
     showMessage('You win!', 'success');
     const retryButton = document.getElementById('retryButton');
     if (retryButton) {
@@ -793,6 +848,8 @@ function isWalkable(cellType) {
 function showMessage(text, type, permanent = false) {
     const messageEl = document.getElementById('message');
     messageEl.innerHTML = '';
+    messageEl.dataset.gameWon = 'false';
+    messageEl.dataset.gameRetry = 'false';
     
     const textDiv = document.createElement('div');
     textDiv.textContent = text;
@@ -800,26 +857,34 @@ function showMessage(text, type, permanent = false) {
     
     if (type === 'success') {
         const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next Game';
-        nextButton.onclick = () => {
-            window.parent.postMessage({
-                type: 'retry',
-                data: { sameLevel: true }
-            }, '*');
-        };
+        nextButton.textContent = 'Next Game (Or Press Enter)';
+        nextButton.onclick = handleNextGame;
         messageEl.appendChild(nextButton);
+        messageEl.dataset.gameWon = 'true';
     } else if (type === 'error' && permanent) {
         const retryButton = document.createElement('button');
-        retryButton.textContent = 'Try Again';
+        retryButton.textContent = 'Try Again (Or Press Enter)';
         retryButton.onclick = () => {
+            console.log('Enter key pressed:', event.key);
             retryLevel();
             messageEl.style.display = 'none';
+            clearGameEndState(); 
         };
         messageEl.appendChild(retryButton);
+        messageEl.dataset.gameRetry = 'true';
     }
     
     messageEl.className = type;
     messageEl.style.display = 'block';
+}
+
+// Add next game handler
+function handleNextGame() {
+    showLoading();
+    window.parent.postMessage({
+        type: 'retry',
+        data: { sameLevel: true }
+    }, '*');
 }
 
 function updateKeys(newKeys) {
@@ -847,24 +912,9 @@ window.addEventListener('load', () => {
     sendReadyMessage();
     renderMaze();
 
-    const retryButton = document.getElementById('retryButton');
+    // Only keep the new game button handler
     const newGameButton = document.getElementById('newGameButton');
-
-    if (retryButton) {
-        // Remove any existing listeners first
-        retryButton.replaceWith(retryButton.cloneNode(true));
-        const newRetryButton = document.getElementById('retryButton');
-        newRetryButton.addEventListener('click', () => {
-            retryLevel();
-            const messageEl = document.getElementById('message');
-            if (messageEl) {
-                messageEl.style.display = 'none';
-            }
-        });
-    }
-
     if (newGameButton) {
-        // Remove any existing listeners first
         newGameButton.replaceWith(newGameButton.cloneNode(true));
         const newGameBtn = document.getElementById('newGameButton');
         newGameBtn.addEventListener('click', newGame);
