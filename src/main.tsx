@@ -341,42 +341,42 @@ Devvit.addCustomPostType({
       }
     };
 
-    const onStartGame = () => {
-      if (!userData) {
-        console.error('No user data available');
-        return;
-      }
-    
-      console.log('Starting game... Level:', currentLevel);
-      
-      // Generate maze based on level
-      const newMaze = currentLevel === 1 ? generateMaze(12, 9) : generateLevel2Maze(12, 9);
-      console.log('Generated new maze:', newMaze);
-      
-      setGameState({
-        maze: newMaze,
-        playerPosition: { x: 1, y: 1 },
-        unlockedDoors: []
-      });
-    
-      setWebviewVisible(true);
-      
-      const message: WebViewMessage = {
-        type: 'initialData',
-        data: {
-          username: userData.username,
-          keys: 2,
-          maze: newMaze,
-          level: currentLevel
+      const onStartGame = () => {
+        if (!userData) {
+            console.error('No user data available');
+            return;
         }
-      };
-    
-      try {
-        console.log('Sending initial data:', message);
-        context.ui.webView.postMessage('mazeGame', message);
-      } catch (error) {
-        console.error('Error sending data:', error);
-      }
+        
+        console.log('Starting game... Level:', currentLevel);
+        
+        // Generate maze based on level
+        const newMaze = currentLevel === 1 ? generateMaze(12, 9) : generateLevel2Maze(12, 9);
+        console.log('Generated new maze:', newMaze);
+        
+        setGameState({
+            maze: newMaze,
+            playerPosition: { x: 1, y: 1 },
+            unlockedDoors: []
+        });
+        
+        setWebviewVisible(true);
+        
+        const message: WebViewMessage = {
+            type: 'initialData',
+            data: {
+                username: userData.username,
+                keys: 2,
+                maze: newMaze,
+                level: currentLevel
+            }
+        };
+        
+        try {
+            console.log('Sending initial data:', message);
+            context.ui.webView.postMessage('mazeGame', message);
+        } catch (error) {
+            console.error('Error sending data:', error);
+        }
     };
 
     return (
