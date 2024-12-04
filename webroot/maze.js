@@ -2,6 +2,8 @@ let initializationAttempts = 0;
 const MAX_ATTEMPTS = 5;
 let timerInterval;
 const GAME_TIME = 30;
+let isPaused = false;
+let savedTimeLeft = null;
 
 let gameState = {
     username: '',
@@ -146,6 +148,16 @@ window.addEventListener('message', (event) => {
 // Add keyboard controls
 window.addEventListener('keydown', (event) => {
     if (gameState.isGameOver) return;
+    if (isPaused && event.key !== 'Escape') return;
+    
+    if (event.key === 'Escape') {
+        if (isPaused) {
+            resumeGame();
+        } else {
+            pauseGame();
+        }
+        return;
+    }
 
     let newX = gameState.playerPosition.x;
     let newY = gameState.playerPosition.y;
@@ -347,7 +359,7 @@ function handleTimeUp() {
     messageEl.style.display = 'block';
 }
 
-// Add keyboard listener for Enter key
+// DUPLICATE?
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         const messageEl = document.getElementById('message');
@@ -1034,6 +1046,73 @@ function updateKeys(newKeys) {
     }
 }
 
+function pauseGame() {
+    if (!isPaused) {
+        // Stop timer
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            savedTimeLeft = parseInt(document.getElementById('timer').textContent);
+        }
+        
+        // Show overlay
+        const overlay = document.getElementById('pause-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';  // Changed from block to flex
+        }
+        
+        isPaused = true;
+
+        // Ensure game container loses focus to prevent keyboard input
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.blur();
+        }
+    }
+}
+
+function resumeGame() {
+    if (isPaused) {
+        // Hide overlay
+        const overlay = document.getElementById('pause-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+        
+        // Resume timer
+        if (savedTimeLeft !== null) {
+            let timeLeft = savedTimeLeft;
+            
+            function updateTimer() {
+                const timerDisplay = document.getElementById('timer');
+                if (timerDisplay) {
+                    timerDisplay.textContent = timeLeft.toString();
+                }
+                
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    handleTimeUp();
+                }
+                timeLeft--;
+            }
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        isPaused = false;
+
+        // Restore focus to game container for keyboard input
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.focus();
+        }
+    }
+}
+
 window.addEventListener('load', () => {
     log('Page loaded, sending ready message');
     sendReadyMessage();
@@ -1045,5 +1124,19 @@ window.addEventListener('load', () => {
         newGameButton.replaceWith(newGameButton.cloneNode(true));
         const newGameBtn = document.getElementById('newGameButton');
         newGameBtn.addEventListener('click', newGame);
+    }
+    // Add pause button handler
+    const pauseButton = document.getElementById('pauseButton');
+    if (pauseButton) {
+        pauseButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent overlay from catching the click
+            pauseGame();
+        });
+    }
+
+    // Add overlay click handler
+    const overlay = document.getElementById('pause-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', resumeGame);
     }
 });

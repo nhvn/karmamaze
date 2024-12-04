@@ -23,6 +23,7 @@
                 </div>
             </div>
             <div class="button-container">
+                <button id="pauseButton" class="icon-button">⏸️</button>
                 <button id="newGameButton">Menu</button>
             </div>
         </div>
@@ -36,6 +37,9 @@
         <div id="top-right-messages"></div>
         <!-- Add this line -->
         <div id="animation-overlay"></div>
+        <div id="pause-overlay" style="display: none;">
+            <div class="pause-message">Tap to Resume</div>
+        </div>
     </div>
     <script src="maze.js"></script>
 </body>
