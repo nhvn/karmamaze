@@ -16,12 +16,195 @@ let gameState = {
     crystalBallUsed: false,
     doorHits: new Map(),
     doorOpacity: new Map(),
-    isDisarming: false 
+    isDisarming: false,
+    moveCount: 0,        // Track number of moves
+    retryCount: 0,       // Track retries
+    winStreak: 0,        // Track consecutive wins
+    totalScore: 0        // Track total score
 };
 
 console.log(gameState); // Ensure it has a `keys` property
 
+// Constants for scoring
+const SCORING_CONFIG = {
+    // Base points
+    BASE_COMPLETION_POINTS: 1000,
+    
+    // Time bonuses (for 30 second game)
+    TIME_BRACKETS: [
+        { threshold: 10, bonus: 500 },  // Completed in under 10s
+        { threshold: 15, bonus: 300 },  // Completed in under 15s
+        { threshold: 20, bonus: 200 },  // Completed in under 20s
+        { threshold: 25, bonus: 100 },  // Completed in under 25s
+    ],
+    
+    // Move efficiency (percentage of minimal path length)
+    MOVE_EFFICIENCY_MULTIPLIERS: [
+        { threshold: 1.1, multiplier: 1.5 },    // Within 110% of optimal
+        { threshold: 1.25, multiplier: 1.25 },  // Within 125% of optimal
+        { threshold: 1.5, multiplier: 1.0 },    // Within 150% of optimal
+        { threshold: 2.0, multiplier: 0.75 },   // Within 200% of optimal
+        { threshold: Infinity, multiplier: 0.5 } // More than 200% of optimal
+    ],
+    
+    // Retry penalties
+    RETRY_PENALTY_MULTIPLIER: 0.75,  // 25% penalty per retry
+    
+    // Win streak bonuses
+    STREAK_BONUSES: [
+        { threshold: 2, bonus: 1.1 },   // 2 wins: 10% bonus
+        { threshold: 5, bonus: 1.2 },   // 5 wins: 20% bonus
+        { threshold: 10, bonus: 1.5 },  // 10 wins: 50% bonus
+        { threshold: 20, bonus: 2.0 },  // 20 wins: 100% bonus
+    ]
+};
 
+// Calculate score for a single game
+function calculateGameScore(gameData) {
+    const {
+        timeRemaining,
+        movesUsed,
+        optimalMoves,
+        retryCount,
+        winStreak
+    } = gameData;
+    
+    // Start with base points
+    let baseScore = SCORING_CONFIG.BASE_COMPLETION_POINTS;
+    
+    // Add time bonus
+    const timeUsed = 30 - timeRemaining;
+    for (const bracket of SCORING_CONFIG.TIME_BRACKETS) {
+        if (timeUsed <= bracket.threshold) {
+            baseScore += bracket.bonus;
+            break;
+        }
+    }
+    
+    // Apply move efficiency multiplier
+    const moveEfficiency = movesUsed / optimalMoves;
+    for (const tier of SCORING_CONFIG.MOVE_EFFICIENCY_MULTIPLIERS) {
+        if (moveEfficiency <= tier.threshold) {
+            baseScore *= tier.multiplier;
+            break;
+        }
+    }
+    
+    // Apply retry penalty
+    baseScore *= Math.pow(SCORING_CONFIG.RETRY_PENALTY_MULTIPLIER, retryCount);
+    baseScore = Math.round(baseScore);
+    
+    // Calculate streak bonus separately
+    let streakBonus = 0;
+    let finalScore = baseScore;
+    
+    // Current win streak includes the current win
+    const currentStreak = winStreak + 1;
+    
+    // Check for streak bonus
+    for (const streakTier of SCORING_CONFIG.STREAK_BONUSES.slice().reverse()) {
+        if (currentStreak >= streakTier.threshold) {
+            streakBonus = Math.round(baseScore * (streakTier.bonus - 1));
+            finalScore = baseScore + streakBonus;
+            break;
+        }
+    }
+
+    return {
+        baseScore,
+        streakBonus,
+        totalScore: finalScore,
+        currentStreak
+    };
+}
+
+// Calculate rating out of 5 stars
+function calculateStarRating(gameData) {
+    const {
+        timeRemaining,
+        movesUsed,
+        optimalMoves,
+        retryCount,
+        winStreak
+    } = gameData;
+    
+    let ratingPoints = 0; // Out of 100 points, will be converted to stars
+    
+    // Time component (up to 30 points)
+    const timeUsed = 30 - timeRemaining;
+    if (timeUsed <= 10) ratingPoints += 30;
+    else if (timeUsed <= 15) ratingPoints += 25;
+    else if (timeUsed <= 20) ratingPoints += 20;
+    else if (timeUsed <= 25) ratingPoints += 15;
+    else ratingPoints += 10;
+    
+    // Move efficiency (up to 40 points)
+    const moveEfficiency = movesUsed / optimalMoves;
+    if (moveEfficiency <= 1.1) ratingPoints += 40;
+    else if (moveEfficiency <= 1.25) ratingPoints += 35;
+    else if (moveEfficiency <= 1.5) ratingPoints += 25;
+    else if (moveEfficiency <= 2.0) ratingPoints += 15;
+    else ratingPoints += 5;
+    
+    // Retry penalty (up to -20 points)
+    ratingPoints -= Math.min(20, retryCount * 10);
+    
+    // Win streak bonus (up to 10 points)
+    if (winStreak >= 20) ratingPoints += 10;
+    else if (winStreak >= 10) ratingPoints += 7;
+    else if (winStreak >= 5) ratingPoints += 5;
+    
+    // Convert to star rating (0-5 stars, can have half stars)
+    const starRating = Math.max(0.5, Math.round((ratingPoints / 100) * 10) / 2);
+    
+    return starRating;
+}
+
+// Track overall player stats
+const playerStats = {
+    totalScore: 0,
+    gamesPlayed: 0,
+    totalStars: 0,
+    winStreak: 0,
+    highestStreak: 0,
+    averageRating: 0,
+    levelStats: new Map(),
+    
+    addGameResult(levelId, gameData) {
+        const scores = calculateGameScore(gameData);
+        const rating = calculateStarRating(gameData);
+        
+        this.totalScore += scores.totalScore;
+        this.gamesPlayed++;
+        this.totalStars += rating;
+        this.averageRating = this.totalStars / this.gamesPlayed;
+        
+        // Update win streak - include current win
+        this.winStreak = gameData.winStreak + 1;
+        this.highestStreak = Math.max(this.highestStreak, this.winStreak);
+        
+        if (!this.levelStats.has(levelId)) {
+            this.levelStats.set(levelId, {
+                highScore: 0,
+                bestRating: 0,
+                timesPlayed: 0
+            });
+        }
+        
+        const levelStat = this.levelStats.get(levelId);
+        levelStat.highScore = Math.max(levelStat.highScore, scores.totalScore);
+        levelStat.bestRating = Math.max(levelStat.bestRating, rating);
+        levelStat.timesPlayed++;
+        
+        return {
+            ...scores,
+            rating,
+            totalScore: this.totalScore,
+            averageRating: this.averageRating,
+            currentStreak: this.winStreak
+        };
+    }
+};
 
 function log(message, data = null) {
     const logMessage = data ? `${message} ${JSON.stringify(data)}` : message;
@@ -328,17 +511,23 @@ function initializeGame(data) {
     }
 
     // Update existing gameState instead of creating new one
-    gameState.username = data.username || 'Developer';
-    gameState.keys = 2;
-    gameState.maze = data.maze;
-    gameState.playerPosition = findStartPosition(data.maze);
-    gameState.isGameOver = false;
-    gameState.visibleTiles = new Set();
-    gameState.exploredTiles = new Set();
-    gameState.crystalBallUsed = false;
-    gameState.mapUsed = false;
-    gameState.doorHits = new Map();
-    gameState.doorOpacity = new Map();
+    gameState = {
+        ...gameState,
+        username: data.username || 'Developer',
+        keys: 2,
+        maze: data.maze,
+        playerPosition: findStartPosition(data.maze),
+        isGameOver: false,
+        visibleTiles: new Set(),
+        exploredTiles: new Set(),
+        crystalBallUsed: false,
+        mapUsed: false,
+        doorHits: new Map(),
+        doorOpacity: new Map(),
+        moveCount: 0,        // Reset move count
+        retryCount: 0,       // Reset retry count if starting new game
+        level: data.level    // Ensure level is set
+    };
 
     // Update UI elements safely
     const usernameEl = document.getElementById('username');
@@ -479,6 +668,8 @@ function clearGameEndState() {
 }
 
 function retryLevel() {
+    gameState.retryCount++;
+    gameState.winStreak = 0;
     showLoading();
     clearGameEndState();
     const messageEl = document.getElementById('message');
@@ -858,6 +1049,9 @@ function movePlayer(x, y) {
     const oldX = gameState.playerPosition.x;
     const oldY = gameState.playerPosition.y;
     
+    // Increment move counter
+    gameState.moveCount++;
+
     // Determine direction
     let direction = '';
     if (x > oldX) direction = 'move-right';
@@ -1048,10 +1242,67 @@ function retryGame() {
     }, '*');
 }
 
+// Add this helper function to calculate optimal moves:
+function calculateOptimalMoves(maze) {
+    // Simple estimate - manhattan distance from start to exit
+    const start = findStartPosition(maze);
+    let exit;
+    
+    // Find exit position
+    for (let y = 0; y < maze.length; y++) {
+        for (let x = 0; x < maze[0].length; x++) {
+            if (maze[y][x] === 'exit') {
+                exit = { x, y };
+                break;
+            }
+        }
+        if (exit) break;
+    }
+
+    // Manhattan distance plus some buffer for doors/obstacles
+    return Math.abs(exit.x - start.x) + Math.abs(exit.y - start.y) + 2;
+}
+
 function handleWin() {
     gameState.isGameOver = true;
     stopTimer();
-    showMessage('You win!', 'success');
+
+    const timeRemaining = parseInt(document.getElementById('timer').textContent);
+    const gameData = {
+        timeRemaining,
+        movesUsed: gameState.moveCount,
+        optimalMoves: calculateOptimalMoves(gameState.maze),
+        retryCount: gameState.retryCount,
+        winStreak: gameState.winStreak
+    };
+
+    const result = playerStats.addGameResult(`level${gameState.level}`, gameData);
+    gameState.winStreak++;
+
+    const messageLines = [
+        'You win!',
+        `Total Score: ${result.totalScore}`,
+        `Score: +${result.baseScore}`
+    ];
+
+    // Add streak bonus if applicable
+    if (result.streakBonus > 0) {
+        messageLines.push(`Win Streak Bonus: +${result.streakBonus} (${result.currentStreak} wins)`);
+    }
+
+    messageLines.push(
+        `Average Rating: ${result.averageRating.toFixed(1)}⭐`,
+        `Games Played: ${playerStats.gamesPlayed}`
+    );
+
+    // Add current streak if it exists
+    // if (result.currentStreak > 1) {
+    //     messageLines.push(`Current Win Streak: ${result.currentStreak}`);
+    // }
+
+    const winMessage = messageLines.join('\n');
+    showMessage(winMessage, 'success');
+
     const retryButton = document.getElementById('retryButton');
     if (retryButton) {
         retryButton.style.display = 'block';
@@ -1061,7 +1312,13 @@ function handleWin() {
         type: 'gameOver',
         data: { 
             won: true,
-            remainingKeys: gameState.keys
+            remainingKeys: gameState.keys,
+            baseScore: result.baseScore,
+            streakBonus: result.streakBonus,
+            totalScore: result.totalScore,
+            rating: result.averageRating,
+            gamesPlayed: playerStats.gamesPlayed,
+            winStreak: playerStats.winStreak
         }
     }, '*');
 }
@@ -1100,11 +1357,18 @@ function showMessage(text, type, permanent = false) {
     messageEl.dataset.gameWon = 'false';
     messageEl.dataset.gameRetry = 'false';
     
-    const textDiv = document.createElement('div');
-    textDiv.textContent = text;
-    messageEl.appendChild(textDiv);
+    // Split text by newlines and create separate divs for each line
+    text.split('\n').forEach(line => {
+        const textDiv = document.createElement('div');
+        textDiv.textContent = line;
+        textDiv.style.marginBottom = '8px'; // Add some spacing between lines
+        messageEl.appendChild(textDiv);
+    });
     
     if (type === 'success') {
+        const spacerDiv = document.createElement('div');
+        messageEl.appendChild(spacerDiv);
+
         const nextButton = document.createElement('button');
         nextButton.textContent = 'Next Game (Or Press Enter)';
         nextButton.onclick = handleNextGame;
