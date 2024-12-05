@@ -228,7 +228,7 @@ window.addEventListener('keydown', (event) => {
                 
                 // Stay in place but use 2 keys
                 gameState.keys -= 2;
-
+        
                 showTopRightMessage('Used 2 keys to disarm trap!');
                 
                 // Start disarm animation
@@ -236,11 +236,25 @@ window.addEventListener('keydown', (event) => {
                 if (trapElement) {
                     trapElement.classList.add('disarming');
                     
-                    // Convert to path after animation and reset disarming state
+                    // Convert to path in game state immediately but keep visual until animation ends
+                    gameState.maze[newY][newX] = 'path';
+                    
+                    // Remove the trap visually after animation
                     setTimeout(() => {
-                        gameState.maze[newY][newX] = 'path';
                         gameState.isDisarming = false;  // Reset the flag after animation completes
-                        renderMaze();
+                        
+                        // Only update the specific cell instead of full re-render
+                        const cell = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
+                        if (cell) {
+                            cell.className = 'cell path';
+                            if (gameState.visibleTiles.has(`${newX},${newY}`)) {
+                                cell.classList.add('visible');
+                            } else if (gameState.exploredTiles.has(`${newX},${newY}`)) {
+                                cell.classList.add('explored');
+                            } else {
+                                cell.classList.add('fog');
+                            }
+                        }
                     }, 500);
                 }
                 
