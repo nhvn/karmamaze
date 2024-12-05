@@ -894,46 +894,60 @@ function handleCellClick(x, y) {
     if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
         const targetCell = gameState.maze[y][x];
     
-    if (targetCell === 'trap') {
-        if (gameState.isDisarming) return;  // Exit early if already disarming
-
-        if (gameState.keys >= 2) {
-            // Set disarming state to true
-            gameState.isDisarming = true;
-            
-            // Stay in place but use 2 keys
-            gameState.keys -= 2;
-
-            showTopRightMessage('Used 2 keys to disarm trap!');
-            
-            // Start disarm animation
-            const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            if (trapElement) {
-                trapElement.classList.add('disarming');
+        if (targetCell === 'trap') {
+            if (gameState.isDisarming) return;  // Exit early if already disarming
+        
+            if (gameState.keys >= 2) {
+                // Set disarming state to true
+                gameState.isDisarming = true;
                 
-                // Convert to path after animation and reset disarming state
-                setTimeout(() => {
+                // Stay in place but use 2 keys
+                gameState.keys -= 2;
+        
+                showTopRightMessage('Used 2 keys to disarm trap!');
+                
+                // Start disarm animation
+                const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                if (trapElement) {
+                    trapElement.classList.add('disarming');
+                    
+                    // Convert to path in game state immediately but keep visual until animation ends
                     gameState.maze[y][x] = 'path';
-                    gameState.isDisarming = false;  // Reset the flag after animation completes
-                    renderMaze();
-                }, 500);
-            }
-            
-            // Update key display
-            const keyStat = document.querySelector('.key-stat');
-            if (keyStat) {
-                keyStat.dataset.count = gameState.keys;
-                const keysEl = keyStat.querySelector('#keys');
-                if (keysEl) {
-                    keysEl.textContent = gameState.keys;
+                    
+                    // Remove the trap visually after animation
+                    setTimeout(() => {
+                        gameState.isDisarming = false;  // Reset the flag after animation completes
+                        
+                        // Only update the specific cell instead of full re-render
+                        const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                        if (cell) {
+                            cell.className = 'cell path';
+                            if (gameState.visibleTiles.has(`${x},${y}`)) {
+                                cell.classList.add('visible');
+                            } else if (gameState.exploredTiles.has(`${x},${y}`)) {
+                                cell.classList.add('explored');
+                            } else {
+                                cell.classList.add('fog');
+                            }
+                        }
+                    }, 500);
                 }
+                
+                // Update key display
+                const keyStat = document.querySelector('.key-stat');
+                if (keyStat) {
+                    keyStat.dataset.count = gameState.keys;
+                    const keysEl = keyStat.querySelector('#keys');
+                    if (keysEl) {
+                        keysEl.textContent = gameState.keys;
+                    }
+                }
+            } else {
+                // Game over - fell into trap
+                handleTrap();
             }
-        } else {
-            // Game over - fell into trap
-            handleTrap();
-        }
-        return;  // Don't move - stay in current position
-    } else if (targetCell === 'crystal-ball') {
+            return;  // Don't move - stay in current position
+        } else if (targetCell === 'crystal-ball') {
             movePlayer(x, y);
             activateCrystalBall();
             gameState.maze[y][x] = 'path';
