@@ -32,7 +32,7 @@ type WebViewMessage =
     };
 
 // Define types for maze structure
-type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball' | 'map' | 'key-powerup';
+type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball' | 'map' | 'key-powerup' | 'trap';
 type Position = { x: number; y: number };
 type GameState = {
   maze: MazeCell[][];
@@ -247,6 +247,28 @@ function generateLevel2Maze(width: number, height: number): MazeCell[][] {
       maze[y][x] = 'key-powerup';
       keyPowerupPlaced = true;
     }
+  }
+
+    // After placing key powerup, add traps
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+          if (maze[y][x] === 'path') {
+              // Don't place traps:
+              // - Near the start
+              // - In front of the real exit
+              // - Next to doors
+              const isNearStart = x <= 2;
+              const isNearExit = x === width - 2 && y === exitPos.y;
+              const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
+                  maze[y + dy]?.[x + dx] === 'door'
+              );
+
+              // 15% chance to place trap if conditions are met
+              if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < 0.15) {
+                  maze[y][x] = 'trap';
+              }
+          }
+      }
   }
 
   return maze;

@@ -15,7 +15,8 @@ let gameState = {
     exploredTiles: new Set(),
     crystalBallUsed: false,
     doorHits: new Map(),
-    doorOpacity: new Map()
+    doorOpacity: new Map(),
+    isDisarming: false 
 };
 
 console.log(gameState); // Ensure it has a `keys` property
@@ -144,6 +145,41 @@ window.addEventListener('message', (event) => {
     }
 });
 
+// function handleTrapDisarm(x, y) {
+//     if (gameState.isDisarming) return false; // Return false if already disarming
+    
+//     if (gameState.keys >= 2) {
+//         gameState.isDisarming = true; // Set the flag before starting animation
+//         gameState.keys -= 2;
+
+//         showTopRightMessage('Used 2 keys to disarm trap');
+        
+//         // Start disarm animation
+//         const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+//         if (trapElement) {
+//             trapElement.classList.add('disarming');
+            
+//             // Convert to path after animation and reset flag
+//             setTimeout(() => {
+//                 gameState.maze[y][x] = 'path';
+//                 gameState.isDisarming = false; // Reset the flag after animation
+//                 renderMaze();
+//             }, 500);
+//         }
+        
+//         // Update key display
+//         const keyStat = document.querySelector('.key-stat');
+//         if (keyStat) {
+//             keyStat.dataset.count = gameState.keys;
+//             const keysEl = keyStat.querySelector('#keys');
+//             if (keysEl) {
+//                 keysEl.textContent = gameState.keys;
+//             }
+//         }
+//         return true; // Disarming succeeded
+//     }
+//     return false; // Not enough keys to disarm
+// }
 
 // Add keyboard controls
 window.addEventListener('keydown', (event) => {
@@ -182,9 +218,47 @@ window.addEventListener('keydown', (event) => {
     if (newX >= 0 && newX < gameState.maze[0].length && 
         newY >= 0 && newY < gameState.maze.length) {
         const targetCell = gameState.maze[newY][newX];
+    
+        if (targetCell === 'trap') {
+            if (gameState.isDisarming) return;  // Exit early if already disarming
+        
+            if (gameState.keys >= 2) {
+                // Set disarming state to true
+                gameState.isDisarming = true;
+                
+                // Stay in place but use 2 keys
+                gameState.keys -= 2;
 
-        // Combine all powerup cases together
-        if (targetCell === 'crystal-ball') {
+                showTopRightMessage('Used 2 keys to disarm trap!');
+                
+                // Start disarm animation
+                const trapElement = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
+                if (trapElement) {
+                    trapElement.classList.add('disarming');
+                    
+                    // Convert to path after animation and reset disarming state
+                    setTimeout(() => {
+                        gameState.maze[newY][newX] = 'path';
+                        gameState.isDisarming = false;  // Reset the flag after animation completes
+                        renderMaze();
+                    }, 500);
+                }
+                
+                // Update key display
+                const keyStat = document.querySelector('.key-stat');
+                if (keyStat) {
+                    keyStat.dataset.count = gameState.keys;
+                    const keysEl = keyStat.querySelector('#keys');
+                    if (keysEl) {
+                        keysEl.textContent = gameState.keys;
+                    }
+                }
+            } else {
+                // Game over - fell into trap
+                handleTrap();
+            }
+            return;  // Don't move - stay in current position
+        } else if (targetCell === 'crystal-ball') {
             movePlayer(newX, newY);
             activateCrystalBall();
             gameState.maze[newY][newX] = 'path';
@@ -527,7 +601,7 @@ function handleDoor(x, y) {
     gameState.doorHits.set(doorKey, hits + 1);
 
     // Calculate opacity (from 1 to 0.3)
-    const opacity = 1 - ((hits + 1) / 12) * 0.7;
+    const opacity = 1 - ((hits + 1) / 10) * 0.7;
     gameState.doorOpacity.set(doorKey, opacity);
 
     // Shake the door
@@ -541,16 +615,14 @@ function handleDoor(x, y) {
         }, 100);
     }
 
-    // Break door after 12 hits
-    if (hits + 1 >= 12) {
+    // Break door after 10 hits
+    if (hits + 1 >= 10) {
         gameState.maze[y][x] = 'path';
         gameState.doorHits.delete(doorKey);
         gameState.doorOpacity.delete(doorKey);
-        // showMessage('Door broken!', 'success');
+        showTopRightMessage('Door broken!');
         renderMaze();
-    } else {
-        // showMessage(`Door weakening... (${12 - (hits + 1)} more hits needed)`, 'error');
-    }
+    } 
 }
 
 function unlockDoor(x, y) {
@@ -562,6 +634,9 @@ function unlockDoor(x, y) {
     // Get door position and create animation first
     const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
     if (!doorElement) return;
+
+    showTopRightMessage('Used 1 key to unlock door!');
+
     const rect = doorElement.getBoundingClientRect();
 
     // Determine split direction
@@ -632,51 +707,6 @@ function unlockDoor(x, y) {
     }, '*');
 }
 
-// function playDoorAnimation(x, y) {
-//     // Get door position
-//     const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-//     if (!doorElement) return;
-//     const rect = doorElement.getBoundingClientRect();
-
-//     // Determine split direction based on player position
-//     const { x: playerX, y: playerY } = gameState.playerPosition;
-//     const dx = Math.abs(x - playerX);
-//     const dy = Math.abs(y - playerY);
-//     const isVertical = dy > dx;  // Keep this the same
-
-//     // Create animation container
-//     const animContainer = document.createElement('div');
-//     animContainer.className = `door-animation ${isVertical ? 'vertical' : 'horizontal'}`;
-//     animContainer.style.left = `${rect.left}px`;
-//     animContainer.style.top = `${rect.top}px`;
-
-//     // create left/right pieces, otherwise create top/bottom pieces
-//     if (!isVertical) {  
-//         const topPiece = document.createElement('div');
-//         topPiece.className = 'door-piece top';
-//         const bottomPiece = document.createElement('div');
-//         bottomPiece.className = 'door-piece bottom';
-//         animContainer.appendChild(topPiece);
-//         animContainer.appendChild(bottomPiece);
-//     } else {  
-//         const leftPiece = document.createElement('div');
-//         leftPiece.className = 'door-piece left';
-//         const rightPiece = document.createElement('div');
-//         rightPiece.className = 'door-piece right';
-//         animContainer.appendChild(leftPiece);
-//         animContainer.appendChild(rightPiece);
-//     }
-
-//     // Add to overlay
-//     const overlay = document.getElementById('animation-overlay');
-//     overlay.appendChild(animContainer);
-
-//     // Clean up after animation
-//     setTimeout(() => {
-//         animContainer.remove();
-//     }, 500);
-// }
-
 // Add this helper function for color interpolation
 function interpolateColor(startColor, endColor, percentage) {
     // Convert hex to RGB
@@ -715,12 +745,12 @@ function showTopRightMessage(message) {
     // Start fade-out after a delay
     setTimeout(() => {
         messageEl.classList.add('fade-out');
-    }, 2000); // Show message for 2 seconds
+    }, 3000); // Show message for x seconds
 
     // Remove the message completely after fade-out transition
     setTimeout(() => {
         messageEl.remove();
-    }, 2300); // Matches fade-out duration (2s display + 0.3s fade)
+    }, 4000); // Matches fade-out duration (2s display + 0.3s fade)
 }
 
 // Updated functions with the new message display
@@ -758,7 +788,6 @@ function activateMap() {
     showTopRightMessage('Found a map!');
 }
 
-
 function activateCrystalBall() {
     gameState.crystalBallUsed = true;
     
@@ -768,14 +797,20 @@ function activateCrystalBall() {
         crystalIndicator.style.display = 'flex';
     }
 
+    // Reveal both exits and traps
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
+            const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (!cellElement) return;
+            
             if (cell === 'exit') {
-                const exitCell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-                if (exitCell) {
-                    exitCell.classList.add('revealed-exit');
-                    gameState.visibleTiles.add(`${x},${y}`);
-                }
+                cellElement.classList.add('revealed-exit');
+                gameState.visibleTiles.add(`${x},${y}`);
+            } else if (cell === 'trap') {
+                cellElement.classList.add('revealed');
+                cellElement.classList.remove('fog');
+                cellElement.classList.add('visible');
+                gameState.visibleTiles.add(`${x},${y}`);
             }
         });
     });
@@ -796,7 +831,7 @@ function activateKeyPowerup() {
         }
     }
     
-    showTopRightMessage('Found keys!');
+    showTopRightMessage('Found magical keys!');
 }
 
 function handleTrap() {
@@ -844,9 +879,47 @@ function handleCellClick(x, y) {
     // Only allow clicks on directly adjacent cells (not diagonal)
     if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
         const targetCell = gameState.maze[y][x];
+    
+    if (targetCell === 'trap') {
+        if (gameState.isDisarming) return;  // Exit early if already disarming
 
-        // Use the same logic as keyboard movement
-        if (targetCell === 'crystal-ball') {
+        if (gameState.keys >= 2) {
+            // Set disarming state to true
+            gameState.isDisarming = true;
+            
+            // Stay in place but use 2 keys
+            gameState.keys -= 2;
+
+            showTopRightMessage('Used 2 keys to disarm trap!');
+            
+            // Start disarm animation
+            const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (trapElement) {
+                trapElement.classList.add('disarming');
+                
+                // Convert to path after animation and reset disarming state
+                setTimeout(() => {
+                    gameState.maze[y][x] = 'path';
+                    gameState.isDisarming = false;  // Reset the flag after animation completes
+                    renderMaze();
+                }, 500);
+            }
+            
+            // Update key display
+            const keyStat = document.querySelector('.key-stat');
+            if (keyStat) {
+                keyStat.dataset.count = gameState.keys;
+                const keysEl = keyStat.querySelector('#keys');
+                if (keysEl) {
+                    keysEl.textContent = gameState.keys;
+                }
+            }
+        } else {
+            // Game over - fell into trap
+            handleTrap();
+        }
+        return;  // Don't move - stay in current position
+    } else if (targetCell === 'crystal-ball') {
             movePlayer(x, y);
             activateCrystalBall();
             gameState.maze[y][x] = 'path';
@@ -878,6 +951,7 @@ function handleCellClick(x, y) {
     }
 }
 
+// Also update the renderMaze function to maintain the revealed state
 function renderMaze(movementClass = '') {
     const grid = document.getElementById('maze-grid');
     if (!gameState.maze || !gameState.maze[0]) {
@@ -896,6 +970,14 @@ function renderMaze(movementClass = '') {
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
             
+            // Add revealed class for traps if crystal ball is used
+            if (cell === 'trap' && gameState.crystalBallUsed) {
+                cellElement.classList.add('revealed');
+                cellElement.classList.remove('fog');
+                cellElement.classList.add('visible');
+            }
+
+            // Rest of your existing renderMaze code...
             if (cell === 'door') {
                 const doorKey = `${x},${y}`;
                 const opacity = gameState.doorOpacity.get(doorKey);
@@ -981,7 +1063,7 @@ function markAdjacentCells() {
 }
 
 function isWalkable(cellType) {
-    return ['path', 'door', 'crystal-ball', 'map', 'key-powerup', 'exit', 'fake-exit'].includes(cellType);
+    return ['path', 'door', 'crystal-ball', 'map', 'key-powerup', 'exit', 'fake-exit', 'trap'].includes(cellType);
 }
 
 function showMessage(text, type, permanent = false) {
