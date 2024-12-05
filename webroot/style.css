@@ -306,6 +306,62 @@ body {
   cursor: default;
 }
 
+/* Trap styles */
+.trap {
+  background: #4a4a4a;
+  position: relative;
+}
+
+.trap::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 25px;
+  height: 25px;
+  background: #0000008d;
+  border-radius: 3px;
+  transition: opacity 0.5s ease;
+}
+
+/* Revealed trap (by crystal ball) */
+.trap.revealed::after {
+  background: rgba(255, 17, 0, 0.7) !important;
+  transition: background-color 0.3s ease, opacity 0.5s ease;
+}
+
+/* Disarming animations */
+.trap.disarming:not(.revealed)::after {
+  background: #594a00;
+  animation: shrinkTrap 0.5s forwards;
+}
+
+.trap.disarming.revealed::after {
+  background: rgba(255, 17, 0, 0.7);
+  animation: fadeTrap 0.5s forwards;
+}
+
+@keyframes shrinkTrap {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+}
+
+@keyframes fadeTrap {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* Player base styles */
 .player {
   position: relative;
@@ -581,7 +637,7 @@ body {
   z-index: 1000;
   text-align: right;
   display: flex;
-  flex-direction: column-reverse; /* New messages appear at the bottom */
+  flex-direction: column; /* New messages appear at the top */
   gap: 5px; /* Spacing between messages */
   pointer-events: none;
 }
@@ -590,7 +646,7 @@ body {
   font-size: 14px;
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.8s ease, transform 0.8s ease; /* Smooth transitions */
+  transition: opacity 2s ease, transform 2s ease; /* Smooth transitions */
 }
 .top-right-message.fade-out {
   opacity: 0;
