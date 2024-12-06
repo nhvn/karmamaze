@@ -508,8 +508,8 @@ function initializeGame(data) {
     // Update lives display
     updateLives(gameState.lives);
 
-    // Show bonus key message only on next game, not retry or new game
-    if (!data.isNewGame && !data.isRetry) {
+    // Show bonus key message only on next game
+    if (message.type === 'nextGame') {
         showTopRightMessage('Found 1 bonus key!');
     }
 
@@ -1034,6 +1034,8 @@ function handleTrap() {
     playerStats.currentLives = newLives; // Add this line to persist lives
     updateLives(newLives);
     
+    showTopRightMessage('Lost 1 life!');
+
     if (newLives > 0) {
         // Still has lives left
         showMessage('Oh no! You fell into a trap!\nBe more careful next time!', 'error', true);
