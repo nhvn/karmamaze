@@ -21,7 +21,8 @@ let gameState = {
     moveCount: 0,        // Track number of moves
     retryCount: 0,       // Track retries
     winStreak: 0,        // Track consecutive wins
-    totalScore: 0        // Track total score
+    totalScore: 0,        // Track total score
+    lives: 3
 };
 
 console.log(gameState); // Ensure it has a `keys` property
@@ -211,6 +212,15 @@ const playerStats = {
         };
     }
 };
+
+// Update life display function
+function updateLives(newLives) {
+    gameState.lives = newLives;
+    const hearts = document.querySelectorAll('.heart-icon');
+    hearts.forEach((heart, index) => {
+        heart.setAttribute('data-filled', index < newLives ? 'true' : 'false');
+    });
+}
 
 function log(message, data = null) {
     const logMessage = data ? `${message} ${JSON.stringify(data)}` : message;
@@ -500,12 +510,16 @@ function initializeGame(data) {
         moveCount: 0,
         retryCount: 0,
         winStreak: gameState.winStreak,
-        totalScore: gameState.totalScore
+        totalScore: gameState.totalScore,
+        lives: data.isNewGame ? 3 : gameState.lives
     };
 
     if (data.isNewGame) {
         showTopRightMessage('Found 1 bonus keys!');
     }
+
+    // Update lives display
+    updateLives(gameState.lives);
 
     // Update UI elements safely
     const usernameEl = document.getElementById('username');
@@ -614,21 +628,22 @@ function handleTimeUp() {
     messageEl.style.display = 'block';
 }
 
-// DUPLICATE?
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         const messageEl = document.getElementById('message');
         if (!messageEl || messageEl.style.display === 'none') return;
         
-        if (gameState.isGameOver && messageEl.dataset.gameWon === 'true') {
-            handleNextGame();
-            return;
-        }
-        
-        if (gameState.isGameOver && messageEl.dataset.gameRetry === 'true') {
-            retryLevel();
-            messageEl.style.display = 'none';
-            return;
+        if (gameState.isGameOver) {
+            if (messageEl.dataset.gameWon === 'true') {
+                handleNextGame();
+                return;
+            }
+            
+            if (messageEl.dataset.gameRetry === 'true' && gameState.lives > 0) {
+                retryLevel();
+                messageEl.style.display = 'none';
+                return;
+            }
         }
     }
 });
@@ -1020,7 +1035,29 @@ function activateKeyPowerup() {
 function handleTrap() {
     gameState.isGameOver = true;
     stopTimer();
-    showMessage('Oh no, it\'s a trap!', 'error', true);
+    
+    // Decrease lives
+    const newLives = gameState.lives - 1;
+    updateLives(newLives);
+    
+    if (newLives > 0) {
+        // Still has lives left
+        showMessage('Oh no! You fell into a trap!\nBe more careful next time!', 'error', true);
+    } else {
+        // Game over - no lives left
+        const finalScore = playerStats.totalScore;
+        const avgRating = playerStats.averageRating;
+        const gamesPlayed = playerStats.gamesPlayed;
+        
+        const gameOverMessage = [
+            'Game Over!',
+            `Final Score: ${finalScore}`,
+            `Average Rating: ${avgRating.toFixed(1)}⭐`,
+            `Games Played: ${gamesPlayed}\n`
+        ].join('\n');
+
+        showMessage(gameOverMessage, 'error no-lives', true, true); 
+    }
 }
 
 function movePlayer(x, y) {
@@ -1329,21 +1366,29 @@ function isWalkable(cellType) {
     return ['path', 'door', 'crystal-ball', 'map', 'key-powerup', 'exit', 'fake-exit', 'trap'].includes(cellType);
 }
 
-function showMessage(text, type, permanent = false) {
+function showMessage(text, type, permanent = false, showQuitOnly = false) {
     const messageEl = document.getElementById('message');
     messageEl.innerHTML = '';
     messageEl.dataset.gameWon = 'false';
     messageEl.dataset.gameRetry = 'false';
     
-    // Split text by newlines and create separate divs for each line
+    // Split text by newlines and create separate divs
     text.split('\n').forEach(line => {
         const textDiv = document.createElement('div');
         textDiv.textContent = line;
-        textDiv.style.marginBottom = '8px'; // Add some spacing between lines
+        textDiv.style.marginBottom = '8px';
         messageEl.appendChild(textDiv);
     });
-    
-    if (type === 'success') {
+
+    if (showQuitOnly) {
+        // Add quit button below Games Played
+        const quitButton = document.createElement('button');
+        quitButton.textContent = 'Quit Game';
+        quitButton.onclick = newGame;
+        quitButton.style.marginTop = '10px';  // Add some space above the button
+        messageEl.appendChild(quitButton);
+    } else if (type === 'success') {
+        // Normal success message handling
         const spacerDiv = document.createElement('div');
         messageEl.appendChild(spacerDiv);
 
@@ -1352,14 +1397,17 @@ function showMessage(text, type, permanent = false) {
         nextButton.onclick = handleNextGame;
         messageEl.appendChild(nextButton);
         messageEl.dataset.gameWon = 'true';
-    } else if (type === 'error' && permanent) {
+    } else if (type === 'error' && permanent && !showQuitOnly) {
+        // Normal error message handling with retry option
+        const spacerDiv = document.createElement('div');
+        messageEl.appendChild(spacerDiv);
+
         const retryButton = document.createElement('button');
         retryButton.textContent = 'Try Again (Or Press Enter)';
         retryButton.onclick = () => {
-            console.log('Enter key pressed:', event.key);
             retryLevel();
             messageEl.style.display = 'none';
-            clearGameEndState(); 
+            clearGameEndState();
         };
         messageEl.appendChild(retryButton);
         messageEl.dataset.gameRetry = 'true';

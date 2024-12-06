@@ -80,6 +80,33 @@ body {
   box-sizing: border-box;
   z-index: 100;
 }
+.user-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lives-container {
+  display: flex;
+  gap: 3px;
+  margin-left: 10px;
+}
+
+.heart-icon {
+  font-size: 20px;
+  transition: all 0.3s ease;
+}
+
+.heart-icon[data-filled="false"] {
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
+
+/* Update message styles for different game over states */
+#message.error.no-lives {
+  background-color: #d32f2f;
+  border-color: #b71c1c;
+}
 .powerup-stats {
   display: flex;
   gap: 15px;
