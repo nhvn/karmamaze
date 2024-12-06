@@ -1406,10 +1406,15 @@ function pauseGame() {
             savedTimeLeft = parseInt(document.getElementById('timer').textContent);
         }
         
+        // Update pause menu stats
+        document.getElementById('pauseTotalScore').textContent = playerStats.totalScore;
+        document.getElementById('pauseAverageRating').textContent = playerStats.averageRating.toFixed(1);
+        document.getElementById('pauseGamesPlayed').textContent = playerStats.gamesPlayed;
+        
         // Show overlay
         const overlay = document.getElementById('pause-overlay');
         if (overlay) {
-            overlay.style.display = 'flex';  // Changed from block to flex
+            overlay.style.display = 'flex';
         }
         
         isPaused = true;
@@ -1470,25 +1475,30 @@ window.addEventListener('load', () => {
     sendReadyMessage();
     renderMaze();
 
-    // Only keep the new game button handler
-    const newGameButton = document.getElementById('newGameButton');
-    if (newGameButton) {
-        newGameButton.replaceWith(newGameButton.cloneNode(true));
-        const newGameBtn = document.getElementById('newGameButton');
-        newGameBtn.addEventListener('click', newGame);
-    }
-    // Add pause button handler
+    // Pause button handler
     const pauseButton = document.getElementById('pauseButton');
     if (pauseButton) {
         pauseButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent overlay from catching the click
+            e.stopPropagation();
             pauseGame();
         });
     }
 
-    // Add overlay click handler
-    const overlay = document.getElementById('pause-overlay');
-    if (overlay) {
-        overlay.addEventListener('click', resumeGame);
+    // Resume button handler
+    const resumeButton = document.getElementById('resumeButton');
+    if (resumeButton) {
+        resumeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resumeGame();
+        });
+    }
+
+    // Quit button handler
+    const quitButton = document.getElementById('quitButton');
+    if (quitButton) {
+        quitButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            newGame(); // This will take you back to the main menu
+        });
     }
 });

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container" tabindex="0"></div>
+    <div id="game-container" tabindex="0">
         <div id="stats">
             <div><span id="username">Waiting...</span></div>
             <div class="powerup-stats">
@@ -24,7 +24,6 @@
             </div>
             <div class="button-container">
                 <button id="pauseButton" class="icon-button">⏸️</button>
-                <button id="newGameButton">Menu</button>
             </div>
         </div>
         <div id="maze-grid"></div>
@@ -35,10 +34,19 @@
             <div class="loading-text">Loading...</div>
         </div>
         <div id="top-right-messages"></div>
-        <!-- Add this line -->
         <div id="animation-overlay"></div>
         <div id="pause-overlay" style="display: none;">
-            <div class="pause-message">Tap to Resume</div>
+            <div class="pause-menu">
+                <div class="pause-stats">
+                    <div class="stat-item">Total Score: <span id="pauseTotalScore">0</span></div>
+                    <div class="stat-item">Average Rating: <span id="pauseAverageRating">0</span>⭐</div>
+                    <div class="stat-item">Games Played: <span id="pauseGamesPlayed">0</span></div>
+                </div>
+                <div class="pause-buttons">
+                    <button id="resumeButton" class="pause-button">Resume</button>
+                    <button id="quitButton" class="pause-button">Quit</button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="maze.js"></script>

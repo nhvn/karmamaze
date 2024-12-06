@@ -16,11 +16,12 @@ body {
 #game-container {
   max-width: 800px;
   margin: auto 0;
-
+  outline: none;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 100px); /* Adjust height to account for stats bar */
+  /* height: calc(100vh - 100px);  */
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 #timer {
   position: absolute;
@@ -128,21 +129,69 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
-  z-index: 2000;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
   display: none;
-  align-items: center;
   justify-content: center;
-  cursor: pointer;
+  align-items: center;
+  z-index: 1000;
 }
 
-.pause-message {
+.pause-menu {
+  background-color: #2a2a2a;
+  border: 2px solid #4a4a4a;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  min-width: 300px;
+}
+
+.pause-stats {
+  margin-bottom: 20px;
+}
+
+.stat-item {
   color: white;
-  font-size: 24px;
-  font-weight: bold;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+.pause-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pause-button {
+  background-color: #4a4a4a;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pause-button:hover {
+  background-color: #666;
+}
+
+#resumeButton {
+  background-color: #4CAF50;
+}
+
+#resumeButton:hover {
+  background-color: #45a049;
+}
+
+#quitButton {
+  background-color: #f44336;
+}
+
+#quitButton:hover {
+  background-color: #da190b;
 }
 
 /* Maze Grid */
