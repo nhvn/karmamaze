@@ -126,38 +126,31 @@ function calculateStarRating(gameData) {
         timeRemaining,
         movesUsed,
         optimalMoves,
-        retryCount,
-        winStreak
+        retryCount
     } = gameData;
     
-    let ratingPoints = 0; // Out of 100 points, will be converted to stars
-    
-    // Time component (up to 30 points)
+    let ratingPoints = 0; // Out of 100 points
+
+    // Time component (up to 50 points) - More generous time brackets
     const timeUsed = 30 - timeRemaining;
-    if (timeUsed <= 10) ratingPoints += 30;
-    else if (timeUsed <= 15) ratingPoints += 25;
-    else if (timeUsed <= 20) ratingPoints += 20;
-    else if (timeUsed <= 25) ratingPoints += 15;
-    else ratingPoints += 10;
+    if (timeUsed <= 17) ratingPoints += 50;      // More time allowed for max points
+    else if (timeUsed <= 22) ratingPoints += 40; // Still high points for good completion
+    else if (timeUsed <= 26) ratingPoints += 30; // Decent points for slower completion
+    else ratingPoints += 20;                     // Base points for finishing
     
-    // Move efficiency (up to 40 points)
+    // Move efficiency (up to 50 points) - More lenient thresholds
     const moveEfficiency = movesUsed / optimalMoves;
-    if (moveEfficiency <= 1.1) ratingPoints += 40;
-    else if (moveEfficiency <= 1.25) ratingPoints += 35;
-    else if (moveEfficiency <= 1.5) ratingPoints += 25;
-    else if (moveEfficiency <= 2.0) ratingPoints += 15;
-    else ratingPoints += 5;
+    if (moveEfficiency <= 1.6) ratingPoints += 50;      // 60% over optimal for max points
+    else if (moveEfficiency <= 1.85) ratingPoints += 40;
+    else if (moveEfficiency <= 2.1) ratingPoints += 30;
+    else if (moveEfficiency <= 2.6) ratingPoints += 20;
+    else ratingPoints += 10;                           
     
-    // Retry penalty (up to -20 points)
+    // Retry penalty (up to -20 points) - Keep this the same
     ratingPoints -= Math.min(20, retryCount * 10);
     
-    // Win streak bonus (up to 10 points)
-    if (winStreak >= 20) ratingPoints += 10;
-    else if (winStreak >= 10) ratingPoints += 7;
-    else if (winStreak >= 5) ratingPoints += 5;
-    
     // Convert to star rating (0-5 stars, can have half stars)
-    const starRating = Math.max(0.5, Math.round((ratingPoints / 100) * 10) / 2);
+    const starRating = Math.max(1.0, Math.round((ratingPoints / 100) * 10) / 2);
     
     return starRating;
 }
@@ -179,6 +172,7 @@ const playerStats = {
         
         // Update keys after maze completion
         this.currentKeys = gameState.keys + 1;  // Save current keys plus bonus
+        this.currentLives = gameState.lives;
         
         this.totalScore += scores.totalScore;
         this.gamesPlayed++;
@@ -480,24 +474,21 @@ function initializeGame(data) {
         return;
     }
 
-    // Store initial maze when first received
     initialMaze = JSON.parse(JSON.stringify(data.maze));
 
-    // Clear any existing win message
     const messageEl = document.getElementById('message');
     if (messageEl) {
         messageEl.style.display = 'none';
         messageEl.textContent = '';
     }
 
-    // Store initial keys - either from previous game bonus or default 2
-    initialKeys = playerStats.currentKeys || 3;
-
-    // Update existing gameState instead of creating new one
+    // Only reset lives if it's a new game from menu
+    const newLives = data.isNewGame ? 3 : (data.lives || gameState.lives);
+    
     gameState = {
         ...gameState,
         username: data.username || 'Developer',
-        keys: initialKeys,  
+        keys: playerStats.currentKeys || 3,
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
         isGameOver: false,
@@ -511,15 +502,16 @@ function initializeGame(data) {
         retryCount: 0,
         winStreak: gameState.winStreak,
         totalScore: gameState.totalScore,
-        lives: data.isNewGame ? 3 : gameState.lives
+        lives: playerStats.currentLives || 3
     };
-
-    if (data.isNewGame) {
-        showTopRightMessage('Found 1 bonus keys!');
-    }
 
     // Update lives display
     updateLives(gameState.lives);
+
+    // Show bonus key message only on next game, not retry or new game
+    if (!data.isNewGame && !data.isRetry) {
+        showTopRightMessage('Found 1 bonus key!');
+    }
 
     // Update UI elements safely
     const usernameEl = document.getElementById('username');
@@ -1036,8 +1028,10 @@ function handleTrap() {
     gameState.isGameOver = true;
     stopTimer();
     
-    // Decrease lives
+    // Decrease lives and store in playerStats
     const newLives = gameState.lives - 1;
+    gameState.lives = newLives;
+    playerStats.currentLives = newLives; // Add this line to persist lives
     updateLives(newLives);
     
     if (newLives > 0) {
@@ -1288,7 +1282,8 @@ function handleWin() {
         movesUsed: gameState.moveCount,
         optimalMoves: calculateOptimalMoves(gameState.maze),
         retryCount: gameState.retryCount,
-        winStreak: gameState.winStreak
+        winStreak: gameState.winStreak,
+        lives: gameState.lives
     };
 
     const result = playerStats.addGameResult(`level${gameState.level}`, gameData);
@@ -1333,7 +1328,8 @@ function handleWin() {
             totalScore: result.totalScore,
             rating: result.averageRating,
             gamesPlayed: playerStats.gamesPlayed,
-            winStreak: playerStats.winStreak
+            winStreak: playerStats.winStreak,
+            lives: gameState.lives
         }
     }, '*');
 }
@@ -1422,7 +1418,10 @@ function handleNextGame() {
     showLoading();
     window.parent.postMessage({
         type: 'retry',
-        data: { sameLevel: true }
+        data: { 
+            sameLevel: true,
+            lives: gameState.lives  // Add this
+        }
     }, '*');
 }
 

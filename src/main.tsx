@@ -10,7 +10,10 @@ type WebViewMessage =
         keys: number; 
         maze: MazeCell[][]; 
         level: number;
-        gamesPlayed?: number;  
+        lives: number;
+        gamesPlayed?: number;
+        isRetry?: boolean;  // Add this
+        isNewGame?: boolean;  // Add this  
       };
     }
   | {
@@ -25,6 +28,7 @@ type WebViewMessage =
       type: 'gameOver';
       data: { 
         won: boolean;
+        lives?: number;
       };
     }
   | {
@@ -48,6 +52,8 @@ type UserData = {
 };
 type PlayerStats = {
   gamesPlayed: number;
+  currentKeys: number;
+  currentLives: number;  // Add this
 };
 function isPathReachable(maze: MazeCell[][], start: Position, end: Position): boolean {
   const queue: Position[] = [start];
@@ -315,8 +321,10 @@ Devvit.addCustomPostType({
 
     // Add playerStats state
     const [playerStats, setPlayerStats] = useState<PlayerStats>(() => ({
-      gamesPlayed: 0
-    }));
+      gamesPlayed: 0,
+      currentKeys: 3,
+      currentLives: 3
+  }));
 
     const [gameState, setGameState] = useState<GameState>(() => ({
       maze: generateMaze(12, 9),
@@ -367,9 +375,14 @@ Devvit.addCustomPostType({
           break;
         
           case 'gameOver':
-            // Increment games played on both win and loss
             const newGamesPlayed = gameState.gamesPlayed + 1;
             console.log('Incrementing games played to:', newGamesPlayed);
+            
+            // Update playerStats with current lives from the game
+            setPlayerStats(prevStats => ({
+              ...prevStats,
+              currentLives: message.data.lives || prevStats.currentLives
+            }));
             
             const newState = {
               ...gameState,
@@ -379,9 +392,7 @@ Devvit.addCustomPostType({
             setGameState(newState);
             await context.redis.set(`maze_${context.postId}`, JSON.stringify(newState));
           
-            // Don't automatically send new maze - let player trigger it
             if (!message.data.won) {
-              // Only generate new maze immediately if player lost
               const newMaze = currentLevel === 1 
                 ? generateMaze(12, 9) 
                 : generateLevel2Maze(12, 9, newGamesPlayed);
@@ -390,34 +401,35 @@ Devvit.addCustomPostType({
                 type: 'initialData',
                 data: {
                   username: userData?.username ?? 'Developer',
-                  keys: 3,
+                  keys: playerStats.currentKeys || 3,
                   maze: newMaze,
                   level: currentLevel,
-                  gamesPlayed: newGamesPlayed
+                  gamesPlayed: newGamesPlayed,
+                  lives: playerStats.currentLives,
+                  isRetry: true
                 }
               };
               context.ui.webView.postMessage('mazeGame', updateMessage);
             }
             break;
-          
-          // Add new case for handling next game request
-          case 'nextGame':
-            const nextMaze = currentLevel === 1 
+        case 'nextGame':
+          const nextMaze = currentLevel === 1 
               ? generateMaze(12, 9) 
               : generateLevel2Maze(12, 9, gameState.gamesPlayed);
-          
-            const nextGameMessage: WebViewMessage = {
+      
+          const nextGameMessage: WebViewMessage = {
               type: 'initialData',
               data: {
-                username: userData?.username ?? 'Developer',
-                keys: 3,
-                maze: nextMaze,
-                level: currentLevel,
-                gamesPlayed: gameState.gamesPlayed
+                  username: userData?.username ?? 'Developer',
+                  keys: playerStats.currentKeys || 3,
+                  maze: nextMaze,
+                  level: currentLevel,
+                  gamesPlayed: gameState.gamesPlayed,
+                  lives: playerStats.currentLives
               }
-            };
-            context.ui.webView.postMessage('mazeGame', nextGameMessage);
-            break;
+          };
+          context.ui.webView.postMessage('mazeGame', nextGameMessage);
+          break;
     
         case 'retry':
           // Don't reset games played on retry
@@ -427,6 +439,7 @@ Devvit.addCustomPostType({
           
           const retryState = {
             ...gameState,
+            lives: playerStats.currentLives,
             maze: retryMaze,
             playerPosition: { x: 1, y: 1 },
             unlockedDoors: []
@@ -438,6 +451,7 @@ Devvit.addCustomPostType({
             type: 'initialData',
             data: {
               username: userData?.username ?? 'Developer',
+              lives: playerStats.currentLives,
               keys: 3,
               maze: retryMaze,
               level: currentLevel,
@@ -479,10 +493,12 @@ Devvit.addCustomPostType({
           type: 'initialData',
           data: {
               username: userData.username,
+              lives: playerStats.currentLives,
               keys: 2,
               maze: newMaze,
               level: currentLevel,
-              gamesPlayed: gameState?.gamesPlayed || 0  // Pass win streak to the game
+              gamesPlayed: gameState?.gamesPlayed || 0,
+              isNewGame: true
           }
       };
       
