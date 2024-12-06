@@ -4,6 +4,7 @@ let timerInterval;
 const GAME_TIME = 30;
 let isPaused = false;
 let savedTimeLeft = null;
+let initialKeys = 3;
 
 let gameState = {
     username: '',
@@ -168,11 +169,15 @@ const playerStats = {
     winStreak: 0,
     highestStreak: 0,
     averageRating: 0,
+    currentKeys: 3, 
     levelStats: new Map(),
     
     addGameResult(levelId, gameData) {
         const scores = calculateGameScore(gameData);
         const rating = calculateStarRating(gameData);
+        
+        // Update keys after maze completion
+        this.currentKeys = gameState.keys + 1;  // Save current keys plus bonus
         
         this.totalScore += scores.totalScore;
         this.gamesPlayed++;
@@ -201,7 +206,8 @@ const playerStats = {
             rating,
             totalScore: this.totalScore,
             averageRating: this.averageRating,
-            currentStreak: this.winStreak
+            currentStreak: this.winStreak,
+            currentKeys: this.currentKeys
         };
     }
 };
@@ -317,52 +323,16 @@ window.addEventListener('message', (event) => {
                 return;
             }
             log('Initializing game with data:', message.data);
-            initializeGame(message.data);
-            break;
-        case 'updateKeys':  // Changed from updateKarma
-            log('Updating keys:', message.data);
-            updateKeys(message.data.keys);  // Changed from karma
+            // Add isNewGame flag based on whether it's a retry
+            initializeGame({
+                ...message.data,
+                isNewGame: !message.data.isRetry
+            });
             break;
         default:
             log('Unknown message type:', message.type);
     }
 });
-
-// function handleTrapDisarm(x, y) {
-//     if (gameState.isDisarming) return false; // Return false if already disarming
-    
-//     if (gameState.keys >= 2) {
-//         gameState.isDisarming = true; // Set the flag before starting animation
-//         gameState.keys -= 2;
-
-//         showTopRightMessage('Used 2 keys to disarm trap');
-        
-//         // Start disarm animation
-//         const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-//         if (trapElement) {
-//             trapElement.classList.add('disarming');
-            
-//             // Convert to path after animation and reset flag
-//             setTimeout(() => {
-//                 gameState.maze[y][x] = 'path';
-//                 gameState.isDisarming = false; // Reset the flag after animation
-//                 renderMaze();
-//             }, 500);
-//         }
-        
-//         // Update key display
-//         const keyStat = document.querySelector('.key-stat');
-//         if (keyStat) {
-//             keyStat.dataset.count = gameState.keys;
-//             const keysEl = keyStat.querySelector('#keys');
-//             if (keysEl) {
-//                 keysEl.textContent = gameState.keys;
-//             }
-//         }
-//         return true; // Disarming succeeded
-//     }
-//     return false; // Not enough keys to disarm
-// }
 
 // Add keyboard controls
 window.addEventListener('keydown', (event) => {
@@ -510,11 +480,14 @@ function initializeGame(data) {
         messageEl.textContent = '';
     }
 
+    // Store initial keys - either from previous game bonus or default 2
+    initialKeys = playerStats.currentKeys || 3;
+
     // Update existing gameState instead of creating new one
     gameState = {
         ...gameState,
         username: data.username || 'Developer',
-        keys: 2,
+        keys: initialKeys,  
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
         isGameOver: false,
@@ -524,10 +497,15 @@ function initializeGame(data) {
         mapUsed: false,
         doorHits: new Map(),
         doorOpacity: new Map(),
-        moveCount: 0,        // Reset move count
-        retryCount: 0,       // Reset retry count if starting new game
-        level: data.level    // Ensure level is set
+        moveCount: 0,
+        retryCount: 0,
+        winStreak: gameState.winStreak,
+        totalScore: gameState.totalScore
     };
+
+    if (data.isNewGame) {
+        showTopRightMessage('Found 1 bonus keys!');
+    }
 
     // Update UI elements safely
     const usernameEl = document.getElementById('username');
@@ -690,7 +668,7 @@ function retryLevel() {
 
     gameState = {
         ...gameState,
-        keys: 2,
+        keys: initialKeys,
         maze: JSON.parse(JSON.stringify(initialMaze)),
         playerPosition: findStartPosition(initialMaze),
         isGameOver: false,
@@ -1024,7 +1002,7 @@ function activateCrystalBall() {
 }
 
 function activateKeyPowerup() {
-    gameState.keys += 5; 
+    gameState.keys += 3; 
     
     // Update the keys display
     const keyStat = document.querySelector('.key-stat');

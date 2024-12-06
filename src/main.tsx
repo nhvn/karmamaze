@@ -10,6 +10,7 @@ type WebViewMessage =
         keys: number; 
         maze: MazeCell[][]; 
         level: number;
+        gamesPlayed?: number;  
       };
     }
   | {
@@ -22,7 +23,9 @@ type WebViewMessage =
     }
   | {
       type: 'gameOver';
-      data: { won: boolean };
+      data: { 
+        won: boolean;
+      };
     }
   | {
       type: 'retry';
@@ -38,11 +41,14 @@ type GameState = {
   maze: MazeCell[][];
   playerPosition: Position;
   unlockedDoors: Position[];
+  gamesPlayed: number;  // Instead of gamesPlayed
 };
 type UserData = {
   username: string;
 };
-
+type PlayerStats = {
+  gamesPlayed: number;
+};
 function isPathReachable(maze: MazeCell[][], start: Position, end: Position): boolean {
   const queue: Position[] = [start];
   const visited = new Set<string>();
@@ -146,8 +152,9 @@ function generateMaze(width: number, height: number): MazeCell[][] {
   return maze;
 }
 
-function generateLevel2Maze(width: number, height: number): MazeCell[][] {
-  const maze = generateMaze(width, height); // Use existing maze generator as base
+function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] {
+  console.log('Generating Level 2 maze with games played:', gamesPlayed);
+  const maze = generateMaze(width, height);
 
   // Find existing exit and start positions
   let startPos = { x: 0, y: 0 };
@@ -249,29 +256,43 @@ function generateLevel2Maze(width: number, height: number): MazeCell[][] {
     }
   }
 
-    // After placing key powerup, add traps
-    for (let y = 1; y < height - 1; y++) {
-      for (let x = 1; x < width - 1; x++) {
-          if (maze[y][x] === 'path') {
-              // Don't place traps:
-              // - Near the start
-              // - In front of the real exit
-              // - Next to doors
-              const isNearStart = x <= 2;
-              const isNearExit = x === width - 2 && y === exitPos.y;
-              const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
-                  maze[y + dy]?.[x + dx] === 'door'
-              );
+    // Update trap frequency based on games played
+    let trapFrequency = 0;
+    if (gamesPlayed >= 20) {
+      trapFrequency = 0.18;
+      console.log('20+ games: Setting trap frequency to 18%');
+    } else if (gamesPlayed >= 10) {
+      trapFrequency = 0.12;
+      console.log('10+ games: Setting trap frequency to 12%');
+    } else if (gamesPlayed >= 3) {
+      trapFrequency = 0.05;
+      console.log('3+ games: Setting trap frequency to 5%');
+    }
+    console.log('Final trap frequency:', trapFrequency);
 
-              // 15% chance to place trap if conditions are met
-              if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < 0.15) {
-                  maze[y][x] = 'trap';
-              }
-          }
-      }
-  }
+    // Only add traps if win streak is 3 or more
+    if (gamesPlayed >= 3) {
+      let trapCount = 0;
+        for (let y = 1; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
+                if (maze[y][x] === 'path') {
+                    const isNearStart = x <= 2;
+                    const isNearExit = x === width - 2 && y === exitPos.y;
+                    const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
+                        maze[y + dy]?.[x + dx] === 'door'
+                    );
 
-  return maze;
+                    if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < trapFrequency) {
+                      maze[y][x] = 'trap';
+                      trapCount++;
+                  }
+                  console.log(`Placed ${trapCount} traps in the maze`);
+                }
+            }
+        }
+    }
+
+    return maze;
 }
 
 Devvit.configure({
@@ -284,7 +305,7 @@ Devvit.addCustomPostType({
   name: 'Key Maze',
   height: 'tall',
   render: (context) => {
-    const [currentLevel, setCurrentLevel] = useState(1);  // Add it here
+    const [currentLevel, setCurrentLevel] = useState(1);
     const [userData, setUserData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
@@ -292,114 +313,185 @@ Devvit.addCustomPostType({
       };
     });
 
+    // Add playerStats state
+    const [playerStats, setPlayerStats] = useState<PlayerStats>(() => ({
+      gamesPlayed: 0
+    }));
+
     const [gameState, setGameState] = useState<GameState>(() => ({
-      maze: generateMaze(12, 9), 
+      maze: generateMaze(12, 9),
       playerPosition: { x: 1, y: 1 },
-      unlockedDoors: []
+      unlockedDoors: [],
+      gamesPlayed: 0
     }));
 
     const [webviewVisible, setWebviewVisible] = useState(false);
 
     const onMessage = async (msg: WebViewMessage) => {
-      // console.log('Received message from webview:', msg);
-      
       const message = ('data' in msg && 'message' in msg.data) 
-          ? (msg.data as any).message 
-          : msg;
+        ? (msg.data as any).message 
+        : msg;
       
       if (message.type === 'newGame') {
-          setWebviewVisible(false);  // Return to level selection
-          return;
-      }
-      
-      if (message.type === 'retry') {
-        const newMaze = currentLevel === 1 ? generateMaze(12, 9) : generateLevel2Maze(12, 9);
-        setGameState({
-            maze: newMaze,
-            playerPosition: { x: 1, y: 1 },
-            unlockedDoors: []
-        });
-    
-        const initMessage: WebViewMessage = {
-            type: 'initialData',
-            data: {
-                username: userData?.username ?? 'Developer',
-                keys: 3,
-                maze: newMaze,
-                level: currentLevel
-            }
-        };
-        context.ui.webView.postMessage('mazeGame', initMessage);
+        // Reset games played when returning to main menu
+        setGameState(prevState => ({
+          ...prevState,
+          gamesPlayed: 0
+        }));
+        setWebviewVisible(false);
         return;
       }
-  
+    
       if (!gameState || !userData) {
-          console.error('Missing game state or user data');
-          return;
+        console.error('Missing game state or user data');
+        return;
       }
-  
+    
       switch (message.type) {
-          case 'movePlayer':
-              const newMoveState = {
-                  ...gameState,
-                  playerPosition: message.data.position
-              };
-              setGameState(newMoveState);
-              await context.redis.set(`maze_${context.postId}`, JSON.stringify(newMoveState));
-              break;
-          
-          case 'unlockDoor':
-              const newUnlockState = {
-                  ...gameState,
-                  unlockedDoors: [...gameState.unlockedDoors, message.data.position]
-              };
-              setGameState(newUnlockState);
-              await context.redis.set(`maze_${context.postId}`, JSON.stringify(newUnlockState));
-              break;
-          
+        case 'movePlayer':
+          const newMoveState = {
+            ...gameState,
+            playerPosition: message.data.position
+          };
+          setGameState(newMoveState);
+          await context.redis.set(`maze_${context.postId}`, JSON.stringify(newMoveState));
+          break;
+        
+        case 'unlockDoor':
+          const newUnlockState = {
+            ...gameState,
+            unlockedDoors: [...gameState.unlockedDoors, message.data.position]
+          };
+          setGameState(newUnlockState);
+          await context.redis.set(`maze_${context.postId}`, JSON.stringify(newUnlockState));
+          break;
+        
           case 'gameOver':
-              await context.redis.del(`maze_${context.postId}`);
-              break;
+            // Increment games played on both win and loss
+            const newGamesPlayed = gameState.gamesPlayed + 1;
+            console.log('Incrementing games played to:', newGamesPlayed);
+            
+            const newState = {
+              ...gameState,
+              gamesPlayed: newGamesPlayed
+            };
+            
+            setGameState(newState);
+            await context.redis.set(`maze_${context.postId}`, JSON.stringify(newState));
+          
+            // Don't automatically send new maze - let player trigger it
+            if (!message.data.won) {
+              // Only generate new maze immediately if player lost
+              const newMaze = currentLevel === 1 
+                ? generateMaze(12, 9) 
+                : generateLevel2Maze(12, 9, newGamesPlayed);
+          
+              const updateMessage: WebViewMessage = {
+                type: 'initialData',
+                data: {
+                  username: userData?.username ?? 'Developer',
+                  keys: 3,
+                  maze: newMaze,
+                  level: currentLevel,
+                  gamesPlayed: newGamesPlayed
+                }
+              };
+              context.ui.webView.postMessage('mazeGame', updateMessage);
+            }
+            break;
+          
+          // Add new case for handling next game request
+          case 'nextGame':
+            const nextMaze = currentLevel === 1 
+              ? generateMaze(12, 9) 
+              : generateLevel2Maze(12, 9, gameState.gamesPlayed);
+          
+            const nextGameMessage: WebViewMessage = {
+              type: 'initialData',
+              data: {
+                username: userData?.username ?? 'Developer',
+                keys: 3,
+                maze: nextMaze,
+                level: currentLevel,
+                gamesPlayed: gameState.gamesPlayed
+              }
+            };
+            context.ui.webView.postMessage('mazeGame', nextGameMessage);
+            break;
+    
+        case 'retry':
+          // Don't reset games played on retry
+          const retryMaze = currentLevel === 1 
+            ? generateMaze(12, 9) 
+            : generateLevel2Maze(12, 9, gameState.gamesPlayed);
+          
+          const retryState = {
+            ...gameState,
+            maze: retryMaze,
+            playerPosition: { x: 1, y: 1 },
+            unlockedDoors: []
+          };
+          
+          setGameState(retryState);
+          
+          const retryMessage: WebViewMessage = {
+            type: 'initialData',
+            data: {
+              username: userData?.username ?? 'Developer',
+              keys: 3,
+              maze: retryMaze,
+              level: currentLevel,
+              gamesPlayed: gameState.gamesPlayed
+            }
+          };
+          
+          context.ui.webView.postMessage('mazeGame', retryMessage);
+          break;
       }
     };
 
-      const onStartGame = () => {
-        if (!userData) {
-            console.error('No user data available');
-            return;
-        }
-        
-        console.log('Starting game... Level:', currentLevel);
-        
-        // Generate maze based on level
-        const newMaze = currentLevel === 1 ? generateMaze(12, 9) : generateLevel2Maze(12, 9);
-        console.log('Generated new maze:', newMaze);
-        
-        setGameState({
-            maze: newMaze,
-            playerPosition: { x: 1, y: 1 },
-            unlockedDoors: []
-        });
-        
-        setWebviewVisible(true);
-        
-        const message: WebViewMessage = {
-            type: 'initialData',
-            data: {
-                username: userData.username,
-                keys: 2,
-                maze: newMaze,
-                level: currentLevel
-            }
-        };
-        
-        try {
-            console.log('Sending initial data:', message);
-            context.ui.webView.postMessage('mazeGame', message);
-        } catch (error) {
-            console.error('Error sending data:', error);
-        }
-    };
+    const onStartGame = () => {
+      if (!userData) {
+          console.error('No user data available');
+          return;
+      }
+      
+      console.log('Starting game... Level:', currentLevel);
+      
+      // Generate maze based on level and win streak
+      const newMaze = currentLevel === 1 
+          ? generateMaze(12, 9) 
+          : generateLevel2Maze(12, 9, gameState?.gamesPlayed || 0);
+      
+      console.log('Generated new maze:', newMaze);
+      
+      setGameState({
+          maze: newMaze,
+          playerPosition: { x: 1, y: 1 },
+          unlockedDoors: [],
+          gamesPlayed: gameState.gamesPlayed || 0
+
+      });
+      
+      setWebviewVisible(true);
+      
+      const message: WebViewMessage = {
+          type: 'initialData',
+          data: {
+              username: userData.username,
+              keys: 2,
+              maze: newMaze,
+              level: currentLevel,
+              gamesPlayed: gameState?.gamesPlayed || 0  // Pass win streak to the game
+          }
+      };
+      
+      try {
+        context.ui.webView.postMessage('mazeGame', message);
+      } catch (error) {
+        console.error('Error sending data:', error);
+      }
+  };
 
     return (
       <vstack grow padding="small">
