@@ -550,7 +550,7 @@ Devvit.addCustomPostType({
             </hstack>
         <hstack>
               {/* <text size="medium">Select Level:</text> */}
-              <button onPress={() => setCurrentLevel(1)}>Level 1</button>
+              {/* <button onPress={() => setCurrentLevel(1)}>Level 1</button> */}
               <button onPress={() => setCurrentLevel(2)}>Level 2</button>
             </hstack>
         </vstack>
