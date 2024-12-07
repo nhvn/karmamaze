@@ -612,34 +612,54 @@ function stopTimer() {
 function handleTimeUp() {
     gameState.isGameOver = true;
 
-    // Add life reduction
+    // Reduce lives
     const newLives = gameState.lives - 1;
     gameState.lives = newLives;
     playerStats.currentLives = newLives;
     updateLives(newLives);
-    showTopRightMessage('Lost 1 life!');
-    
 
-    const messageEl = document.getElementById('message');
-    messageEl.innerHTML = '';
-    messageEl.dataset.gameWon = 'false';
-    messageEl.dataset.gameRetry = 'true';
-    
-    const textDiv = document.createElement('div');
-    textDiv.textContent = "Time's up! You've been caught!";
-    messageEl.appendChild(textDiv);
-    
-    const retryButton = document.createElement('button');
-    retryButton.textContent = 'Try Again (Or Press Enter)';
-    retryButton.onclick = () => {
-        retryLevel();
-        clearGameEndState();
-    };
-    messageEl.appendChild(retryButton);
-    
-    messageEl.className = 'error';
-    messageEl.style.display = 'block';
+    // Show life reduction message
+    showTopRightMessage('Lost 1 life!');
+
+    // Check for game over
+    if (newLives > 0) {
+        // Still has lives left
+        const messageEl = document.getElementById('message');
+        messageEl.innerHTML = '';
+        messageEl.dataset.gameWon = 'false';
+        messageEl.dataset.gameRetry = 'true';
+        
+        const textDiv = document.createElement('div');
+        textDiv.textContent = "Time's up! You've been caught!";
+        messageEl.appendChild(textDiv);
+        
+        const retryButton = document.createElement('button');
+        retryButton.textContent = 'Try Again (Or Press Enter)';
+        retryButton.onclick = () => {
+            retryLevel();
+            clearGameEndState();
+        };
+        messageEl.appendChild(retryButton);
+        
+        messageEl.className = 'error';
+        messageEl.style.display = 'block';
+    } else {
+        // No lives left - Game Over
+        const finalScore = playerStats.totalScore;
+        const avgRating = playerStats.averageRating;
+        const gamesPlayed = playerStats.gamesPlayed;
+        
+        const gameOverMessage = [
+            'Game Over!',
+            `Final Score: ${finalScore}`,
+            `Average Rating: ${avgRating.toFixed(1)}⭐`,
+            `Games Played: ${gamesPlayed}\n`
+        ].join('\n');
+
+        showMessage(gameOverMessage, 'error no-lives', true, true);
+    }
 }
+
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
@@ -1039,7 +1059,7 @@ function movePlayer(x, y) {
     else if (x < oldX) direction = 'move-left';
     else if (y > oldY) direction = 'move-down';
     else if (y < oldY) direction = 'move-up';
-    
+
     gameState.playerPosition = { x, y };
     
     renderMaze(direction);
