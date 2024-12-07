@@ -312,7 +312,7 @@ Devvit.addCustomPostType({
   name: 'Key Maze',
   height: 'tall',
   render: (context) => {
-    const [currentLevel, setCurrentLevel] = useState(1);
+    const [currentLevel, setCurrentLevel] = useState(2);
     const [userData, setUserData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
@@ -539,19 +539,19 @@ Devvit.addCustomPostType({
           </vstack>
           <spacer />
           <text size="medium">
-            {currentLevel === 1 
+            {currentLevel === 2 
               ? 'Navigate through the maze using keys to unlock doors. Can you reach the exit?' 
               : 'Find the crystal ball to reveal the true exit! Watch out for traps!'}
           </text>
           <spacer />
           <button onPress={onStartGame}>Start Game</button>
           <hstack>
-              <text size="medium">Current Level: {currentLevel}</text>
+              {/* <text size="medium">Current Level: {currentLevel}</text> */}
             </hstack>
         <hstack>
               {/* <text size="medium">Select Level:</text> */}
               {/* <button onPress={() => setCurrentLevel(1)}>Level 1</button> */}
-              <button onPress={() => setCurrentLevel(2)}>Level 2</button>
+              {/* <button onPress={() => setCurrentLevel(2)}>Level 2</button> */}
             </hstack>
         </vstack>
         <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>

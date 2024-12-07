@@ -247,7 +247,7 @@ function log(message, data = null) {
 function updateVisibility() {
     const { x, y } = gameState.playerPosition;
     const newVisible = new Set();
-    const viewRadius = gameState.mapUsed ? 2 : 1; // 2 gives 5x5, 1 gives 3x3
+    const viewRadius = gameState.mapUsed ? 3 : 1; // 2 gives 5x5, 1 gives 3x3
     
     // Add current position and adjacent tiles to visible set
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
@@ -934,7 +934,7 @@ function activateMap() {
     }
 
     const { x, y } = gameState.playerPosition;
-    const viewRadius = 2;
+    const viewRadius = 3;
 
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
         for (let dx = -viewRadius; dx <= viewRadius; dx++) {
