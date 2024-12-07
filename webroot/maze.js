@@ -260,10 +260,6 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
     
     // Only allow clicks on directly adjacent cells (not diagonal)
     if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
-        const exitY = findExitY();
-        if (!isPathReachable({x, y}, {x: gameState.maze[0].length-1, y: exitY})) {
-            return;
-        }
         const targetCell = gameState.maze[y][x];
     
         if (targetCell === 'trap') {
@@ -385,10 +381,6 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
 
     if (newX >= 0 && newX < gameState.maze[0].length && 
         newY >= 0 && newY < gameState.maze.length) {
-        const exitY = findExitY();
-        if (!isPathReachable({newX, newY}, {newX: gameState.maze[0].length-1, newY: exitY})) {
-            return;
-        }
         const targetCell = gameState.maze[newY][newX];
     
         if (targetCell === 'trap') {
@@ -487,35 +479,6 @@ function findStartPosition(maze) {
         }
     }
     return { x: 0, y: 0 };
-}
-function isPathReachable(start, end) {
-    const visited = new Set();
-    const queue = [start];
-    
-    while (queue.length > 0) {
-        const current = queue.shift();
-        const key = `${current.x},${current.y}`;
-        
-        if (current.x === end.x && current.y === end.y) return true;
-        
-        visited.add(key);
-        
-        // Check each direction
-        [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dx, dy]) => {
-            const newX = current.x + dx;
-            const newY = current.y + dy;
-            const newKey = `${newX},${newY}`;
-            
-            if (newX >= 0 && newX < gameState.maze[0].length && 
-                newY >= 0 && newY < gameState.maze.length &&
-                !visited.has(newKey) &&
-                gameState.maze[newY][newX] !== 'wall') {
-                queue.push({x: newX, y: newY});
-            }
-        });
-    }
-    
-    return false;
 }
 function markAdjacentCells() {
     const { x: playerX, y: playerY } = gameState.playerPosition;
@@ -1526,12 +1489,4 @@ function sendReadyMessage() {
             sendReadyMessage();
         }
     }, 1000);
-}
-function findExitY() {
-    for (let y = 0; y < gameState.maze.length; y++) {
-        if (gameState.maze[y][gameState.maze[0].length-1] === 'exit') {
-            return y;
-        }
-    }
-    return 0;
 }

@@ -56,7 +56,37 @@ type PlayerStats = {
 };
 
 // 2. MAZE GENERATION
-function generateMaze(width: number, height: number): MazeCell[][] { // Casual mode
+function isPathReachable(maze: MazeCell[][], start: Position, end: Position): boolean {
+  const queue: Position[] = [start];
+  const visited = new Set<string>();
+  const width = maze[0].length;
+  const height = maze.length;
+
+  while (queue.length > 0) {
+    const { x, y } = queue.shift()!;
+    if (x === end.x && y === end.y) return true;
+
+    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dx, dy]) => {
+      const newX = x + dx;
+      const newY = y + dy;
+      const key = `${newX},${newY}`;
+
+      if (
+        newX >= 0 &&
+        newY >= 0 &&
+        newX < width &&
+        newY < height &&
+        !visited.has(key) &&
+        (maze[newY][newX] === 'path' || maze[newY][newX] === 'door' || maze[newY][newX] === 'exit')
+      ) {
+        visited.add(key);
+        queue.push({ x: newX, y: newY });
+      }
+    });
+  }
+  return false;
+}
+function generateMaze(width: number, height: number): MazeCell[][] {
   // Initialize maze with paths
   const maze: MazeCell[][] = Array(height)
     .fill(null)
@@ -108,17 +138,26 @@ function generateMaze(width: number, height: number): MazeCell[][] { // Casual m
       }
     }
   }
+
+  // Ensure path to exit exists
+  let pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
+  while (!pathExists) {
     let x = width - 2;
     let y = exitY;
+    
     while (x > 1) {
       maze[y][x] = Math.random() < 0.2 ? 'door' : 'path';
       if (y > startY && Math.random() < 0.3) y--;
       if (y < startY && Math.random() < 0.3) y++;
       x--;
     }
+    
+    pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
+  }
+
   return maze;
 }
-function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] { // Normal Mode
+function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] {
   console.log('Generating Level 2 maze with games played:', gamesPlayed);
   const maze = generateMaze(width, height);
 

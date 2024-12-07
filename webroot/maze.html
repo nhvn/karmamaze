@@ -8,8 +8,11 @@
 </head>
 <body>
     <div id="game-container" tabindex="0">
+        <!-- Stats Bar -->
         <div id="stats">
-            <div><span id="username">Waiting...</span></div>
+            <div>
+                <span id="username">Waiting...</span>
+            </div>
             <div class="lives-container">
                 <div class="heart-icon" data-filled="true">❤️</div>
                 <div class="heart-icon" data-filled="true">❤️</div>
@@ -31,15 +34,21 @@
                 <button id="pauseButton" class="icon-button">⏸️</button>
             </div>
         </div>
+
+        <!-- Main Game Elements -->
         <div id="maze-grid"></div>
         <div id="message"></div>
         <div id="timer">30</div>
+
+        <!-- Overlays -->
         <div id="loading-overlay" style="display: none;">
             <div class="loading-spinner"></div>
             <div class="loading-text">Loading...</div>
         </div>
         <div id="top-right-messages"></div>
         <div id="animation-overlay"></div>
+        
+        <!-- Pause Menu -->
         <div id="pause-overlay" style="display: none;">
             <div class="pause-menu">
                 <div class="pause-stats">
@@ -54,6 +63,7 @@
             </div>
         </div>
     </div>
+
     <script src="maze.js"></script>
 </body>
 </html>
