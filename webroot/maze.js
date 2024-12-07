@@ -27,7 +27,7 @@ let gameState = {
     lives: 3
 };
 
-console.log(gameState); // Ensure it has a `keys` property
+// console.log(gameState); 
 
 // Constants for scoring
 const SCORING_CONFIG = {
@@ -220,7 +220,7 @@ function updateLives(newLives) {
 
 function log(message, data = null) {
     const logMessage = data ? `${message} ${JSON.stringify(data)}` : message;
-    console.log(logMessage);
+    // console.log(logMessage);
     const debug = document.getElementById('debug');
     if (debug) {
         debug.textContent = logMessage;

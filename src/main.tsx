@@ -1,7 +1,7 @@
 import './createPost.js';
 import { Devvit, useState } from '@devvit/public-api';
 
-// Define message types for game state communication
+// 1. TYPES & INTERFACES
 type WebViewMessage =
   | {
       type: 'initialData';
@@ -12,8 +12,8 @@ type WebViewMessage =
         level: number;
         lives: number;
         gamesPlayed?: number;
-        isRetry?: boolean;  // Add this
-        isNewGame?: boolean;  // Add this  
+        isRetry?: boolean; 
+        isNewGame?: boolean;
         shouldShowBonusKey?: boolean;
       };
     }
@@ -38,15 +38,13 @@ type WebViewMessage =
   | {
       type: 'newGame';
     };
-
-// Define types for maze structure
 type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball' | 'map' | 'key-powerup' | 'trap';
 type Position = { x: number; y: number };
 type GameState = {
   maze: MazeCell[][];
   playerPosition: Position;
   unlockedDoors: Position[];
-  gamesPlayed: number;  // Instead of gamesPlayed
+  gamesPlayed: number;
 };
 type UserData = {
   username: string;
@@ -54,40 +52,11 @@ type UserData = {
 type PlayerStats = {
   gamesPlayed: number;
   currentKeys: number;
-  currentLives: number;  // Add this
+  currentLives: number;
 };
-function isPathReachable(maze: MazeCell[][], start: Position, end: Position): boolean {
-  const queue: Position[] = [start];
-  const visited = new Set<string>();
-  const width = maze[0].length;
-  const height = maze.length;
 
-  while (queue.length > 0) {
-    const { x, y } = queue.shift()!;
-    if (x === end.x && y === end.y) return true;
-
-    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dx, dy]) => {
-      const newX = x + dx;
-      const newY = y + dy;
-      const key = `${newX},${newY}`;
-
-      if (
-        newX >= 0 &&
-        newY >= 0 &&
-        newX < width &&
-        newY < height &&
-        !visited.has(key) &&
-        (maze[newY][newX] === 'path' || maze[newY][newX] === 'door' || maze[newY][newX] === 'exit')
-      ) {
-        visited.add(key);
-        queue.push({ x: newX, y: newY });
-      }
-    });
-  }
-  return false;
-}
-
-function generateMaze(width: number, height: number): MazeCell[][] {
+// 2. MAZE GENERATION
+function generateMaze(width: number, height: number): MazeCell[][] { // Casual mode
   // Initialize maze with paths
   const maze: MazeCell[][] = Array(height)
     .fill(null)
@@ -139,27 +108,17 @@ function generateMaze(width: number, height: number): MazeCell[][] {
       }
     }
   }
-
-  // Ensure path to exit exists
-  let pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
-  while (!pathExists) {
     let x = width - 2;
     let y = exitY;
-    
     while (x > 1) {
       maze[y][x] = Math.random() < 0.2 ? 'door' : 'path';
       if (y > startY && Math.random() < 0.3) y--;
       if (y < startY && Math.random() < 0.3) y++;
       x--;
     }
-    
-    pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
-  }
-
   return maze;
 }
-
-function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] {
+function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] { // Normal Mode
   console.log('Generating Level 2 maze with games played:', gamesPlayed);
   const maze = generateMaze(width, height);
 
@@ -302,18 +261,19 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     return maze;
 }
 
+// 3. DEVVIT CONFIGURATION
 Devvit.configure({
   redditAPI: true,
   redis: true,
 });
 
-// Then your custom post type and other code follows
+// 4. GAME COMPONENT
 Devvit.addCustomPostType({
   name: 'Key Maze',
   height: 'tall',
   render: (context) => {
     const [currentLevel, setCurrentLevel] = useState(2);
-    const [userData, setUserData] = useState<UserData | null>(async () => {
+    const [userData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
         username: currUser?.username ?? 'developer'
@@ -413,6 +373,7 @@ Devvit.addCustomPostType({
               context.ui.webView.postMessage('mazeGame', updateMessage);
             }
             break;
+
         case 'nextGame':
           const nextMaze = currentLevel === 1 
           ? generateMaze(12, 9) 
@@ -479,14 +440,10 @@ Devvit.addCustomPostType({
           return;
       }
       
-      console.log('Starting game... Level:', currentLevel);
-      
       // Generate maze based on level and win streak
       const newMaze = currentLevel === 1 
           ? generateMaze(12, 9) 
           : generateLevel2Maze(12, 9, gameState?.gamesPlayed || 0);
-      
-      console.log('Generated new maze:', newMaze);
       
       setGameState({
           maze: newMaze,
@@ -531,10 +488,10 @@ Devvit.addCustomPostType({
           <spacer />
           <vstack alignment="start middle">
             <hstack>
-              {/* <text size="medium" weight="bold">
+              <text size="medium" weight="bold">
                 {' '}
                 {userData?.username ?? 'anon'}
-              </text> */}
+              </text>
             </hstack>
           </vstack>
           <spacer />
@@ -546,12 +503,11 @@ Devvit.addCustomPostType({
           <spacer />
           <button onPress={onStartGame}>Start Game</button>
           <hstack>
-              {/* <text size="medium">Current Level: {currentLevel}</text> */}
+          <text size="medium">Current Mode: {currentLevel === 1 ? 'Casual' : 'Normal'}</text>
             </hstack>
         <hstack>
-              {/* <text size="medium">Select Level:</text> */}
-              {/* <button onPress={() => setCurrentLevel(1)}>Level 1</button> */}
-              {/* <button onPress={() => setCurrentLevel(2)}>Level 2</button> */}
+              <button onPress={() => setCurrentLevel(1)}>Casual</button>
+              <button onPress={() => setCurrentLevel(2)}>Normal</button>
             </hstack>
         </vstack>
         <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
@@ -570,6 +526,7 @@ Devvit.addCustomPostType({
   },
 });
 
+// 5. MENU ITEMS
 Devvit.addMenuItem({
   location: 'subreddit',
   label: 'Start Key Maze',
