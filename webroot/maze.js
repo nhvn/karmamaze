@@ -7,6 +7,7 @@ let savedTimeLeft = null;
 let initialKeys = 3;
 
 let gameState = {
+    cameraOffset: { x: 0, y: 0 },
     username: '',
     keys: 2,
     maze: [],
@@ -466,7 +467,7 @@ let initialMaze = null; // Store initial maze for retry
 function initializeGame(data) {
     showLoading();
     log('Initializing game with data:', data);
-    
+
     gameState.level = data.level;
 
     if (!data.maze) {
@@ -481,7 +482,8 @@ function initializeGame(data) {
         messageEl.style.display = 'none';
         messageEl.textContent = '';
     }
-    
+
+    // Initialize game state
     gameState = {
         ...gameState,
         username: data.username || 'Developer',
@@ -502,7 +504,23 @@ function initializeGame(data) {
         lives: playerStats.currentLives || 3
     };
 
-    // Update lives display
+    const grid = document.getElementById('maze-grid');
+    const cellSize = 40;
+    
+    // Set the grid size explicitly (to ensure stable dimensions)
+    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, ${cellSize}px)`;
+    grid.style.gridTemplateRows = `repeat(${data.maze.length}, ${cellSize}px)`;
+
+    const viewportWidth = grid.clientWidth;
+    const viewportHeight = grid.clientHeight;
+
+    // Set initial camera offset
+    gameState.cameraOffset = {
+        x: Math.floor(viewportWidth / 2) - (gameState.playerPosition.x * cellSize),
+        y: Math.floor(viewportHeight / 2) - (gameState.playerPosition.y * cellSize)
+    };
+    grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
+
     updateLives(gameState.lives);
 
     // Update UI elements safely
@@ -520,7 +538,7 @@ function initializeGame(data) {
             keysEl.textContent = gameState.keys;
         }
     }
-    
+
     // Reset powerup indicators
     const mapIndicator = document.getElementById('map-indicator');
     const crystalIndicator = document.getElementById('crystal-indicator');
@@ -531,7 +549,7 @@ function initializeGame(data) {
         crystalIndicator.style.display = 'none';
     }
 
-    renderMaze();
+    renderMaze(); // Call renderMaze after camera offset is applied
     updateVisibility();
     startTimer();
     hideLoading();
@@ -728,56 +746,6 @@ function findStartPosition(maze) {
         }
     }
     return { x: 0, y: 0 };
-}
-
-function renderMaze() {
-    const grid = document.getElementById('maze-grid');
-    if (!gameState.maze || !gameState.maze[0]) {
-        log('No maze data available to render');
-        return;
-    }
-
-    log('Rendering maze');
-    grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, 40px)`;
-    grid.innerHTML = '';
-
-    gameState.maze.forEach((row, y) => {
-        row.forEach((cell, x) => {
-            const cellElement = document.createElement('div');
-            cellElement.className = `cell ${cell} fog`;
-            cellElement.dataset.x = x;
-            cellElement.dataset.y = y;
-            
-            // Apply stored opacity for doors
-            if (cell === 'door') {
-                const doorKey = `${x},${y}`;
-                const opacity = gameState.doorOpacity.get(doorKey);
-                if (opacity !== undefined) {
-                    cellElement.style.opacity = opacity;
-                }
-            }
-            
-            // Rest of your existing render logic...
-            if (cell === 'exit' && gameState.crystalBallUsed) {
-                cellElement.classList.add('exit1');
-                cellElement.classList.add('revealed-exit');
-            }
-
-            if (cell === 'fake-exit' && gameState.crystalBallUsed) {
-                cellElement.classList.add('fake-exit1');
-            }
-
-            if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
-                cellElement.classList.add('player');
-            }
-
-            cellElement.onclick = () => handleCellClick(x, y);
-            grid.appendChild(cellElement);
-        });
-    });
-
-    updateVisibility();
-    markAdjacentCells();
 }
 
 function handleDoor(x, y) {
@@ -1188,12 +1156,19 @@ function handleCellClick(x, y) {
 // Also update the renderMaze function to maintain the revealed state
 function renderMaze(movementClass = '') {
     const grid = document.getElementById('maze-grid');
-    if (!gameState.maze || !gameState.maze[0]) {
-        log('No maze data available to render');
-        return;
-    }
+    if (!gameState.maze || !gameState.maze[0]) return;
 
-    log('Rendering maze');
+    // Calculate and apply camera offset
+    const viewportWidth = grid.clientWidth;
+    const viewportHeight = grid.clientHeight;
+    const cellSize = 40;
+    
+    gameState.cameraOffset = {
+        x: Math.floor(viewportWidth/2) - (gameState.playerPosition.x * cellSize),
+        y: Math.floor(viewportHeight/2) - (gameState.playerPosition.y * cellSize)
+    };
+    grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
+
     grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, 40px)`;
     grid.innerHTML = '';
 
@@ -1203,15 +1178,13 @@ function renderMaze(movementClass = '') {
             cellElement.className = `cell ${cell} fog`;
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
-            
-            // Add revealed class for traps if crystal ball is used
+
             if (cell === 'trap' && gameState.crystalBallUsed) {
                 cellElement.classList.add('revealed');
                 cellElement.classList.remove('fog');
                 cellElement.classList.add('visible');
             }
 
-            // Rest of your existing renderMaze code...
             if (cell === 'door') {
                 const doorKey = `${x},${y}`;
                 const opacity = gameState.doorOpacity.get(doorKey);
@@ -1219,7 +1192,7 @@ function renderMaze(movementClass = '') {
                     cellElement.style.opacity = opacity;
                 }
             }
-            
+
             if (cell === 'exit' && gameState.crystalBallUsed) {
                 cellElement.classList.add('exit1');
                 cellElement.classList.add('revealed-exit');
