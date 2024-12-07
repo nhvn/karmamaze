@@ -14,6 +14,7 @@ type WebViewMessage =
         gamesPlayed?: number;
         isRetry?: boolean;  // Add this
         isNewGame?: boolean;  // Add this  
+        shouldShowBonusKey?: boolean;
       };
     }
   | {
@@ -418,10 +419,12 @@ Devvit.addCustomPostType({
           : generateLevel2Maze(12, 9, gameState.gamesPlayed);
   
           // Add this first
-          context.ui.webView.postMessage('mazeGame', {
+          if (message.data.won && message.data.shouldShowBonusKey) {
+            context.ui.webView.postMessage('mazeGame', {
               type: 'showMessage',
               data: { message: 'Found 1 bonus key!' }
-          });
+            });
+          }        
       
           const nextGameMessage: WebViewMessage = {
               type: 'initialData',

@@ -648,6 +648,12 @@ body {
   background: rgba(255, 215, 0, 0.8);
   box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
 }
+.powerup-inactive::after {
+  opacity: 0.3 !important;
+}
+.key-stat[data-count="12"] #keys {
+  color: #FFA500;
+}
 .map-orb {
   background: rgba(0, 191, 255, 0.8);
   box-shadow: 0 0 5px rgba(0, 191, 255, 0.8);

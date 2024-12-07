@@ -10,6 +10,7 @@ let gameState = {
     cameraOffset: { x: 0, y: 0 },
     username: '',
     keys: 2,
+    initialKeysForMaze: 2,
     maze: [],
     playerPosition: { x: 0, y: 0 },
     isGameOver: false,
@@ -172,7 +173,7 @@ const playerStats = {
         const rating = calculateStarRating(gameData);
         
         // Update keys after maze completion
-        this.currentKeys = gameState.keys + 1;  // Save current keys plus bonus
+        this.currentKeys = Math.min(gameState.keys + (gameState.keys < MAX_KEYS ? 1 : 0), MAX_KEYS);
         this.currentLives = gameState.lives;
         
         this.totalScore += scores.totalScore;
@@ -488,6 +489,7 @@ function initializeGame(data) {
         ...gameState,
         username: data.username || 'Developer',
         keys: playerStats.currentKeys || 3,
+        initialKeysForMaze: playerStats.currentKeys || 3, // Store initial keys
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
         isGameOver: false,
@@ -678,23 +680,13 @@ function retryLevel() {
     clearGameEndState();
     const messageEl = document.getElementById('message');
 
-    // Reset powerup indicators
-    const mapIndicator = document.getElementById('map-indicator');
-    const crystalIndicator = document.getElementById('crystal-indicator');
-    if (mapIndicator) {
-        mapIndicator.style.display = 'none';
-    }
-    if (crystalIndicator) {
-        crystalIndicator.style.display = 'none';
-    }
-
     if (messageEl) {
         messageEl.style.display = 'none';
     }
 
     gameState = {
         ...gameState,
-        keys: initialKeys,
+        keys: gameState.initialKeysForMaze,
         maze: JSON.parse(JSON.stringify(initialMaze)),
         playerPosition: findStartPosition(initialMaze),
         isGameOver: false,
@@ -713,6 +705,7 @@ function retryLevel() {
         const keysEl = keyStat.querySelector('#keys');
         if (keysEl) {
             keysEl.textContent = gameState.keys;
+            keysEl.style.color = gameState.keys >= MAX_KEYS ? '#FFA500' : '';
         }
     }
 
@@ -721,7 +714,6 @@ function retryLevel() {
     startTimer();
     hideLoading();
 
-    // Add focus to game container for immediate keyboard control
     const gameContainer = document.getElementById('game-container');
     if (gameContainer) {
         gameContainer.focus();
@@ -977,13 +969,24 @@ function activateCrystalBall() {
     showTopRightMessage('Found a crystal ball!');
 }
 
+// Add key capacity limit
+const MAX_KEYS = 12;
+
 function activateKeyPowerup() {
-    gameState.keys += 3; 
+    if (gameState.keys >= MAX_KEYS) {
+        showTopRightMessage('Bag full!');
+        return;
+    }
+    
+    gameState.keys += 3;
+    if (gameState.keys > MAX_KEYS) {
+        gameState.keys = MAX_KEYS;
+    }
     
     // Update the keys display
     const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
-        keyStat.dataset.count = gameState.keys;  // Update data attribute for visibility
+        keyStat.dataset.count = gameState.keys;
         const keysEl = keyStat.querySelector('#keys');
         if (keysEl) {
             keysEl.textContent = gameState.keys;
@@ -1029,20 +1032,16 @@ function movePlayer(x, y) {
     const oldX = gameState.playerPosition.x;
     const oldY = gameState.playerPosition.y;
     
-    // Increment move counter
     gameState.moveCount++;
-
-    // Determine direction
+    
     let direction = '';
     if (x > oldX) direction = 'move-right';
     else if (x < oldX) direction = 'move-left';
     else if (y > oldY) direction = 'move-down';
     else if (y < oldY) direction = 'move-up';
-
-    // Update position
+    
     gameState.playerPosition = { x, y };
     
-    // Render the maze with the movement class
     renderMaze(direction);
     updateVisibility();
     markAdjacentCells();
@@ -1271,7 +1270,6 @@ function handleWin() {
         `Score: +${result.baseScore}`
     ];
 
-    // Add streak bonus if applicable
     if (result.streakBonus > 0) {
         messageLines.push(`Win Streak Bonus: +${result.streakBonus} (${result.currentStreak} wins)`);
     }
@@ -1280,11 +1278,6 @@ function handleWin() {
         `Average Rating: ${result.averageRating.toFixed(1)}⭐`,
         `Games Played: ${playerStats.gamesPlayed}`
     );
-
-    // Add current streak if it exists
-    // if (result.currentStreak > 1) {
-    //     messageLines.push(`Current Win Streak: ${result.currentStreak}`);
-    // }
 
     const winMessage = messageLines.join('\n');
     showMessage(winMessage, 'success');
@@ -1305,7 +1298,8 @@ function handleWin() {
             rating: result.averageRating,
             gamesPlayed: playerStats.gamesPlayed,
             winStreak: playerStats.winStreak,
-            lives: gameState.lives
+            lives: gameState.lives,
+            shouldShowBonusKey: gameState.keys < MAX_KEYS
         }
     }, '*');
 }
@@ -1391,9 +1385,11 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
 
 function handleNextGame() {
     showLoading();
-    showTopRightMessage('Found a bonus key!'); // Add this line
+    if (gameState.keys < MAX_KEYS) {
+        showTopRightMessage('Found a bonus key!');
+    }
     window.parent.postMessage({
-        type: 'nextGame',  // Change from 'retry' to 'nextGame'
+        type: 'nextGame',
         data: { 
             lives: gameState.lives
         }
