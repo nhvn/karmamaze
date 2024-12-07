@@ -591,6 +591,15 @@ function stopTimer() {
 
 function handleTimeUp() {
     gameState.isGameOver = true;
+
+    // Add life reduction
+    const newLives = gameState.lives - 1;
+    gameState.lives = newLives;
+    playerStats.currentLives = newLives;
+    updateLives(newLives);
+    showTopRightMessage('Lost 1 life!');
+    
+
     const messageEl = document.getElementById('message');
     messageEl.innerHTML = '';
     messageEl.dataset.gameWon = 'false';
@@ -1013,7 +1022,7 @@ function activateKeyPowerup() {
         }
     }
     
-    showTopRightMessage('Found magical keys!');
+    showTopRightMessage('Found 3 keys!');
 }
 
 function handleTrap() {
@@ -1407,21 +1416,9 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
     messageEl.style.display = 'block';
 }
 
-// Add next game handler
-// function handleNextGame() {
-//     showLoading();
-//     window.parent.postMessage({
-//         type: 'retry',
-//         data: { 
-//             sameLevel: true,
-//             lives: gameState.lives  // Add this
-//         }
-//     }, '*');
-// }
-
 function handleNextGame() {
     showLoading();
-    showTopRightMessage('Found 1 bonus key!'); // Add this line
+    showTopRightMessage('Found a bonus key!'); // Add this line
     window.parent.postMessage({
         type: 'nextGame',  // Change from 'retry' to 'nextGame'
         data: { 
