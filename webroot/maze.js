@@ -481,9 +481,6 @@ function initializeGame(data) {
         messageEl.style.display = 'none';
         messageEl.textContent = '';
     }
-
-    // Only reset lives if it's a new game from menu
-    const newLives = data.isNewGame ? 3 : (data.lives || gameState.lives);
     
     gameState = {
         ...gameState,
@@ -507,11 +504,6 @@ function initializeGame(data) {
 
     // Update lives display
     updateLives(gameState.lives);
-
-    // Show bonus key message only on next game
-    if (message.type === 'nextGame') {
-        showTopRightMessage('Found 1 bonus key!');
-    }
 
     // Update UI elements safely
     const usernameEl = document.getElementById('username');
@@ -1416,13 +1408,24 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
 }
 
 // Add next game handler
+// function handleNextGame() {
+//     showLoading();
+//     window.parent.postMessage({
+//         type: 'retry',
+//         data: { 
+//             sameLevel: true,
+//             lives: gameState.lives  // Add this
+//         }
+//     }, '*');
+// }
+
 function handleNextGame() {
     showLoading();
+    showTopRightMessage('Found 1 bonus key!'); // Add this line
     window.parent.postMessage({
-        type: 'retry',
+        type: 'nextGame',  // Change from 'retry' to 'nextGame'
         data: { 
-            sameLevel: true,
-            lives: gameState.lives  // Add this
+            lives: gameState.lives
         }
     }, '*');
 }

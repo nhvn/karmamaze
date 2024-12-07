@@ -414,8 +414,14 @@ Devvit.addCustomPostType({
             break;
         case 'nextGame':
           const nextMaze = currentLevel === 1 
-              ? generateMaze(12, 9) 
-              : generateLevel2Maze(12, 9, gameState.gamesPlayed);
+          ? generateMaze(12, 9) 
+          : generateLevel2Maze(12, 9, gameState.gamesPlayed);
+  
+          // Add this first
+          context.ui.webView.postMessage('mazeGame', {
+              type: 'showMessage',
+              data: { message: 'Found 1 bonus key!' }
+          });
       
           const nextGameMessage: WebViewMessage = {
               type: 'initialData',
