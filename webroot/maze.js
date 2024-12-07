@@ -228,72 +228,71 @@ function log(message, data = null) {
 }
 
 // DEVELOPMENT MODE - show everything
-function updateVisibility() {
-    if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
-    
-    gameState.maze.forEach((row, y) => {
-        row.forEach((_, x) => {
-            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            if (cell) {
-                cell.classList.remove('fog', 'explored');
-                cell.classList.add('visible');
-                gameState.visibleTiles.add(`${x},${y}`);
-            }
-        });
-    });
-}
-
-// PRODUCTION MODE - use this instead
 // function updateVisibility() {
-//     const { x, y } = gameState.playerPosition;
-//     const newVisible = new Set();
-//     const viewRadius = gameState.mapUsed ? 2 : 1; // 2 gives 5x5, 1 gives 3x3
+//     if (!gameState.maze || !gameState.visibleTiles) return;  // Add safety check
     
-//     // Add current position and adjacent tiles to visible set
-//     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
-//         for (let dx = -viewRadius; dx <= viewRadius; dx++) {
-//             const newX = x + dx;
-//             const newY = y + dy;
-//             if (newX >= 0 && newX < gameState.maze[0].length && 
-//                 newY >= 0 && newY < gameState.maze.length) {
-//                 newVisible.add(`${newX},${newY}`);
-//                 // Only add to explored tiles if map is active
-//                 if (gameState.level === 1 || gameState.mapUsed) {
-//                     gameState.exploredTiles.add(`${newX},${newY}`);
-//                 }
-//             }
-//         }
-//     }
-
-//     // Update visibility classes for all tiles
 //     gameState.maze.forEach((row, y) => {
-//         row.forEach((cell, x) => {
-//             const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-//             if (cellElement) {
-//                 const key = `${x},${y}`;
-                
-//                 // Always show powerups with glow
-//                 if (cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup') {
-//                     cellElement.classList.add('powerup-glow');
-//                 }
-
-//                 if (newVisible.has(key)) {
-//                     cellElement.classList.remove('fog', 'explored');
-//                     cellElement.classList.add('visible');
-//                 } else if ((gameState.level === 1 || gameState.mapUsed) && gameState.exploredTiles.has(key)) {
-//                     // Show explored tiles if in Level 1 or if map is active in Level 2
-//                     cellElement.classList.remove('fog', 'visible');
-//                     cellElement.classList.add('explored');
-//                 } else {
-//                     cellElement.classList.remove('visible', 'explored');
-//                     cellElement.classList.add('fog');
-//                 }
+//         row.forEach((_, x) => {
+//             const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+//             if (cell) {
+//                 cell.classList.remove('fog', 'explored');
+//                 cell.classList.add('visible');
+//                 gameState.visibleTiles.add(`${x},${y}`);
 //             }
 //         });
 //     });
-
-//     gameState.visibleTiles = newVisible;
 // }
+
+// PRODUCTION MODE - use this instead
+function updateVisibility() {
+    const { x, y } = gameState.playerPosition;
+    const newVisible = new Set();
+    const viewRadius = gameState.mapUsed ? 2 : 1; // 2 gives 5x5, 1 gives 3x3
+    
+    // Add current position and adjacent tiles to visible set
+    for (let dy = -viewRadius; dy <= viewRadius; dy++) {
+        for (let dx = -viewRadius; dx <= viewRadius; dx++) {
+            const newX = x + dx;
+            const newY = y + dy;
+            if (newX >= 0 && newX < gameState.maze[0].length && 
+                newY >= 0 && newY < gameState.maze.length) {
+                newVisible.add(`${newX},${newY}`);
+                // Always add to explored tiles since that's the default behavior now
+                gameState.exploredTiles.add(`${newX},${newY}`);
+            }
+        }
+    }
+
+    // Update visibility classes for all tiles
+    gameState.maze.forEach((row, y) => {
+        row.forEach((cell, x) => {
+            const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cellElement) {
+                const key = `${x},${y}`;
+                
+                // Always show powerups with glow
+                if (cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup') {
+                    cellElement.classList.add('powerup-glow');
+                }
+
+                if (newVisible.has(key)) {
+                    cellElement.classList.remove('fog', 'explored');
+                    cellElement.classList.add('visible');
+                } else if (gameState.exploredTiles.has(key)) {
+                    // Show explored tiles as the default now
+                    cellElement.classList.remove('fog', 'visible');
+                    cellElement.classList.add('explored');
+                } else {
+                    cellElement.classList.remove('visible', 'explored');
+                    cellElement.classList.add('fog');
+                }
+            }
+        });
+    });
+
+    gameState.visibleTiles = newVisible;
+}
+
 
 function sendReadyMessage() {
     if (initializationAttempts >= MAX_ATTEMPTS) {
@@ -933,6 +932,7 @@ function activateMap() {
     if (mapIndicator) {
         mapIndicator.style.display = 'flex';
     }
+
     const { x, y } = gameState.playerPosition;
     const viewRadius = 2;
 
@@ -945,7 +945,6 @@ function activateMap() {
                 newY >= 0 && newY < gameState.maze.length) {
                 const key = `${newX},${newY}`;
                 gameState.visibleTiles.add(key);
-                gameState.exploredTiles.add(key);
 
                 const cell = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
                 if (cell) {
