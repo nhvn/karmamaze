@@ -1234,7 +1234,7 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         messageEl.appendChild(spacerDiv);
 
         const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next Game (Or Press Enter)';
+        nextButton.textContent = 'Next Game';
         nextButton.onclick = handleNextGame;
         messageEl.appendChild(nextButton);
         messageEl.dataset.gameWon = 'true';
@@ -1243,7 +1243,7 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         messageEl.appendChild(spacerDiv);
 
         const retryButton = document.createElement('button');
-        retryButton.textContent = 'Try Again (Or Press Enter)';
+        retryButton.textContent = 'Try Again';
         retryButton.onclick = () => {
             retryLevel();
             messageEl.style.display = 'none';
