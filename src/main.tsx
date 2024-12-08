@@ -185,82 +185,111 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
-  // NEW: Add first fake exit (always present)
+  // Add first fake exit (if path exists)
   let fakeExitPlaced = false;
-  while (!fakeExitPlaced) {
+  let attempts = 0;
+  const maxAttempts = 50; // Prevent infinite loop
+
+  while (!fakeExitPlaced && attempts < maxAttempts) {
     const y = Math.floor(Math.random() * (height - 2)) + 1;
     if (y !== exitPos.y && maze[y][width - 1] === 'wall') {
-      maze[y][width - 1] = 'fake-exit';
-      fakeExitPlaced = true;
+      // Check if there's a path tile in front of this position
+      if (maze[y][width - 2] === 'path') {
+        maze[y][width - 1] = 'fake-exit';
+        fakeExitPlaced = true;
+        console.log('Placed first fake exit with connected path at:', y);
+      }
     }
+    attempts++;
   }
 
-  // NEW: Add second fake exit only if games played is 10 or more
+  // Add second fake exit only if games played is 10 or more
   if (gamesPlayed >= 10) {
-    console.log('Adding second fake exit (10+ games played)');
+    console.log('Attempting to add second fake exit (10+ games played)');
     let secondFakeExitPlaced = false;
-    while (!secondFakeExitPlaced) {
+    attempts = 0;
+
+    while (!secondFakeExitPlaced && attempts < maxAttempts) {
       const y = Math.floor(Math.random() * (height - 2)) + 1;
       if (
         y !== exitPos.y &&
         maze[y][width - 1] === 'wall' &&
         maze[y][width - 1] !== 'fake-exit'
       ) {
-        maze[y][width - 1] = 'fake-exit';
-        secondFakeExitPlaced = true;
+        // Check if there's a path tile in front of this position
+        if (maze[y][width - 2] === 'path') {
+          maze[y][width - 1] = 'fake-exit';
+          secondFakeExitPlaced = true;
+          console.log('Placed second fake exit with connected path at:', y);
+        }
       }
+      attempts++;
     }
   }
 
-  // Place crystal ball in a valid path location
+  // Place crystal ball in a valid, reachable path location
   let crystalBallPlaced = false;
   while (!crystalBallPlaced) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on path tiles, not walls or doors
+    
     if (
       maze[y][x] === 'path' &&
       !(x === startPos.x && y === startPos.y) && // Not near start
       !(x === exitPos.x && y === exitPos.y)
     ) {
-      maze[y][x] = 'crystal-ball';
-      crystalBallPlaced = true;
+      // Check if position is reachable from start
+      const isReachable = isPathReachable(maze, startPos, { x, y });
+      
+      if (isReachable) {
+        maze[y][x] = 'crystal-ball';
+        crystalBallPlaced = true;
+        console.log('Placed crystal ball at reachable position:', x, y);
+      }
     }
   }
 
-  // Place map in a valid path location
+  // Place map in a valid, reachable path location
   let mapPlaced = false;
   while (!mapPlaced) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
-    const currentCell = maze[y][x];
-
-    // Only place on path tiles, not walls or doors
+    
     if (
-      currentCell === 'path' &&
+      maze[y][x] === 'path' &&
       !(x === startPos.x && y === startPos.y) && // Not near start
       !(x === exitPos.x && y === exitPos.y)
     ) {
-      maze[y][x] = 'map';
-      mapPlaced = true;
+      // Check if position is reachable from start
+      const isReachable = isPathReachable(maze, startPos, { x, y });
+      
+      if (isReachable) {
+        maze[y][x] = 'map';
+        mapPlaced = true;
+        console.log('Placed map at reachable position:', x, y);
+      }
     }
   }
 
-  // Place key powerup in a valid path location
+  // Place key powerup in a valid, reachable path location
   let keyPowerupPlaced = false;
   while (!keyPowerupPlaced) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
-    const currentCell = maze[y][x];
-
-    // Only place on path tiles, not walls or doors
+    
     if (
-      currentCell === 'path' &&
+      maze[y][x] === 'path' &&
       !(x === startPos.x && y === startPos.y) && // Not near start
       !(x === exitPos.x && y === exitPos.y)
     ) {
-      maze[y][x] = 'key-powerup';
-      keyPowerupPlaced = true;
+      // Check if position is reachable from start
+      const isReachable = isPathReachable(maze, startPos, { x, y });
+      
+      if (isReachable) {
+        maze[y][x] = 'key-powerup';
+        keyPowerupPlaced = true;
+        console.log('Placed key powerup at reachable position:', x, y);
+      }
     }
   }
 
