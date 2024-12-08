@@ -327,7 +327,7 @@ Devvit.addCustomPostType({
   }));
 
     const [gameState, setGameState] = useState<GameState>(() => ({
-      maze: generateMaze(20, 9),
+      maze: generateMaze(18, 9),
       playerPosition: { x: 1, y: 1 },
       unlockedDoors: [],
       gamesPlayed: 0
@@ -394,8 +394,8 @@ Devvit.addCustomPostType({
           
             if (!message.data.won) {
               const newMaze = currentLevel === 1 
-                ? generateMaze(20, 9) 
-                : generateLevel2Maze(20, 9, newGamesPlayed);
+                ? generateMaze(18, 9) 
+                : generateLevel2Maze(18, 9, newGamesPlayed);
           
               const updateMessage: WebViewMessage = {
                 type: 'initialData',
@@ -415,8 +415,8 @@ Devvit.addCustomPostType({
 
         case 'nextGame':
           const nextMaze = currentLevel === 1 
-          ? generateMaze(20, 9) 
-          : generateLevel2Maze(20, 9, gameState.gamesPlayed);
+          ? generateMaze(18, 9) 
+          : generateLevel2Maze(18, 9, gameState.gamesPlayed);
   
           // Add this first
           if (message.data.won && message.data.shouldShowBonusKey) {
@@ -443,8 +443,8 @@ Devvit.addCustomPostType({
         case 'retry':
           // Don't reset games played on retry
           const retryMaze = currentLevel === 1 
-            ? generateMaze(20, 9) 
-            : generateLevel2Maze(20, 9, gameState.gamesPlayed);
+            ? generateMaze(18, 9) 
+            : generateLevel2Maze(18, 9, gameState.gamesPlayed);
           
           const retryState = {
             ...gameState,
@@ -481,8 +481,8 @@ Devvit.addCustomPostType({
       
       // Generate maze based on level and win streak
       const newMaze = currentLevel === 1 
-          ? generateMaze(20, 9) 
-          : generateLevel2Maze(20, 9, gameState?.gamesPlayed || 0);
+          ? generateMaze(18, 9) 
+          : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0);
       
       setGameState({
           maze: newMaze,
