@@ -185,7 +185,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
-  // Add first fake exit
+  // NEW: Add first fake exit (always present)
   let fakeExitPlaced = false;
   while (!fakeExitPlaced) {
     const y = Math.floor(Math.random() * (height - 2)) + 1;
@@ -195,17 +195,20 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
-  // Add second fake exit
-  let secondFakeExitPlaced = false;
-  while (!secondFakeExitPlaced) {
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    if (
-      y !== exitPos.y &&
-      maze[y][width - 1] === 'wall' &&
-      maze[y][width - 1] !== 'fake-exit'
-    ) {
-      maze[y][width - 1] = 'fake-exit';
-      secondFakeExitPlaced = true;
+  // NEW: Add second fake exit only if games played is 10 or more
+  if (gamesPlayed >= 10) {
+    console.log('Adding second fake exit (10+ games played)');
+    let secondFakeExitPlaced = false;
+    while (!secondFakeExitPlaced) {
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      if (
+        y !== exitPos.y &&
+        maze[y][width - 1] === 'wall' &&
+        maze[y][width - 1] !== 'fake-exit'
+      ) {
+        maze[y][width - 1] = 'fake-exit';
+        secondFakeExitPlaced = true;
+      }
     }
   }
 
