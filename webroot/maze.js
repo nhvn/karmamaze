@@ -629,29 +629,34 @@ function unlockDoor(x, y) {
         return;
     }
 
-    // Get door position and create animation first
     const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
     if (!doorElement) return;
 
     showTopRightMessage('Used 1 key to unlock door!');
 
-    const rect = doorElement.getBoundingClientRect();
+    const doorRect = doorElement.getBoundingClientRect();
+    const mazeGrid = document.getElementById('maze-grid');
+    const mazeRect = mazeGrid.getBoundingClientRect();
 
-    // Determine split direction
+    const relativeLeft = doorRect.left - mazeRect.left;
+    const relativeTop = doorRect.top - mazeRect.top;
+
+    // Get player position
     const { x: playerX, y: playerY } = gameState.playerPosition;
+
+    // Flip the logic: if dx > dy, split vertically (top/bottom); else split horizontally (left/right)
     const dx = Math.abs(x - playerX);
     const dy = Math.abs(y - playerY);
-    const isVertical = dy > dx; // This logic is fine and remains the same
+    const isHorizontal = dx < dy; 
 
-    // Create animation container
     const animContainer = document.createElement('div');
-    animContainer.className = `door-animation ${isVertical ? 'horizontal' : 'vertical'}`; // Swap 'horizontal' and 'vertical'
-    animContainer.style.left = `${rect.left}px`;
-    animContainer.style.top = `${rect.top}px`;
+    animContainer.className = `door-animation ${isHorizontal ? 'horizontal' : 'vertical'}`;
+    animContainer.style.left = `${relativeLeft}px`;
+    animContainer.style.top = `${relativeTop}px`;
+    animContainer.style.pointerEvents = 'none'; // Prevent interaction
+    mazeGrid.appendChild(animContainer);
 
-    // Create split pieces
-    if (isVertical) {
-        // When dy > dx, the door splits left/right
+    if (isHorizontal) {
         const leftPiece = document.createElement('div');
         leftPiece.className = 'door-piece left';
         const rightPiece = document.createElement('div');
@@ -659,7 +664,6 @@ function unlockDoor(x, y) {
         animContainer.appendChild(leftPiece);
         animContainer.appendChild(rightPiece);
     } else {
-        // When dx > dy, the door splits top/bottom
         const topPiece = document.createElement('div');
         topPiece.className = 'door-piece top';
         const bottomPiece = document.createElement('div');
@@ -668,41 +672,18 @@ function unlockDoor(x, y) {
         animContainer.appendChild(bottomPiece);
     }
 
-    // Add to overlay
-    const overlay = document.getElementById('animation-overlay');
-    if (overlay) {
-        overlay.appendChild(animContainer);
-    }
-
-    // Update game state
     gameState.keys--;
     gameState.maze[y][x] = 'path';
-    
-    // Update the key display
-    const keyStat = document.querySelector('.key-stat');
-    if (keyStat) {
-        keyStat.dataset.count = gameState.keys;
-        const keysEl = keyStat.querySelector('#keys');
-        if (keysEl) {
-            keysEl.textContent = gameState.keys;
-        }
-    }
-    
-    // Render maze after state update
+
     renderMaze();
 
-    // Clean up animation after it completes
+    mazeGrid.appendChild(animContainer); // Append again to ensure it persists
+
     setTimeout(() => {
         if (animContainer) {
             animContainer.remove();
         }
-    }, 500);
-
-    // Send message
-    window.parent.postMessage({
-        type: 'unlockDoor',
-        data: { position: { x, y } }
-    }, '*');
+    }, 1300); // Slightly longer than animation duration
 }
 
 // 4. GAME STATE MANAGEMENT
@@ -975,7 +956,7 @@ function startTimer() {
     function updateTimer() {
         const timerDisplay = document.getElementById('timer');
         if (timerDisplay) {
-            timerDisplay.textContent = `${timeLeft} s`;  // Added the 's' suffix
+            timerDisplay.textContent = `${timeLeft}`;
         }
         
         if (timeLeft === 0) {
