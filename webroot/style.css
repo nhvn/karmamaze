@@ -295,6 +295,8 @@ body {
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  opacity: 1 !important; /* NEW: Always keep powerup fully visible */
+  transition: box-shadow 0.3s ease;
 }
 .visible.crystal-ball::after {
   background: rgba(153, 50, 204, 0.8);
@@ -311,8 +313,23 @@ body {
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
               0 0 20px rgba(255, 215, 0, 0.5);
 }
-.explored.crystal-ball::after, .explored.map::after, .explored.key-powerup::after {
-  opacity: 0.3;
+.explored.crystal-ball::after {
+  background: rgba(153, 50, 204, 0.8);
+  box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
+              0 0 20px rgba(153, 50, 204, 0.5);
+  opacity: 1 !important;
+}
+.explored.map::after {
+  background: rgba(0, 191, 255, 0.8);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
+              0 0 20px rgba(0, 191, 255, 0.5);
+  opacity: 1 !important;
+}
+.explored.key-powerup::after {
+  background: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
+              0 0 20px rgba(255, 215, 0, 0.5);
+  opacity: 1 !important;
 }
 .key-orb, .map-orb, .crystal-orb { /* Powerup orbs */
   width: 20px;

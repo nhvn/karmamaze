@@ -706,10 +706,10 @@ function unlockDoor(x, y) {
 }
 
 // 4. GAME STATE MANAGEMENT
-function updateVisibility() { // [PRODUCTION MODE]
+function updateVisibility() {
     const { x, y } = gameState.playerPosition;
     const newVisible = new Set();
-    const viewRadius = gameState.mapUsed ? 3 : 1; // 3 gives 7x7, 2 gives 5x5, 1 gives 3x3 view
+    const viewRadius = gameState.mapUsed ? 3 : 1;
     
     // Add current position and adjacent tiles to visible set
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
@@ -719,7 +719,7 @@ function updateVisibility() { // [PRODUCTION MODE]
             if (newX >= 0 && newX < gameState.maze[0].length && 
                 newY >= 0 && newY < gameState.maze.length) {
                 newVisible.add(`${newX},${newY}`);
-                // Always add to explored tiles since that's the default behavior now
+                // Always add to explored tiles
                 gameState.exploredTiles.add(`${newX},${newY}`);
             }
         }
@@ -731,20 +731,40 @@ function updateVisibility() { // [PRODUCTION MODE]
             const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
             if (cellElement) {
                 const key = `${x},${y}`;
+                const isPowerup = cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup';
                 
-                // Always show powerups with glow
-                if (cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup') {
-                    cellElement.classList.add('powerup-glow');
+                if (isPowerup) {
+                    // Ensure we have a powerup icon element
+                    let powerupIcon = cellElement.querySelector('.powerup-icon');
+                    if (!powerupIcon) {
+                        // Create powerup icon if it doesn't exist
+                        powerupIcon = document.createElement('div');
+                        powerupIcon.className = 'powerup-icon';
+                        cellElement.appendChild(powerupIcon);
+                    }
+                    
+                    // Keep the powerup icon visible and glowing
+                    powerupIcon.classList.add('powerup-glow');
                 }
 
+                // Handle base tile visibility
                 if (newVisible.has(key)) {
+                    // Currently visible tiles
                     cellElement.classList.remove('fog', 'explored');
                     cellElement.classList.add('visible');
                 } else if (gameState.exploredTiles.has(key)) {
-                    // Show explored tiles as the default now
-                    cellElement.classList.remove('fog', 'visible');
-                    cellElement.classList.add('explored');
+                    if (isPowerup) {
+                        // For powerup tiles: dim the background but keep powerup visible
+                        cellElement.classList.remove('fog');
+                        cellElement.classList.add('explored');
+                        // Don't add to newVisible set anymore - let background be dimmed
+                    } else {
+                        // Normal explored tile behavior
+                        cellElement.classList.remove('fog', 'visible');
+                        cellElement.classList.add('explored');
+                    }
                 } else {
+                    // Unexplored tiles
                     cellElement.classList.remove('visible', 'explored');
                     cellElement.classList.add('fog');
                 }
