@@ -90,7 +90,7 @@ body {
   gap: 10px;
 }
 .pause-button {
-  background-color: #4a4a4a;
+  /* background-color: #4a4a4a; */
   color: white;
   border: none;
   padding: 10px 20px;
@@ -162,35 +162,60 @@ body {
 }
 
 /* 4. BUTTONS */
-.icon-button { /* Pause Icon */
-  background: #4a4a4a;
-  color: white;
+#resumeButton, #quitButton {
+  background-color: #4a4a4a;
+}
+#resumeButton:hover, #quitButton:hover {
+  background-color: #666;
+}
+.button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+}
+.icon-button {
+  background-color: #4a4a4ab3;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 18px;
-  padding: 8px 12px;
+  padding: 8px;
+  transition: background-color 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .icon-button:hover {
-  background: #5a5a5a;
+  background-color: #66666699;
 }
-#resumeButton {
-  background-color: #4CAF50;
+
+.pause-icon {
+  width: 13px;
+  height: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-#resumeButton:hover {
-  background-color: #45a049;
+
+.pause-bar {
+  width: 5px;
+  height: 16px;
+  background-color: white;
+  border-radius: 2px;
 }
-#quitButton {
-  background-color: #f44336;
+#pauseButton {
+    background-color: #4a4a4a;  /* Match pause menu buttons */
+    color: white;
+    border: none;
+    padding: 8px 16px;         /* Slightly smaller padding than menu buttons */
+    border-radius: 5px;
+    font-size: 14px;          /* Slightly smaller than menu buttons */
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
-#quitButton:hover {
-  background-color: #da190b;
-}
-.button-container {
-  margin-left: auto; /* Ensures pause button stays on far right */
+#pauseButton:hover {
+    background-color: #666;    /* Match pause menu button hover */
 }
 #retryButton, #newGameButton { /* Retry & New Game Button */
   background: #4a4a4a;
@@ -239,10 +264,6 @@ body {
 .heart-icon[data-filled="false"] {
   opacity: 0.3;
   filter: grayscale(100%);
-}
-#message.error.no-lives {
-  background-color: #d32f2f;
-  border-color: #b71c1c;
 }
 .powerup-stats {
   display: flex;
@@ -340,11 +361,6 @@ body {
   text-align: center;
   z-index: 1;
   pointer-events: none;
-}
-.key-stat.hidden {
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 .key-stat[data-count="0"] {
   display: none;

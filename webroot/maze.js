@@ -576,16 +576,7 @@ function activateKeyPowerup() {
         gameState.keys = MAX_KEYS;
     }
     
-    // Update the keys display
-    const keyStat = document.querySelector('.key-stat');
-    if (keyStat) {
-        keyStat.dataset.count = gameState.keys;
-        const keysEl = keyStat.querySelector('#keys');
-        if (keysEl) {
-            keysEl.textContent = gameState.keys;
-        }
-    }
-    
+    updateKeys(gameState.keys);
     showTopRightMessage('Found some keys!');
 }
 function handleDoor(x, y) {
@@ -673,6 +664,7 @@ function unlockDoor(x, y) {
     }
 
     gameState.keys--;
+    updateKeys(gameState.keys);
     gameState.maze[y][x] = 'path';
 
     renderMaze();
@@ -785,13 +777,6 @@ function updateKeys(newKeys) {
         const keysEl = keyStat.querySelector('#keys');
         if (keysEl) {
             keysEl.textContent = newKeys;
-        }
-
-        // Show/hide based on key count
-        if (newKeys <= 0) {
-            keyStat.classList.add('hidden');
-        } else {
-            keyStat.classList.remove('hidden');
         }
     }
 }
@@ -993,25 +978,7 @@ function handleTimeUp() {
     // Check for game over
     if (newLives > 0) {
         // Still has lives left
-        const messageEl = document.getElementById('message');
-        messageEl.innerHTML = '';
-        messageEl.dataset.gameWon = 'false';
-        messageEl.dataset.gameRetry = 'true';
-        
-        const textDiv = document.createElement('div');
-        textDiv.textContent = "Time's up! You've been caught!";
-        messageEl.appendChild(textDiv);
-        
-        const retryButton = document.createElement('button');
-        retryButton.textContent = 'Try Again (Or Press Enter)';
-        retryButton.onclick = () => {
-            retryLevel();
-            clearGameEndState();
-        };
-        messageEl.appendChild(retryButton);
-        
-        messageEl.className = 'error';
-        messageEl.style.display = 'block';
+        showMessage("Time's up! You've been caught!", 'error', true);
     } else {
         // No lives left - Game Over
         const finalScore = playerStats.totalScore;
@@ -1091,7 +1058,7 @@ function handleTrap() {
     // Decrease lives and store in playerStats
     const newLives = gameState.lives - 1;
     gameState.lives = newLives;
-    playerStats.currentLives = newLives; // Add this line to persist lives
+    playerStats.currentLives = newLives;
     updateLives(newLives);
     
     showTopRightMessage('Lost 1 life!');
