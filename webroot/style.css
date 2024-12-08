@@ -355,8 +355,10 @@ body {
   padding: 10px;
   border-radius: 8px;
   margin-top: 25px;
-  overflow: hidden;
+  overflow: visible;  /* Change from hidden to visible */
   transition: transform 0.1s linear;
+  width: fit-content;  /* Add this to ensure grid expands with content */
+  min-width: 100%;    /* Add this to maintain minimum width */
 }
 .cell {
   width: 40px;
