@@ -165,9 +165,9 @@ function renderMaze(movementClass = '') {
     const viewportHeight = window.innerHeight;
     
     // Use Math.round for precise pixel values
-    gameState.cameraOffset = {
-        x: Math.round((viewportWidth / 2) - (gameState.playerPosition.x * cellSize) - (cellSize / 2)),
-        y: Math.round((viewportHeight / 2) - (gameState.playerPosition.y * cellSize) - (cellSize / 2) - 25)
+    gameState.cameraOffset = { // Had to manually make the player in center
+        x: Math.round((viewportWidth / 2) - (gameState.playerPosition.x * cellSize) - (cellSize / 2) - 7),
+        y: Math.round((viewportHeight / 2) - (gameState.playerPosition.y * cellSize) - (cellSize / 2) - 32)
     };
 
     // Important: Apply transform before rendering cells
