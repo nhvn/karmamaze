@@ -81,6 +81,9 @@ function initializeGame(data) {
         messageEl.textContent = '';
     }
 
+    // Get start position first
+    const startPosition = findStartPosition(data.maze);
+
     // Initialize game state
     gameState = {
         ...gameState,
@@ -88,7 +91,7 @@ function initializeGame(data) {
         keys: playerStats.currentKeys || 3,
         initialKeysForMaze: playerStats.currentKeys || 3,
         maze: data.maze,
-        playerPosition: findStartPosition(data.maze),
+        playerPosition: startPosition,
         isGameOver: false,
         visibleTiles: new Set(),
         exploredTiles: new Set(),
@@ -103,22 +106,9 @@ function initializeGame(data) {
         lives: playerStats.currentLives || 3
     };
 
-    const cellSize = 40;
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    // Calculate camera offset
-    gameState.cameraOffset = {
-        x: Math.round((viewportWidth / 2) - (gameState.playerPosition.x * cellSize) - (cellSize / 2)),
-        y: Math.round((viewportHeight / 2) - (gameState.playerPosition.y * cellSize) - (cellSize / 2) - 25)
-    };
-
-    // Apply initial grid setup
+    // Setup basic grid
     const grid = document.getElementById('maze-grid');
-    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, ${cellSize}px)`;
-    
-    // Important: Apply the transform immediately
-    grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
+    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, 40px)`;
 
     updateLives(gameState.lives);
 
@@ -148,11 +138,17 @@ function initializeGame(data) {
         crystalIndicator.style.display = 'none';
     }
 
-    // Important: Render the maze before updating visibility
+    // Initial render
     renderMaze();
-    updateVisibility();
+    
+    // Trigger a "fake" move to the starting position to force centering
+    requestAnimationFrame(() => {
+        movePlayer(startPosition.x, startPosition.y);
+        updateVisibility();
+        hideLoading();
+    });
+
     startTimer();
-    hideLoading();
 
     // Add focus to game container for immediate keyboard control
     const gameContainer = document.getElementById('game-container');
