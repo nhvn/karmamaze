@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Key Maze</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -10,18 +10,17 @@
     <div id="game-container" tabindex="0">
         <!-- Stats Bar -->
         <div id="stats">
-            <div>
-                <span id="username">Waiting...</span>
-            </div>
             <div class="lives-container">
                 <div class="heart-icon" data-filled="true">❤️</div>
                 <div class="heart-icon" data-filled="true">❤️</div>
                 <div class="heart-icon" data-filled="true">❤️</div>
             </div>
+            <div id="timer">30 s</div>
             <div class="powerup-stats">
                 <div class="key-stat">
-                    <div class="key-orb"></div>
-                    <span id="keys">Waiting...</span>
+                    <div class="key-orb">
+                        <span id="keys">0</span> <!-- The number needs to be inside the orb div -->
+                    </div>
                 </div>
                 <div id="map-indicator" class="powerup-indicator" style="display: none;">
                     <div class="map-orb"></div>
@@ -38,7 +37,6 @@
         <!-- Main Game Elements -->
         <div id="maze-grid"></div>
         <div id="message"></div>
-        <div id="timer">30</div>
 
         <!-- Overlays -->
         <div id="loading-overlay" style="display: none;">

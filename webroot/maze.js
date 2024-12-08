@@ -27,7 +27,7 @@ let gameState = {
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
-const GAME_TIME = 30;
+const GAME_TIME = 60;
 const SCORING_CONFIG = {
     // Base points
     BASE_COMPLETION_POINTS: 1000,
@@ -86,7 +86,7 @@ function initializeGame(data) {
         ...gameState,
         username: data.username || 'Developer',
         keys: playerStats.currentKeys || 3,
-        initialKeysForMaze: playerStats.currentKeys || 3, // Store initial keys
+        initialKeysForMaze: playerStats.currentKeys || 3,
         maze: data.maze,
         playerPosition: findStartPosition(data.maze),
         isGameOver: false,
@@ -103,21 +103,21 @@ function initializeGame(data) {
         lives: playerStats.currentLives || 3
     };
 
-    const grid = document.getElementById('maze-grid');
     const cellSize = 40;
-    
-    // Set the grid size explicitly (to ensure stable dimensions)
-    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, ${cellSize}px)`;
-    grid.style.gridTemplateRows = `repeat(${data.maze.length}, ${cellSize}px)`;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    const viewportWidth = grid.clientWidth;
-    const viewportHeight = grid.clientHeight;
-
-    // Set initial camera offset
+    // Calculate camera offset
     gameState.cameraOffset = {
-        x: Math.floor(viewportWidth / 2) - (gameState.playerPosition.x * cellSize),
-        y: Math.floor(viewportHeight / 2) - (gameState.playerPosition.y * cellSize)
+        x: Math.round((viewportWidth / 2) - (gameState.playerPosition.x * cellSize) - (cellSize / 2)),
+        y: Math.round((viewportHeight / 2) - (gameState.playerPosition.y * cellSize) - (cellSize / 2) - 25)
     };
+
+    // Apply initial grid setup
+    const grid = document.getElementById('maze-grid');
+    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, ${cellSize}px)`;
+    
+    // Important: Apply the transform immediately
     grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
 
     updateLives(gameState.lives);
@@ -148,7 +148,8 @@ function initializeGame(data) {
         crystalIndicator.style.display = 'none';
     }
 
-    renderMaze(); // Call renderMaze after camera offset is applied
+    // Important: Render the maze before updating visibility
+    renderMaze();
     updateVisibility();
     startTimer();
     hideLoading();
@@ -163,18 +164,19 @@ function renderMaze(movementClass = '') {
     const grid = document.getElementById('maze-grid');
     if (!gameState.maze || !gameState.maze[0]) return;
 
-    // Calculate and apply camera offset
-    const viewportWidth = grid.clientWidth;
-    const viewportHeight = grid.clientHeight;
     const cellSize = 40;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
+    // Use Math.round for precise pixel values
     gameState.cameraOffset = {
-        x: Math.floor(viewportWidth/2) - (gameState.playerPosition.x * cellSize),
-        y: Math.floor(viewportHeight/2) - (gameState.playerPosition.y * cellSize)
+        x: Math.round((viewportWidth / 2) - (gameState.playerPosition.x * cellSize) - (cellSize / 2)),
+        y: Math.round((viewportHeight / 2) - (gameState.playerPosition.y * cellSize) - (cellSize / 2) - 25)
     };
-    grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
 
-    grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, 40px)`;
+    // Important: Apply transform before rendering cells
+    grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
+    grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, ${cellSize}px)`;
     grid.innerHTML = '';
 
     gameState.maze.forEach((row, y) => {
@@ -573,7 +575,7 @@ function activateKeyPowerup() {
         return;
     }
     
-    gameState.keys += 3;
+    gameState.keys += 4;
     if (gameState.keys > MAX_KEYS) {
         gameState.keys = MAX_KEYS;
     }
@@ -588,7 +590,7 @@ function activateKeyPowerup() {
         }
     }
     
-    showTopRightMessage('Found 3 keys!');
+    showTopRightMessage('Found some keys!');
 }
 function handleDoor(x, y) {
     if (gameState.keys > 0) {
@@ -957,7 +959,7 @@ function startTimer() {
     function updateTimer() {
         const timerDisplay = document.getElementById('timer');
         if (timerDisplay) {
-            timerDisplay.textContent = timeLeft.toString();
+            timerDisplay.textContent = `${timeLeft} s`;  // Added the 's' suffix
         }
         
         if (timeLeft === 0) {
@@ -1141,6 +1143,12 @@ function retryLevel() {
         doorOpacity: new Map()
     };
 
+    // Reset powerup UI indicators
+    const crystalIndicator = document.getElementById('crystal-indicator');
+    const mapIndicator = document.getElementById('map-indicator');
+    if (crystalIndicator) crystalIndicator.style.display = 'none';
+    if (mapIndicator) mapIndicator.style.display = 'none';
+
     // Update UI
     const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
@@ -1163,6 +1171,12 @@ function retryLevel() {
     }
 }
 function handleNextGame() {
+    // Hide message and overlay first
+    const messageEl = document.getElementById('message');
+    const messageOverlay = document.getElementById('message-overlay');
+    if (messageEl) messageEl.style.display = 'none';
+    if (messageOverlay) messageOverlay.style.display = 'none';
+
     showLoading();
     if (gameState.keys < MAX_KEYS) {
         showTopRightMessage('Found a bonus key!');
@@ -1190,6 +1204,15 @@ function retryGame() {
 
 // 7. UI & MESSAGES
 function showMessage(text, type, permanent = false, showQuitOnly = false) {
+    // Get or create the message overlay
+    let messageOverlay = document.getElementById('message-overlay');
+    if (!messageOverlay) {
+        messageOverlay = document.createElement('div');
+        messageOverlay.id = 'message-overlay';
+        document.body.appendChild(messageOverlay);
+    }
+
+    // Get or create the message element
     const messageEl = document.getElementById('message');
     messageEl.innerHTML = '';
     messageEl.dataset.gameWon = 'false';
@@ -1204,14 +1227,12 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
     });
 
     if (showQuitOnly) {
-        // Add quit button below Games Played
         const quitButton = document.createElement('button');
         quitButton.textContent = 'Quit Game';
         quitButton.onclick = newGame;
-        quitButton.style.marginTop = '10px';  // Add some space above the button
+        quitButton.style.marginTop = '10px';
         messageEl.appendChild(quitButton);
     } else if (type === 'success') {
-        // Normal success message handling
         const spacerDiv = document.createElement('div');
         messageEl.appendChild(spacerDiv);
 
@@ -1221,7 +1242,6 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         messageEl.appendChild(nextButton);
         messageEl.dataset.gameWon = 'true';
     } else if (type === 'error' && permanent && !showQuitOnly) {
-        // Normal error message handling with retry option
         const spacerDiv = document.createElement('div');
         messageEl.appendChild(spacerDiv);
 
@@ -1230,6 +1250,7 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         retryButton.onclick = () => {
             retryLevel();
             messageEl.style.display = 'none';
+            messageOverlay.style.display = 'none';
             clearGameEndState();
         };
         messageEl.appendChild(retryButton);
@@ -1238,6 +1259,23 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
     
     messageEl.className = type;
     messageEl.style.display = 'block';
+    messageOverlay.style.display = 'flex';
+}
+function clearGameEndState() {
+    const messageEl = document.getElementById('message');
+    const messageOverlay = document.getElementById('message-overlay');
+    
+    if (messageEl) {
+        messageEl.style.display = 'none';
+        messageEl.innerHTML = '';
+    }
+    
+    if (messageOverlay) {
+        messageOverlay.style.display = 'none';
+    }
+
+    gameState.isGameOver = false;
+    console.log('Game end state cleared.');
 }
 function showTopRightMessage(message) {
     const messageContainer = document.getElementById('top-right-messages');
