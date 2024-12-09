@@ -61,9 +61,16 @@
         <div id="pause-overlay" style="display: none;">
             <div class="pause-menu">
                 <div class="pause-stats">
-                    <div class="stat-item">Total Score: <span id="pauseTotalScore">0</span></div>
-                    <div class="stat-item">Average Rating: <span id="pauseAverageRating">0</span>⭐</div>
-                    <div class="stat-item">Games Played: <span id="pauseGamesPlayed">0</span></div>
+                    <!-- Normal mode stats -->
+                    <div class="normal-mode-stats">
+                        <div class="stat-item">Total Score: <span id="pauseTotalScore">0</span></div>
+                        <div class="stat-item">Average Rating: <span id="pauseAverageRating">0</span>⭐</div>
+                        <div class="stat-item">Games Played: <span id="pauseGamesPlayed">0</span></div>
+                    </div>
+                    <!-- Casual mode stats -->
+                    <div class="casual-mode-stats" style="display: none">
+                        <div class="stat-item">Games Played: <span id="pauseGamesPlayedCasual">0</span></div>
+                    </div>
                 </div>
                 <div class="pause-buttons">
                     <button id="resumeButton" class="pause-button">Resume</button>

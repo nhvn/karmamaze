@@ -160,7 +160,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
 
   // Add after ensuring path to exit exists
   const placeKeyPowerup = (maze: MazeCell[][], startY: number, exitY: number) => {
-    let position = { x: 0, y: 0 };
+    // let position = { x: 0, y: 0 };
     let placed = false;
     
     while (!placed) {
@@ -655,8 +655,8 @@ const onStartGame = () => {
             <vstack alignment="middle center" width="80%" maxWidth="100%">
               <text size="medium">
                 {currentLevel === 2 
-                  ? 'Navigate through the maze using keys to unlock doors. Can you reach the exit?' 
-                  : 'Find the crystal ball to reveal the true exit! Watch out for traps!'}
+                  ? 'Race against time in the unknown!' 
+                  : 'Chill experience for a chill guy.'}
               </text>
             </vstack>
           </vstack>

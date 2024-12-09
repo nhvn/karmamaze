@@ -23,7 +23,8 @@ let gameState = {
     retryCount: 0,       // Track retries
     winStreak: 0,        // Track consecutive wins
     totalScore: 0,        // Track total score
-    lives: 3
+    lives: 3,
+    isCasualMode: false
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
@@ -106,6 +107,8 @@ function initializeGame(data) {
         lives: playerStats.currentLives || 3
     };
 
+    gameState.isCasualMode = data.isCasualMode;
+
     // Setup basic grid
     const grid = document.getElementById('maze-grid');
     grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, 40px)`;
@@ -157,6 +160,16 @@ function initializeGame(data) {
             }, 50);
         }, 50);
     });
+
+    // Don't start timer in casual mode
+    if (!gameState.isCasualMode) {
+        startTimer();
+    } else {
+        const timerDisplay = document.getElementById('timer');
+        if (timerDisplay) {
+            timerDisplay.style.display = 'none';
+        }
+    }
 
     startTimer();
 
@@ -1022,57 +1035,67 @@ function handleWin() {
     gameState.isGameOver = true;
     stopTimer();
 
-    const timeRemaining = parseInt(document.getElementById('timer').textContent);
-    const gameData = {
-        timeRemaining,
-        movesUsed: gameState.moveCount,
-        optimalMoves: calculateOptimalMoves(gameState.maze),
-        retryCount: gameState.retryCount,
-        winStreak: gameState.winStreak,
-        lives: gameState.lives
-    };
+    if (gameState.isCasualMode) {
+        const messageLines = [
+            'You win!',
+            `Games Played: ${playerStats.gamesPlayed + 1}`
+        ];
+        
+        showMessage(messageLines.join('\n'), 'success');
+    } else {
 
-    const result = playerStats.addGameResult(`level${gameState.level}`, gameData);
-    gameState.winStreak++;
+        const timeRemaining = parseInt(document.getElementById('timer').textContent);
+        const gameData = {
+            timeRemaining,
+            movesUsed: gameState.moveCount,
+            optimalMoves: calculateOptimalMoves(gameState.maze),
+            retryCount: gameState.retryCount,
+            winStreak: gameState.winStreak,
+            lives: gameState.lives
+        };
 
-    const messageLines = [
-        'You win!',
-        `Total Score: ${result.totalScore}`,
-        `Score: +${result.baseScore}`
-    ];
+        const result = playerStats.addGameResult(`level${gameState.level}`, gameData);
+        gameState.winStreak++;
 
-    if (result.streakBonus > 0) {
-        messageLines.push(`Win Streak Bonus: +${result.streakBonus} (${result.currentStreak} wins)`);
-    }
+        const messageLines = [
+            'You win!',
+            `Total Score: ${result.totalScore}`,
+            `Score: +${result.baseScore}`
+        ];
 
-    messageLines.push(
-        `Average Rating: ${result.averageRating.toFixed(1)}⭐`,
-        `Games Played: ${playerStats.gamesPlayed}`
-    );
-
-    const winMessage = messageLines.join('\n');
-    showMessage(winMessage, 'success');
-
-    const retryButton = document.getElementById('retryButton');
-    if (retryButton) {
-        retryButton.style.display = 'block';
-    }
-
-    window.parent.postMessage({
-        type: 'gameOver',
-        data: { 
-            won: true,
-            remainingKeys: gameState.keys,
-            baseScore: result.baseScore,
-            streakBonus: result.streakBonus,
-            totalScore: result.totalScore,
-            rating: result.averageRating,
-            gamesPlayed: playerStats.gamesPlayed,
-            winStreak: playerStats.winStreak,
-            lives: gameState.lives,
-            shouldShowBonusKey: gameState.keys < MAX_KEYS
+        if (result.streakBonus > 0) {
+            messageLines.push(`Win Streak Bonus: +${result.streakBonus} (${result.currentStreak} wins)`);
         }
-    }, '*');
+
+        messageLines.push(
+            `Average Rating: ${result.averageRating.toFixed(1)}⭐`,
+            `Games Played: ${playerStats.gamesPlayed}`
+        );
+
+        const winMessage = messageLines.join('\n');
+        showMessage(winMessage, 'success');
+
+        const retryButton = document.getElementById('retryButton');
+        if (retryButton) {
+            retryButton.style.display = 'block';
+        }
+
+        window.parent.postMessage({
+            type: 'gameOver',
+            data: { 
+                won: true,
+                remainingKeys: gameState.keys,
+                baseScore: result.baseScore,
+                streakBonus: result.streakBonus,
+                totalScore: result.totalScore,
+                rating: result.averageRating,
+                gamesPlayed: playerStats.gamesPlayed,
+                winStreak: playerStats.winStreak,
+                lives: gameState.lives,
+                shouldShowBonusKey: gameState.keys < MAX_KEYS
+            }
+        }, '*');
+    }
 }
 function handleTrap() {
     gameState.isGameOver = true;
@@ -1301,30 +1324,28 @@ function hideLoading() {
 // 8. PAUSE MENU
 function pauseGame() {
     if (!isPaused) {
-        // Stop timer
-        if (timerInterval) {
+        if (!gameState.isCasualMode && timerInterval) {
             clearInterval(timerInterval);
             savedTimeLeft = parseInt(document.getElementById('timer').textContent);
         }
         
-        // Update pause menu stats
-        document.getElementById('pauseTotalScore').textContent = playerStats.totalScore;
-        document.getElementById('pauseAverageRating').textContent = playerStats.averageRating.toFixed(1);
-        document.getElementById('pauseGamesPlayed').textContent = playerStats.gamesPlayed;
+        const normalStats = document.querySelector('.normal-mode-stats');
+        const casualStats = document.querySelector('.casual-mode-stats');
         
-        // Show overlay
-        const overlay = document.getElementById('pause-overlay');
-        if (overlay) {
-            overlay.style.display = 'flex';
+        if (gameState.isCasualMode) {
+            normalStats.style.display = 'none';
+            casualStats.style.display = 'block';
+            document.getElementById('pauseGamesPlayedCasual').textContent = playerStats.gamesPlayed;
+        } else {
+            normalStats.style.display = 'block';
+            casualStats.style.display = 'none';
+            document.getElementById('pauseTotalScore').textContent = playerStats.totalScore;
+            document.getElementById('pauseAverageRating').textContent = playerStats.averageRating.toFixed(1);
+            document.getElementById('pauseGamesPlayed').textContent = playerStats.gamesPlayed;
         }
-        
-        isPaused = true;
 
-        // Ensure game container loses focus to prevent keyboard input
-        const gameContainer = document.getElementById('game-container');
-        if (gameContainer) {
-            gameContainer.blur();
-        }
+        document.getElementById('pause-overlay').style.display = 'flex';
+        isPaused = true;
     }
 }
 function resumeGame() {
