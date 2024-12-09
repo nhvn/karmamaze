@@ -1,5 +1,6 @@
 import './createPost.js';
 import { Devvit, useState } from '@devvit/public-api';
+import type { Context } from '@devvit/public-api';
 
 // 1. TYPES & INTERFACES
 type WebViewMessage =
@@ -387,8 +388,9 @@ Devvit.configure({
 Devvit.addCustomPostType({
   name: 'Key Maze',
   height: 'tall',
-  render: (context) => {
+  render: (context: Context) => {
     const [currentLevel, setCurrentLevel] = useState(2);
+    const [webviewVisible, setWebviewVisible] = useState(false);
     const [userData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
@@ -396,12 +398,11 @@ Devvit.addCustomPostType({
       };
     });
 
-    // Add playerStats state
     const [playerStats, setPlayerStats] = useState<PlayerStats>(() => ({
       gamesPlayed: 0,
       currentKeys: 3,
       currentLives: 3
-  }));
+    }));
 
     const [gameState, setGameState] = useState<GameState>(() => ({
       maze: generateMaze(18, 9),
@@ -410,15 +411,12 @@ Devvit.addCustomPostType({
       gamesPlayed: 0
     }));
 
-    const [webviewVisible, setWebviewVisible] = useState(false);
-
     const onMessage = async (msg: WebViewMessage) => {
       const message = ('data' in msg && 'message' in msg.data) 
         ? (msg.data as any).message 
         : msg;
       
       if (message.type === 'newGame') {
-        // Reset games played when returning to main menu
         setGameState(prevState => ({
           ...prevState,
           gamesPlayed: 0
@@ -550,39 +548,40 @@ Devvit.addCustomPostType({
       }
     };
 
+    const toggleMode = () => {
+      setCurrentLevel(prev => prev === 1 ? 2 : 1);
+    };
+
     const onStartGame = () => {
       if (!userData) {
-          console.error('No user data available');
-          return;
+        console.error('No user data available');
+        return;
       }
       
-      // Generate maze based on level and win streak
-      console.log('Current games played before generating maze:', gameState?.gamesPlayed);
       const newMaze = currentLevel === 1 
-          ? generateMaze(18, 9) 
-          : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0);
+        ? generateMaze(18, 9) 
+        : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0);
       
       setGameState({
-          maze: newMaze,
-          playerPosition: { x: 1, y: 1 },
-          unlockedDoors: [],
-          gamesPlayed: gameState.gamesPlayed || 0
-
+        maze: newMaze,
+        playerPosition: { x: 1, y: 1 },
+        unlockedDoors: [],
+        gamesPlayed: gameState.gamesPlayed || 0
       });
       
       setWebviewVisible(true);
       
       const message: WebViewMessage = {
-          type: 'initialData',
-          data: {
-              username: userData.username,
-              lives: playerStats.currentLives,
-              keys: 2,
-              maze: newMaze,
-              level: currentLevel,
-              gamesPlayed: gameState?.gamesPlayed || 0,
-              isNewGame: true
-          }
+        type: 'initialData',
+        data: {
+          username: userData.username,
+          lives: playerStats.currentLives,
+          keys: 2,
+          maze: newMaze,
+          level: currentLevel,
+          gamesPlayed: gameState?.gamesPlayed || 0,
+          isNewGame: true
+        }
       };
       
       try {
@@ -590,7 +589,7 @@ Devvit.addCustomPostType({
       } catch (error) {
         console.error('Error sending data:', error);
       }
-  };
+    };
 
     return (
       <vstack grow padding="small">
@@ -599,34 +598,45 @@ Devvit.addCustomPostType({
           height={webviewVisible ? '0%' : '100%'}
           alignment="middle center"
         >
-          <text size="xlarge" weight="bold">
-            Key Maze
-          </text>
-          <spacer />
-          <vstack alignment="start middle">
-            <hstack>
-              <text size="medium" weight="bold">
-                {' '}
-                {userData?.username ?? 'anon'}
-              </text>
+          {/* Logo/Title */}
+          <image 
+            url="/images/kmazeCover.png"
+            imageWidth={200}
+            imageHeight={100}
+          />
+          <spacer size="medium" />
+
+          {/* Mode Selection */}
+          <hstack alignment="middle center" gap="medium">
+            <hstack onPress={toggleMode}>
+              <text size="large" weight="bold">{'<'}</text>
             </hstack>
-          </vstack>
-          <spacer />
+            <text size="large" weight="bold">
+              {currentLevel === 1 ? 'Casual' : 'Normal'}
+            </text>
+            <hstack onPress={toggleMode}>
+              <text size="large" weight="bold">{'>'}</text>
+            </hstack>
+          </hstack>
+
+          {/* Mode Description */}
           <text size="medium">
             {currentLevel === 2 
               ? 'Navigate through the maze using keys to unlock doors. Can you reach the exit?' 
               : 'Find the crystal ball to reveal the true exit! Watch out for traps!'}
           </text>
-          <spacer />
-          <button onPress={onStartGame}>Start Game</button>
-          <hstack>
-          <text size="medium">Current Mode: {currentLevel === 1 ? 'Casual' : 'Normal'}</text>
-            </hstack>
-        <hstack>
-              <button onPress={() => setCurrentLevel(1)}>Casual</button>
-              <button onPress={() => setCurrentLevel(2)}>Normal</button>
-            </hstack>
+          <spacer size="medium" />
+
+          {/* Main Buttons */}
+          <vstack gap="small">
+            <button onPress={onStartGame}>Play</button>
+            <button>Leaderboard</button>
+            <button>How to Play</button>
+          </vstack>
+
         </vstack>
+
+        {/* Game Webview */}
         <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
           <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>
             <webview
@@ -640,18 +650,17 @@ Devvit.addCustomPostType({
         </vstack>
       </vstack>
     );
-  },
+  }
 });
 
-// 5. MENU ITEMS
+// 5. MENU ITEMS (outside of the CustomPostType)
 Devvit.addMenuItem({
   location: 'subreddit',
   label: 'Start Key Maze',
   onPress: async (_, context) => {
-    const currentSubreddit = await context.reddit.getCurrentSubreddit(); // Not getCurrentUser
+    const currentSubreddit = await context.reddit.getCurrentSubreddit();
     if (!currentSubreddit) {
       console.error('No subreddit found');
-      
       return;
     }
     
