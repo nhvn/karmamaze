@@ -159,6 +159,7 @@ function generateMaze(width: number, height: number): MazeCell[][] {
 }
 function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] {
   console.log('Generating Level 2 maze with games played:', gamesPlayed);
+  console.log('Should crystal ball be placed?', gamesPlayed >= 3);
   const maze = generateMaze(width, height);
 
   // Find existing exit and start positions
@@ -190,17 +191,18 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   let attempts = 0;
   const maxAttempts = 50; // Prevent infinite loop
 
-  while (!fakeExitPlaced && attempts < maxAttempts) {
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    if (y !== exitPos.y && maze[y][width - 1] === 'wall') {
-      // Check if there's a path tile in front of this position
-      if (maze[y][width - 2] === 'path') {
-        maze[y][width - 1] = 'fake-exit';
-        fakeExitPlaced = true;
-        console.log('Placed first fake exit with connected path at:', y);
+  if (gamesPlayed >= 3) {
+    while (!fakeExitPlaced && attempts < maxAttempts) {
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      if (y !== exitPos.y && maze[y][width - 1] === 'wall') {
+        if (maze[y][width - 2] === 'path') {
+          maze[y][width - 1] = 'fake-exit';
+          fakeExitPlaced = true;
+          console.log('Placed first fake exit with connected path at:', y);
+        }
       }
+      attempts++;
     }
-    attempts++;
   }
 
   // Add second fake exit only if games played is 10 or more
@@ -227,24 +229,26 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
-  // Place crystal ball in a valid, reachable path location
-  let crystalBallPlaced = false;
-  while (!crystalBallPlaced) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    
-    if (
-      maze[y][x] === 'path' &&
-      !(x === startPos.x && y === startPos.y) && // Not near start
-      !(x === exitPos.x && y === exitPos.y)
-    ) {
-      // Check if position is reachable from start
-      const isReachable = isPathReachable(maze, startPos, { x, y });
+  // Place crystal ball in a valid, reachable path location only if games played >= 3
+  if (gamesPlayed >= 3) {
+    let crystalBallPlaced = false;
+    while (!crystalBallPlaced) {
+      const x = Math.floor(Math.random() * (width - 2)) + 1;
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
       
-      if (isReachable) {
-        maze[y][x] = 'crystal-ball';
-        crystalBallPlaced = true;
-        console.log('Placed crystal ball at reachable position:', x, y);
+      if (
+        maze[y][x] === 'path' &&
+        !(x === startPos.x && y === startPos.y) && // Not near start
+        !(x === exitPos.x && y === exitPos.y)
+      ) {
+        // Check if position is reachable from start
+        const isReachable = isPathReachable(maze, startPos, { x, y });
+        
+        if (isReachable) {
+          maze[y][x] = 'crystal-ball';
+          crystalBallPlaced = true;
+          console.log('Placed crystal ball at reachable position:', x, y);
+        }
       }
     }
   }
@@ -512,6 +516,7 @@ Devvit.addCustomPostType({
       }
       
       // Generate maze based on level and win streak
+      console.log('Current games played before generating maze:', gameState?.gamesPlayed);
       const newMaze = currentLevel === 1 
           ? generateMaze(18, 9) 
           : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0);

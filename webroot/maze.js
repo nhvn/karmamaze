@@ -27,7 +27,7 @@ let gameState = {
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
-const GAME_TIME = 60;
+const GAME_TIME = 90;
 const SCORING_CONFIG = {
     // Base points
     BASE_COMPLETION_POINTS: 1000,
