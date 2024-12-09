@@ -16,6 +16,7 @@ type WebViewMessage =
         isRetry?: boolean; 
         isNewGame?: boolean;
         shouldShowBonusKey?: boolean;
+        isCasualMode?: boolean; // Add this field
       };
     }
   | {
@@ -31,6 +32,7 @@ type WebViewMessage =
       data: { 
         won: boolean;
         lives?: number;
+        isCasualMode?: boolean; // Add this field
       };
     }
   | {
@@ -156,11 +158,40 @@ function generateMaze(width: number, height: number): MazeCell[][] {
     pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
   }
 
+  // Add after ensuring path to exit exists
+  const placeKeyPowerup = (maze: MazeCell[][], startY: number, exitY: number) => {
+    let position = { x: 0, y: 0 };
+    let placed = false;
+    
+    while (!placed) {
+      const x = Math.floor(Math.random() * (width - 2)) + 1;
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
+      
+      if (
+        maze[y][x] === 'path' &&
+        !(x === 1 && y === startY) && // Not near start
+        !(x === width - 2 && y === exitY) // Not near exit
+      ) {
+        if (isPathReachable(maze, { x: 1, y: startY }, { x, y })) {
+          maze[y][x] = 'key-powerup';
+          placed = true;
+          console.log('Placed key powerup at:', x, y);
+        }
+      }
+    }
+  };
+
+  // Place 1-2 key powerups
+  const numPowerups = Math.random() < 0.5 ? 1 : 2;
+  for (let i = 0; i < numPowerups; i++) {
+    placeKeyPowerup(maze, startY, exitY);
+  }
+
   return maze;
 }
-function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0): MazeCell[][] {
+function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0, isCasualMode: boolean = false): MazeCell[][] {
   console.log('Generating Level 2 maze with games played:', gamesPlayed);
-  console.log('Should crystal ball be placed?', gamesPlayed >= 3);
+  console.log('Casual Mode:', isCasualMode);
   const maze = generateMaze(width, height);
 
   // Find existing exit and start positions
@@ -171,7 +202,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   for (let y = 0; y < height; y++) {
     if (y === 0 || y === height - 1) {
       for (let x = 1; x < width - 1; x++) {
-        maze[y][x] = 'path'; // Convert outer walls to paths except edges
+        maze[y][x] = 'path';
       }
     }
   }
@@ -187,10 +218,15 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
+  // Skip special elements if in casual mode
+  if (isCasualMode) {
+    return maze;
+  }
+
   // Add first fake exit (if path exists)
   let fakeExitPlaced = false;
   let attempts = 0;
-  const maxAttempts = 50; // Prevent infinite loop
+  const maxAttempts = 50;
 
   if (gamesPlayed >= 3) {
     while (!fakeExitPlaced && attempts < maxAttempts) {
@@ -219,7 +255,6 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
         maze[y][width - 1] === 'wall' &&
         maze[y][width - 1] !== 'fake-exit'
       ) {
-        // Check if there's a path tile in front of this position
         if (maze[y][width - 2] === 'path') {
           maze[y][width - 1] = 'fake-exit';
           secondFakeExitPlaced = true;
@@ -239,10 +274,9 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
       
       if (
         maze[y][x] === 'path' &&
-        !(x === startPos.x && y === startPos.y) && // Not near start
+        !(x === startPos.x && y === startPos.y) &&
         !(x === exitPos.x && y === exitPos.y)
       ) {
-        // Check if position is reachable from start
         const isReachable = isPathReachable(maze, startPos, { x, y });
         
         if (isReachable) {
@@ -262,10 +296,9 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     
     if (
       maze[y][x] === 'path' &&
-      !(x === startPos.x && y === startPos.y) && // Not near start
+      !(x === startPos.x && y === startPos.y) &&
       !(x === exitPos.x && y === exitPos.y)
     ) {
-      // Check if position is reachable from start
       const isReachable = isPathReachable(maze, startPos, { x, y });
       
       if (isReachable) {
@@ -276,106 +309,101 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
-    // Place key powerup(s) in valid, reachable path locations
-    const placeKeyPowerup = (maze: MazeCell[][], startPos: Position, exitPos: Position) => {
-      let position = { x: 0, y: 0 };
-      let placed = false;
+  // Place key powerup(s) in valid, reachable path locations
+  const placeKeyPowerup = (maze: MazeCell[][], startPos: Position, exitPos: Position) => {
+    let position = { x: 0, y: 0 };
+    let placed = false;
+    
+    while (!placed) {
+      const x = Math.floor(Math.random() * (width - 2)) + 1;
+      const y = Math.floor(Math.random() * (height - 2)) + 1;
       
-      while (!placed) {
-        const x = Math.floor(Math.random() * (width - 2)) + 1;
-        const y = Math.floor(Math.random() * (height - 2)) + 1;
+      if (
+        maze[y][x] === 'path' &&
+        !(x === startPos.x && y === startPos.y) &&
+        !(x === exitPos.x && y === exitPos.y)
+      ) {
+        const isReachable = isPathReachable(maze, startPos, { x, y });
         
-        if (
-          maze[y][x] === 'path' &&
-          !(x === startPos.x && y === startPos.y) && // Not near start
-          !(x === exitPos.x && y === exitPos.y)
-        ) {
-          // Check if position is reachable from start
-          const isReachable = isPathReachable(maze, startPos, { x, y });
-          
-          if (isReachable) {
-            maze[y][x] = 'key-powerup';
-            position = { x, y };
-            placed = true;
-            console.log('Placed key powerup at reachable position:', x, y);
+        if (isReachable) {
+          maze[y][x] = 'key-powerup';
+          position = { x, y };
+          placed = true;
+          console.log('Placed key powerup at reachable position:', x, y);
+        }
+      }
+    }
+    return position;
+  };
+
+  // Determine number of key powerups to place based on games played
+  let numKeyPowerups = 1;
+  if (gamesPlayed < 10) {
+    numKeyPowerups = Math.random() < 0.5 ? 1 : 2;
+    console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
+  } else {
+    numKeyPowerups = Math.random() < 0.5 ? 2 : 3;
+    console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
+  }
+
+  // Place the determined number of key powerups
+  const keyPowerupPositions = [];
+  for (let i = 0; i < numKeyPowerups; i++) {
+    const position = placeKeyPowerup(maze, startPos, exitPos);
+    keyPowerupPositions.push(position);
+  }
+
+  // Store key powerup rewards
+  const keyPowerupRewards = keyPowerupPositions.map(pos => {
+    if (gamesPlayed < 10) {
+      return Math.floor(Math.random() * 2) + 1;
+    } else {
+      return Math.floor(Math.random() * 3) + 1;
+    }
+  });
+
+  console.log('Key powerup positions and rewards:', keyPowerupPositions.map((pos, i) => ({
+    position: pos,
+    reward: keyPowerupRewards[i]
+  })));
+
+  // Update trap frequency based on games played
+  let trapFrequency = 0;
+  if (gamesPlayed >= 20) {
+    trapFrequency = 0.18;
+    console.log('20+ games: Setting trap frequency to 18%');
+  } else if (gamesPlayed >= 10) {
+    trapFrequency = 0.12;
+    console.log('10+ games: Setting trap frequency to 12%');
+  } else if (gamesPlayed >= 3) {
+    trapFrequency = 0.05;
+    console.log('3+ games: Setting trap frequency to 5%');
+  }
+  console.log('Final trap frequency:', trapFrequency);
+
+  // Only add traps if win streak is 3 or more
+  if (gamesPlayed >= 3) {
+    let trapCount = 0;
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        if (maze[y][x] === 'path') {
+          const isNearStart = x <= 2;
+          const isNearExit = x === width - 2 && y === exitPos.y;
+          const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
+            maze[y + dy]?.[x + dx] === 'door'
+          );
+
+          if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < trapFrequency) {
+            maze[y][x] = 'trap';
+            trapCount++;
           }
         }
       }
-      return position;
-    };
-
-    // Determine number of key powerups to place based on games played
-    let numKeyPowerups = 1;
-    if (gamesPlayed < 10) {
-      // Games 1-9: Random between 1-2 powerups
-      numKeyPowerups = Math.random() < 0.5 ? 1 : 2;
-      console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
-    } else {
-      // Games 10+: Random between 2-3 powerups
-      numKeyPowerups = Math.random() < 0.5 ? 2 : 3;
-      console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
     }
+    console.log(`Placed ${trapCount} traps in the maze`);
+  }
 
-    // Place the determined number of key powerups
-    const keyPowerupPositions = [];
-    for (let i = 0; i < numKeyPowerups; i++) {
-      const position = placeKeyPowerup(maze, startPos, exitPos);
-      keyPowerupPositions.push(position);
-    }
-
-    // Store key powerup rewards (you'll need to pass this information to the game)
-    const keyPowerupRewards = keyPowerupPositions.map(pos => {
-      if (gamesPlayed < 10) {
-        // Games 1-9: Random between 1-2 keys
-        return Math.floor(Math.random() * 2) + 1;
-      } else {
-        // Games 10+: Random between 1-3 keys
-        return Math.floor(Math.random() * 3) + 1;
-      }
-    });
-
-    console.log('Key powerup positions and rewards:', keyPowerupPositions.map((pos, i) => ({
-      position: pos,
-      reward: keyPowerupRewards[i]
-    })));
-
-    // Update trap frequency based on games played
-    let trapFrequency = 0;
-    if (gamesPlayed >= 20) {
-      trapFrequency = 0.18;
-      console.log('20+ games: Setting trap frequency to 18%');
-    } else if (gamesPlayed >= 10) {
-      trapFrequency = 0.12;
-      console.log('10+ games: Setting trap frequency to 12%');
-    } else if (gamesPlayed >= 3) {
-      trapFrequency = 0.05;
-      console.log('3+ games: Setting trap frequency to 5%');
-    }
-    console.log('Final trap frequency:', trapFrequency);
-
-    // Only add traps if win streak is 3 or more
-    if (gamesPlayed >= 3) {
-      let trapCount = 0;
-        for (let y = 1; y < height - 1; y++) {
-            for (let x = 1; x < width - 1; x++) {
-                if (maze[y][x] === 'path') {
-                    const isNearStart = x <= 2;
-                    const isNearExit = x === width - 2 && y === exitPos.y;
-                    const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
-                        maze[y + dy]?.[x + dx] === 'door'
-                    );
-
-                    if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < trapFrequency) {
-                      maze[y][x] = 'trap';
-                      trapCount++;
-                  }
-                  console.log(`Placed ${trapCount} traps in the maze`);
-                }
-            }
-        }
-    }
-
-    return maze;
+  return maze;
 }
 
 // 3. DEVVIT CONFIGURATION
@@ -451,7 +479,6 @@ Devvit.addCustomPostType({
         
           case 'gameOver':
             const newGamesPlayed = gameState.gamesPlayed + 1;
-            console.log('Incrementing games played to:', newGamesPlayed);
             
             // Update playerStats with current lives from the game
             setPlayerStats(prevStats => ({
@@ -552,44 +579,46 @@ Devvit.addCustomPostType({
       setCurrentLevel(prev => prev === 1 ? 2 : 1);
     };
 
-    const onStartGame = () => {
-      if (!userData) {
-        console.error('No user data available');
-        return;
-      }
-      
-      const newMaze = currentLevel === 1 
-        ? generateMaze(18, 9) 
-        : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0);
-      
-      setGameState({
-        maze: newMaze,
-        playerPosition: { x: 1, y: 1 },
-        unlockedDoors: [],
-        gamesPlayed: gameState.gamesPlayed || 0
-      });
-      
-      setWebviewVisible(true);
-      
-      const message: WebViewMessage = {
-        type: 'initialData',
-        data: {
-          username: userData.username,
-          lives: playerStats.currentLives,
-          keys: 2,
-          maze: newMaze,
-          level: currentLevel,
-          gamesPlayed: gameState?.gamesPlayed || 0,
-          isNewGame: true
-        }
-      };
-      
-      try {
-        context.ui.webView.postMessage('mazeGame', message);
-      } catch (error) {
-        console.error('Error sending data:', error);
-      }
-    };
+const onStartGame = () => {
+  if (!userData) {
+    console.error('No user data available');
+    return;
+  }
+  
+  const isCasualMode = currentLevel === 1;
+  const newMaze = currentLevel === 1 
+    ? generateMaze(18, 9) 
+    : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
+  
+  setGameState({
+    maze: newMaze,
+    playerPosition: { x: 1, y: 1 },
+    unlockedDoors: [],
+    gamesPlayed: gameState.gamesPlayed || 0
+  });
+  
+  setWebviewVisible(true);
+  
+  const message: WebViewMessage = {
+    type: 'initialData',
+    data: {
+      username: userData.username,
+      lives: playerStats.currentLives,
+      keys: 2,
+      maze: newMaze,
+      level: currentLevel,
+      gamesPlayed: gameState?.gamesPlayed || 0,
+      isNewGame: true,
+      isCasualMode: isCasualMode
+    }
+  };
+  
+  try {
+    context.ui.webView.postMessage('mazeGame', message);
+  } catch (error) {
+    console.error('Error sending data:', error);
+  }
+};
 
     return (
       <vstack grow padding="small">
@@ -598,6 +627,7 @@ Devvit.addCustomPostType({
           height={webviewVisible ? '0%' : '100%'}
           alignment="middle center"
         >
+          {/* ISSUE: pic not loaded */}
           {/* Logo/Title */}
           <image 
             url="/images/kmazeCover.png"
@@ -619,12 +649,17 @@ Devvit.addCustomPostType({
             </hstack>
           </hstack>
 
+          {/* ISSUE: crops out the sides when it needs to wrap around to next line */}
           {/* Mode Description */}
-          <text size="medium">
-            {currentLevel === 2 
-              ? 'Navigate through the maze using keys to unlock doors. Can you reach the exit?' 
-              : 'Find the crystal ball to reveal the true exit! Watch out for traps!'}
-          </text>
+          <vstack alignment="middle center" padding="small" width="100%">
+            <vstack alignment="middle center" width="80%" maxWidth="100%">
+              <text size="medium">
+                {currentLevel === 2 
+                  ? 'Navigate through the maze using keys to unlock doors. Can you reach the exit?' 
+                  : 'Find the crystal ball to reveal the true exit! Watch out for traps!'}
+              </text>
+            </vstack>
+          </vstack>
           <spacer size="medium" />
 
           {/* Main Buttons */}
