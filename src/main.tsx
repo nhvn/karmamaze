@@ -275,27 +275,68 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     }
   }
 
-  // Place key powerup in a valid, reachable path location
-  let keyPowerupPlaced = false;
-  while (!keyPowerupPlaced) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    
-    if (
-      maze[y][x] === 'path' &&
-      !(x === startPos.x && y === startPos.y) && // Not near start
-      !(x === exitPos.x && y === exitPos.y)
-    ) {
-      // Check if position is reachable from start
-      const isReachable = isPathReachable(maze, startPos, { x, y });
+    // Place key powerup(s) in valid, reachable path locations
+    const placeKeyPowerup = (maze: MazeCell[][], startPos: Position, exitPos: Position) => {
+      let position = { x: 0, y: 0 };
+      let placed = false;
       
-      if (isReachable) {
-        maze[y][x] = 'key-powerup';
-        keyPowerupPlaced = true;
-        console.log('Placed key powerup at reachable position:', x, y);
+      while (!placed) {
+        const x = Math.floor(Math.random() * (width - 2)) + 1;
+        const y = Math.floor(Math.random() * (height - 2)) + 1;
+        
+        if (
+          maze[y][x] === 'path' &&
+          !(x === startPos.x && y === startPos.y) && // Not near start
+          !(x === exitPos.x && y === exitPos.y)
+        ) {
+          // Check if position is reachable from start
+          const isReachable = isPathReachable(maze, startPos, { x, y });
+          
+          if (isReachable) {
+            maze[y][x] = 'key-powerup';
+            position = { x, y };
+            placed = true;
+            console.log('Placed key powerup at reachable position:', x, y);
+          }
+        }
       }
+      return position;
+    };
+
+    // Determine number of key powerups to place based on games played
+    let numKeyPowerups = 1;
+    if (gamesPlayed < 10) {
+      // Games 1-9: Random between 1-2 powerups
+      numKeyPowerups = Math.random() < 0.5 ? 1 : 2;
+      console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
+    } else {
+      // Games 10+: Random between 2-3 powerups
+      numKeyPowerups = Math.random() < 0.5 ? 2 : 3;
+      console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
     }
-  }
+
+    // Place the determined number of key powerups
+    const keyPowerupPositions = [];
+    for (let i = 0; i < numKeyPowerups; i++) {
+      const position = placeKeyPowerup(maze, startPos, exitPos);
+      keyPowerupPositions.push(position);
+    }
+
+    // Store key powerup rewards (you'll need to pass this information to the game)
+    const keyPowerupRewards = keyPowerupPositions.map(pos => {
+      if (gamesPlayed < 10) {
+        // Games 1-9: Random between 1-2 keys
+        return Math.floor(Math.random() * 2) + 1;
+      } else {
+        // Games 10+: Random between 1-3 keys
+        return Math.floor(Math.random() * 3) + 1;
+      }
+    });
+
+    console.log('Key powerup positions and rewards:', keyPowerupPositions.map((pos, i) => ({
+      position: pos,
+      reward: keyPowerupRewards[i]
+    })));
 
     // Update trap frequency based on games played
     let trapFrequency = 0;

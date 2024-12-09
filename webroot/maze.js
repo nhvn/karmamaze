@@ -581,13 +581,26 @@ function activateKeyPowerup() {
         return;
     }
     
-    gameState.keys += 4;
+    // Determine number of keys based on games played
+    let keysFound;
+    if (gameState.gamesPlayed < 10) {
+        // Games 1-9: Random 1-2 keys
+        keysFound = Math.floor(Math.random() * 2) + 1;
+    } else {
+        // Games 10+: Random 1-3 keys
+        keysFound = Math.floor(Math.random() * 3) + 1;
+    }
+    
+    // Add the keys
+    gameState.keys += keysFound;
     if (gameState.keys > MAX_KEYS) {
+        // If we would exceed MAX_KEYS, adjust keysFound to show actual amount added
+        keysFound -= (gameState.keys - MAX_KEYS);
         gameState.keys = MAX_KEYS;
     }
     
     updateKeys(gameState.keys);
-    showTopRightMessage('Found some keys!');
+    showTopRightMessage(`Found ${keysFound} key${keysFound > 1 ? 's' : ''}!`);
 }
 function handleDoor(x, y) {
     if (gameState.keys > 0) {
