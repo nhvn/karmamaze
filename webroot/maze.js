@@ -144,8 +144,18 @@ function initializeGame(data) {
     // Trigger a "fake" move to the starting position to force centering
     requestAnimationFrame(() => {
         movePlayer(startPosition.x, startPosition.y);
-        updateVisibility();
-        hideLoading();
+        
+        // Add a second move after a short delay
+        setTimeout(() => {
+            movePlayer(startPosition.x, startPosition.y);
+            
+            // And a third one just to be extra sure
+            setTimeout(() => {
+                movePlayer(startPosition.x, startPosition.y);
+                updateVisibility();
+                hideLoading();
+            }, 50);
+        }, 50);
     });
 
     startTimer();

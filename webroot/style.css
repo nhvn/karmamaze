@@ -773,5 +773,11 @@ body {
     width: 15px;
     height: 15px;
   }
+  .pause-menu {
+    padding: 20px 2px;
+  }
+  .pause-buttons {
+    padding: 10px 20px;
+  }
 }
 
