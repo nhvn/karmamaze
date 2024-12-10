@@ -1,7 +1,7 @@
 import './createPost.js';
 import { Devvit, useState } from '@devvit/public-api';
 import type { Context } from '@devvit/public-api';
-import { Leaderboard, LeaderboardManager } from './leaderboard.js';  // Note: use .js even though file is .tsx
+import { Leaderboard, LeaderboardManager, checkPersonalHighScore } from './leaderboard.js';  // Note: use .js even though file is .tsx
 // 1. TYPES & INTERFACES
 type WebViewMessage =
   | {
@@ -310,10 +310,12 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   // Determine number of key powerups based on games played
   let numKeyPowerups;
   if (gamesPlayed < 10) {
-    numKeyPowerups = Math.random() < 0.5 ? 1 : 2;
+    // 70% chance of 1, 30% chance of 2
+    numKeyPowerups = Math.random() < 0.7 ? 1 : 2;
     console.log(`Games played ${gamesPlayed} (< 10): Placing ${numKeyPowerups} powerup(s)`);
   } else {
-    numKeyPowerups = Math.random() < 0.5 ? 2 : 3;
+    // 70% chance of 2, 30% chance of 3
+    numKeyPowerups = Math.random() < 0.7 ? 2 : 3;
     console.log(`Games played ${gamesPlayed} (>= 10): Placing ${numKeyPowerups} powerup(s)`);
   }
 
@@ -325,20 +327,15 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   }
 
   // Store key powerup rewards
-  const keyPowerupRewards = keyPowerupPositions.map(pos => {
+  const keyPowerupRewards = keyPowerupPositions.map(() => {
     if (gamesPlayed < 10) {
       // Games 1-9: Each powerup gives 1-2 keys randomly
-      return Math.floor(Math.random() * 2) + 1;  // Random number 1-2
+      return Math.floor(Math.random() * 2 + 1); // Will give either 1 or 2
     } else {
       // Games 10+: Each powerup gives 1-3 keys randomly
-      return Math.floor(Math.random() * 3) + 1;  // Random number 1-3
+      return Math.floor(Math.random() * 3 + 1); // Will give 1, 2, or 3
     }
   });
-
-  console.log('Key powerup positions and rewards:', keyPowerupPositions.map((pos, i) => ({
-    position: pos,
-    reward: keyPowerupRewards[i]
-  })));
 
   // Update trap frequency based on games played
   let trapFrequency = 0;
@@ -451,18 +448,37 @@ Devvit.addCustomPostType({
           await context.redis.set(`maze_${context.postId}`, JSON.stringify(newUnlockState));
           break;
         
-          case 'gameOver':
-            if (message.data.won) {
-              await LeaderboardManager.updateLeaderboard(context, {
-                username: userData?.username ?? 'Developer',
-                score: message.data.totalScore,
-                averageRating: message.data.rating,
-                gamesPlayed: message.data.gamesPlayed
-              });
+          case 'gameOver': {
+            if (message.data.won && message.data.totalScore) {
+              try {
+                const username = userData?.username ?? 'Developer';
+                const newScore = message.data.totalScore;
+                
+                // First check if it's a personal best
+                const isPersonalBest = await checkPersonalHighScore(context, username, newScore);
+                
+                // Then update the leaderboard
+                await LeaderboardManager.updateLeaderboard(context, {
+                  username,
+                  score: newScore
+                });
+          
+                // Send result back to game window
+                context.ui.webView.postMessage('mazeGame', {
+                  type: 'highScoreResult',
+                  isPersonalBest
+                });
+              } catch (error) {
+                console.error('Error in game over:', error);
+                context.ui.webView.postMessage('mazeGame', {
+                  type: 'highScoreResult',
+                  isPersonalBest: false
+                });
+              }
             }
+            
             const newGamesPlayed = gameState.gamesPlayed + 1;
             
-            // Update playerStats with current lives from the game
             setPlayerStats(prevStats => ({
               ...prevStats,
               currentLives: message.data.lives || prevStats.currentLives
@@ -496,6 +512,7 @@ Devvit.addCustomPostType({
               context.ui.webView.postMessage('mazeGame', updateMessage);
             }
             break;
+          }
 
         case 'nextGame':
           const nextMaze = currentLevel === 1 
@@ -688,16 +705,25 @@ Devvit.addMenuItem({
       return;
     }
     
-    await context.reddit.submitPost({
-      title: 'Key Maze Challenge',
-      subredditName: currentSubreddit.name,
-      preview: (
-        <vstack>
-          <text>Loading Key Maze...</text>
-        </vstack>
-      ),
-    });
+    // await context.reddit.submitPost({
+    //   title: 'Key Maze Challenge',
+    //   subredditName: currentSubreddit.name,
+    //   preview: (
+    //     <vstack>
+    //       <text>Loading Key Maze...</text>
+    //     </vstack>
+    //   ),
+    // });
     context.ui.showToast(`Created new Key Maze in ${currentSubreddit.name}`);
+  },
+});
+
+Devvit.addMenuItem({
+  location: 'subreddit',
+  label: 'Reset Maze Leaderboard',
+  onPress: async (_, context) => {
+    await LeaderboardManager.resetLeaderboard(context);
+    context.ui.showToast('Leaderboard has been reset');
   },
 });
 
