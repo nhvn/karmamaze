@@ -1,7 +1,7 @@
 import './createPost.js';
 import { Devvit, useState } from '@devvit/public-api';
 import type { Context } from '@devvit/public-api';
-
+import { Leaderboard, LeaderboardManager } from './leaderboard.js';  // Note: use .js even though file is .tsx
 // 1. TYPES & INTERFACES
 type WebViewMessage =
   | {
@@ -158,35 +158,6 @@ function generateMaze(width: number, height: number): MazeCell[][] {
     pathExists = isPathReachable(maze, { x: 1, y: startY }, { x: width - 2, y: exitY });
   }
 
-  // Add after ensuring path to exit exists
-  const placeKeyPowerup = (maze: MazeCell[][], startY: number, exitY: number) => {
-    // let position = { x: 0, y: 0 };
-    let placed = false;
-    
-    while (!placed) {
-      const x = Math.floor(Math.random() * (width - 2)) + 1;
-      const y = Math.floor(Math.random() * (height - 2)) + 1;
-      
-      if (
-        maze[y][x] === 'path' &&
-        !(x === 1 && y === startY) && // Not near start
-        !(x === width - 2 && y === exitY) // Not near exit
-      ) {
-        if (isPathReachable(maze, { x: 1, y: startY }, { x, y })) {
-          maze[y][x] = 'key-powerup';
-          placed = true;
-          console.log('Placed key powerup at:', x, y);
-        }
-      }
-    }
-  };
-
-  // Place 1-2 key powerups
-  const numPowerups = Math.random() < 0.5 ? 1 : 2;
-  for (let i = 0; i < numPowerups; i++) {
-    placeKeyPowerup(maze, startY, exitY);
-  }
-
   return maze;
 }
 function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0, isCasualMode: boolean = false): MazeCell[][] {
@@ -336,17 +307,17 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     return position;
   };
 
-  // Determine number of key powerups to place based on games played
-  let numKeyPowerups = 1;
+  // Determine number of key powerups based on games played
+  let numKeyPowerups;
   if (gamesPlayed < 10) {
     numKeyPowerups = Math.random() < 0.5 ? 1 : 2;
-    console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
+    console.log(`Games played ${gamesPlayed} (< 10): Placing ${numKeyPowerups} powerup(s)`);
   } else {
     numKeyPowerups = Math.random() < 0.5 ? 2 : 3;
-    console.log(`Games played ${gamesPlayed}: Placing ${numKeyPowerups} key powerup(s)`);
+    console.log(`Games played ${gamesPlayed} (>= 10): Placing ${numKeyPowerups} powerup(s)`);
   }
 
-  // Place the determined number of key powerups
+  // Place powerups
   const keyPowerupPositions = [];
   for (let i = 0; i < numKeyPowerups; i++) {
     const position = placeKeyPowerup(maze, startPos, exitPos);
@@ -356,9 +327,11 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   // Store key powerup rewards
   const keyPowerupRewards = keyPowerupPositions.map(pos => {
     if (gamesPlayed < 10) {
-      return Math.floor(Math.random() * 2) + 1;
+      // Games 1-9: Each powerup gives 1-2 keys randomly
+      return Math.floor(Math.random() * 2) + 1;  // Random number 1-2
     } else {
-      return Math.floor(Math.random() * 3) + 1;
+      // Games 10+: Each powerup gives 1-3 keys randomly
+      return Math.floor(Math.random() * 3) + 1;  // Random number 1-3
     }
   });
 
@@ -419,6 +392,7 @@ Devvit.addCustomPostType({
   render: (context: Context) => {
     const [currentLevel, setCurrentLevel] = useState(2);
     const [webviewVisible, setWebviewVisible] = useState(false);
+    const [currentView, setCurrentView] = useState<'menu' | 'game' | 'leaderboard'>('menu');
     const [userData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
@@ -444,21 +418,21 @@ Devvit.addCustomPostType({
         ? (msg.data as any).message 
         : msg;
       
-      if (message.type === 'newGame') {
-        setGameState(prevState => ({
-          ...prevState,
-          gamesPlayed: 0
-        }));
-        setWebviewVisible(false);
-        return;
-      }
-    
       if (!gameState || !userData) {
         console.error('Missing game state or user data');
         return;
-      }
+      }    
     
       switch (message.type) {
+        case 'newGame':
+          setGameState(prevState => ({
+            ...prevState,
+            gamesPlayed: 0
+          }));
+          setWebviewVisible(false);
+          setCurrentView('menu');  // Add this line
+          return;
+
         case 'movePlayer':
           const newMoveState = {
             ...gameState,
@@ -478,6 +452,14 @@ Devvit.addCustomPostType({
           break;
         
           case 'gameOver':
+            if (message.data.won) {
+              await LeaderboardManager.updateLeaderboard(context, {
+                username: userData?.username ?? 'Developer',
+                score: message.data.totalScore,
+                averageRating: message.data.rating,
+                gamesPlayed: message.data.gamesPlayed
+              });
+            }
             const newGamesPlayed = gameState.gamesPlayed + 1;
             
             // Update playerStats with current lives from the game
@@ -579,112 +561,119 @@ Devvit.addCustomPostType({
       setCurrentLevel(prev => prev === 1 ? 2 : 1);
     };
 
-const onStartGame = () => {
-  if (!userData) {
-    console.error('No user data available');
-    return;
-  }
-  
-  const isCasualMode = currentLevel === 1;
-  const newMaze = currentLevel === 1 
-    ? generateMaze(18, 9) 
-    : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
-  
-  setGameState({
-    maze: newMaze,
-    playerPosition: { x: 1, y: 1 },
-    unlockedDoors: [],
-    gamesPlayed: gameState.gamesPlayed || 0
-  });
-  
-  setWebviewVisible(true);
-  
-  const message: WebViewMessage = {
-    type: 'initialData',
-    data: {
-      username: userData.username,
-      lives: playerStats.currentLives,
-      keys: 2,
-      maze: newMaze,
-      level: currentLevel,
-      gamesPlayed: gameState?.gamesPlayed || 0,
-      isNewGame: true,
-      isCasualMode: isCasualMode
-    }
-  };
-  
-  try {
-    context.ui.webView.postMessage('mazeGame', message);
-  } catch (error) {
-    console.error('Error sending data:', error);
-  }
-};
+    const onStartGame = () => {
+      if (!userData) {
+        console.error('No user data available');
+        return;
+      }
+      
+      const isCasualMode = currentLevel === 1;
+      const newMaze = currentLevel === 1 
+        ? generateMaze(18, 9) 
+        : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
+      
+      setGameState({
+        maze: newMaze,
+        playerPosition: { x: 1, y: 1 },
+        unlockedDoors: [],
+        gamesPlayed: gameState.gamesPlayed || 0
+      });
+      
+      setWebviewVisible(true);
+      setCurrentView('game');  // Add this line
+      
+      const message: WebViewMessage = {
+        type: 'initialData',
+        data: {
+          username: userData.username,
+          lives: playerStats.currentLives,
+          keys: 2,
+          maze: newMaze,
+          level: currentLevel,
+          gamesPlayed: gameState?.gamesPlayed || 0,
+          isNewGame: true,
+          isCasualMode: isCasualMode
+        }
+      };
+      
+      try {
+        context.ui.webView.postMessage('mazeGame', message);
+      } catch (error) {
+        console.error('Error sending data:', error);
+      }
+    };
 
-    return (
-      <vstack grow padding="small">
-        <vstack
-          grow={!webviewVisible}
-          height={webviewVisible ? '0%' : '100%'}
-          alignment="middle center"
-        >
-          {/* ISSUE: pic not loaded */}
-          {/* Logo/Title */}
-          <image 
-            url="/images/kmazeCover.png"
-            imageWidth={200}
-            imageHeight={100}
-          />
-          <spacer size="medium" />
+return (
+  <vstack grow padding="small">
+    {currentView === 'menu' ? (
+      // Menu View
+      <vstack
+        grow={!webviewVisible}
+        height={webviewVisible ? '0%' : '100%'}
+        alignment="middle center"
+      >
+        {/* Logo/Title */}
+        <image 
+          url="/images/kmazeCover.png"
+          imageWidth={200}
+          imageHeight={100}
+        />
+        <spacer size="medium" />
 
-          {/* Mode Selection */}
-          <hstack alignment="middle center" gap="medium">
-            <hstack onPress={toggleMode}>
-              <text size="large" weight="bold">{'<'}</text>
-            </hstack>
-            <text size="large" weight="bold">
-              {currentLevel === 1 ? 'Casual' : 'Normal'}
-            </text>
-            <hstack onPress={toggleMode}>
-              <text size="large" weight="bold">{'>'}</text>
-            </hstack>
+        {/* Mode Selection */}
+        <hstack alignment="middle center" gap="medium">
+          <hstack onPress={toggleMode}>
+            <text size="large" weight="bold">{'<'}</text>
           </hstack>
+          <text size="large" weight="bold">
+            {currentLevel === 1 ? 'Casual' : 'Normal'}
+          </text>
+          <hstack onPress={toggleMode}>
+            <text size="large" weight="bold">{'>'}</text>
+          </hstack>
+        </hstack>
 
-          {/* ISSUE: crops out the sides when it needs to wrap around to next line */}
-          {/* Mode Description */}
-          <vstack alignment="middle center" padding="small" width="100%">
-            <vstack alignment="middle center" width="80%" maxWidth="100%">
-              <text size="medium">
-                {currentLevel === 2 
-                  ? 'Race against time in the unknown!' 
-                  : 'Chill experience for a chill guy.'}
-              </text>
-            </vstack>
+        {/* Mode Description */}
+        <vstack alignment="middle center" padding="small" width="100%">
+          <vstack alignment="middle center" width="80%" maxWidth="100%">
+            <text size="medium">
+              {currentLevel === 2 
+                ? 'Race against time in the unknown!' 
+                : 'Chill experience for a chill guy.'}
+            </text>
           </vstack>
-          <spacer size="medium" />
-
-          {/* Main Buttons */}
-          <vstack gap="small">
-            <button onPress={onStartGame}>Play</button>
-            <button>Leaderboard</button>
-            <button>How to Play</button>
-          </vstack>
-
         </vstack>
+        <spacer size="medium" />
 
-        {/* Game Webview */}
-        <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
-          <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>
-            <webview
-              id="mazeGame"
-              url="maze.html"
-              onMessage={(msg) => onMessage(msg as WebViewMessage)}
-              grow
-              height={webviewVisible ? '100%' : '0%'}
-            />
-          </vstack>
+        {/* Main Buttons */}
+        <vstack gap="small">
+          <button onPress={onStartGame}>Play</button>
+          <button onPress={() => setCurrentView('leaderboard')}>Leaderboard</button>
+          <button>How to Play</button>
         </vstack>
       </vstack>
-    );
+    ) : currentView === 'leaderboard' ? (
+      // Leaderboard View
+      <Leaderboard 
+        context={context}
+        onBack={() => setCurrentView('menu')}
+      />
+    ) : currentView === 'game' ? ( 
+      // Game View THIS SHOULD BE WHAT?
+      <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
+        <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>
+          <webview
+            id="mazeGame"
+            url="maze.html"
+            onMessage={(msg) => onMessage(msg as WebViewMessage)}
+            grow
+            height={webviewVisible ? '100%' : '0%'}
+          />
+        </vstack>
+      </vstack>
+    ) : null} 
+  </vstack>
+);
   }
 });
 
