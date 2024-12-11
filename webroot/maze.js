@@ -886,52 +886,16 @@ function calculateGameScore(gameData) { // Score for single game
         currentStreak
     };
 }
-function calculateStarRating(gameData) { // Rating out of 5 stars
-    const {
-        timeRemaining,
-        movesUsed,
-        optimalMoves,
-        retryCount
-    } = gameData;
-    
-    let ratingPoints = 0; // Out of 100 points
-
-    // Time component (up to 50 points) - More generous time brackets
-    const timeUsed = 30 - timeRemaining;
-    if (timeUsed <= 17) ratingPoints += 50;      // More time allowed for max points
-    else if (timeUsed <= 22) ratingPoints += 40; // Still high points for good completion
-    else if (timeUsed <= 26) ratingPoints += 30; // Decent points for slower completion
-    else ratingPoints += 20;                     // Base points for finishing
-    
-    // Move efficiency (up to 50 points) - More lenient thresholds
-    const moveEfficiency = movesUsed / optimalMoves;
-    if (moveEfficiency <= 1.6) ratingPoints += 50;      // 60% over optimal for max points
-    else if (moveEfficiency <= 1.85) ratingPoints += 40;
-    else if (moveEfficiency <= 2.1) ratingPoints += 30;
-    else if (moveEfficiency <= 2.6) ratingPoints += 20;
-    else ratingPoints += 10;                           
-    
-    // Retry penalty (up to -20 points) - Keep this the same
-    ratingPoints -= Math.min(20, retryCount * 10);
-    
-    // Convert to star rating (0-5 stars, can have half stars)
-    const starRating = Math.max(1.0, Math.round((ratingPoints / 100) * 10) / 2);
-    
-    return starRating;
-}
 const playerStats = { 
     totalScore: 0,
     gamesPlayed: 0,
-    totalStars: 0,
     winStreak: 0,
     highestStreak: 0,
-    averageRating: 0,
     currentKeys: 3, 
     levelStats: new Map(),
     
     addGameResult(levelId, gameData) {
         const scores = calculateGameScore(gameData);
-        const rating = calculateStarRating(gameData);
         
         // Update keys after maze completion
         this.currentKeys = Math.min(gameState.keys + (gameState.keys < MAX_KEYS ? 1 : 0), MAX_KEYS);
@@ -939,8 +903,6 @@ const playerStats = {
         
         this.totalScore += scores.totalScore;
         this.gamesPlayed++;
-        this.totalStars += rating;
-        this.averageRating = this.totalStars / this.gamesPlayed;
         
         // Update win streak - include current win
         this.winStreak = gameData.winStreak + 1;
@@ -949,21 +911,17 @@ const playerStats = {
         if (!this.levelStats.has(levelId)) {
             this.levelStats.set(levelId, {
                 highScore: 0,
-                bestRating: 0,
                 timesPlayed: 0
             });
         }
         
         const levelStat = this.levelStats.get(levelId);
         levelStat.highScore = Math.max(levelStat.highScore, scores.totalScore);
-        levelStat.bestRating = Math.max(levelStat.bestRating, rating);
         levelStat.timesPlayed++;
         
         return {
             ...scores,
-            rating,
             totalScore: this.totalScore,
-            averageRating: this.averageRating,
             currentStreak: this.winStreak,
             currentKeys: this.currentKeys
         };
@@ -1018,13 +976,11 @@ function handleTimeUp() {
     } else {
         // No lives left - Game Over
         const finalScore = playerStats.totalScore;
-        const avgRating = playerStats.averageRating;
         const gamesPlayed = playerStats.gamesPlayed;
         
         const gameOverMessage = [
             'Game Over!',
             `Final Score: ${finalScore}`,
-            `Average Rating: ${avgRating.toFixed(1)}⭐`,
             `Games Played: ${gamesPlayed}\n`
         ].join('\n');
 
@@ -1068,7 +1024,6 @@ function handleWin() {
         }
 
         messageLines.push(
-            `Average Rating: ${result.averageRating.toFixed(1)}⭐`,
             `Games Played: ${playerStats.gamesPlayed}`
         );
 
@@ -1088,7 +1043,6 @@ function handleWin() {
                 baseScore: result.baseScore,
                 streakBonus: result.streakBonus,
                 totalScore: result.totalScore,
-                rating: result.averageRating,
                 gamesPlayed: playerStats.gamesPlayed,
                 winStreak: playerStats.winStreak,
                 lives: gameState.lives,
@@ -1115,13 +1069,11 @@ function handleTrap() {
     } else {
         // Game over - no lives left
         const finalScore = playerStats.totalScore;
-        const avgRating = playerStats.averageRating;
         const gamesPlayed = playerStats.gamesPlayed;
         
         const gameOverMessage = [
             'Game Over!',
             `Final Score: ${finalScore}`,
-            `Average Rating: ${avgRating.toFixed(1)}⭐`,
             `Games Played: ${gamesPlayed}\n`
         ].join('\n');
 
@@ -1236,25 +1188,29 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         messageEl.appendChild(textDiv);
     });
 
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.flexDirection = 'column';
+    // buttonContainer.style.gap = '10px';
+    buttonContainer.style.marginTop = '15px';
+
     if (showQuitOnly) {
         const quitButton = document.createElement('button');
         quitButton.textContent = 'Quit Game';
         quitButton.onclick = newGame;
-        quitButton.style.marginTop = '10px';
-        messageEl.appendChild(quitButton);
+        buttonContainer.appendChild(quitButton);
     } else if (type === 'success') {
-        const spacerDiv = document.createElement('div');
-        messageEl.appendChild(spacerDiv);
-
         const nextButton = document.createElement('button');
         nextButton.textContent = 'Next Game';
         nextButton.onclick = handleNextGame;
-        messageEl.appendChild(nextButton);
+        buttonContainer.appendChild(nextButton);
         messageEl.dataset.gameWon = 'true';
-    } else if (type === 'error' && permanent && !showQuitOnly) {
-        const spacerDiv = document.createElement('div');
-        messageEl.appendChild(spacerDiv);
 
+        const quitButton = document.createElement('button');
+        quitButton.textContent = 'Quit Game';
+        quitButton.onclick = newGame;
+        buttonContainer.appendChild(quitButton);
+    } else if (type === 'error' && permanent && !showQuitOnly) {
         const retryButton = document.createElement('button');
         retryButton.textContent = 'Try Again';
         retryButton.onclick = () => {
@@ -1263,10 +1219,16 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
             messageOverlay.style.display = 'none';
             clearGameEndState();
         };
-        messageEl.appendChild(retryButton);
+        buttonContainer.appendChild(retryButton);
         messageEl.dataset.gameRetry = 'true';
+
+        const quitButton = document.createElement('button');
+        quitButton.textContent = 'Quit Game';
+        quitButton.onclick = newGame;
+        buttonContainer.appendChild(quitButton);
     }
-    
+
+    messageEl.appendChild(buttonContainer);
     messageEl.className = type;
     messageEl.style.display = 'block';
     messageOverlay.style.display = 'flex';
@@ -1340,7 +1302,6 @@ function pauseGame() {
             normalStats.style.display = 'block';
             casualStats.style.display = 'none';
             document.getElementById('pauseTotalScore').textContent = playerStats.totalScore;
-            document.getElementById('pauseAverageRating').textContent = playerStats.averageRating.toFixed(1);
             document.getElementById('pauseGamesPlayed').textContent = playerStats.gamesPlayed;
         }
 

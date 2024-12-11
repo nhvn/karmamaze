@@ -631,9 +631,9 @@ return (
       >
         {/* Logo/Title */}
         <image 
-          url="/images/kmazeCover.png"
-          imageWidth={200}
-          imageHeight={100}
+          url="kmazeCover.png"
+          imageWidth={300}
+          imageHeight={150}
         />
         <spacer size="medium" />
 
@@ -705,15 +705,15 @@ Devvit.addMenuItem({
       return;
     }
     
-    // await context.reddit.submitPost({
-    //   title: 'Key Maze Challenge',
-    //   subredditName: currentSubreddit.name,
-    //   preview: (
-    //     <vstack>
-    //       <text>Loading Key Maze...</text>
-    //     </vstack>
-    //   ),
-    // });
+    await context.reddit.submitPost({
+      title: 'Key Maze Challenge',
+      subredditName: currentSubreddit.name,
+      preview: (
+        <vstack>
+          <text>Loading Key Maze...</text>
+        </vstack>
+      ),
+    });
     context.ui.showToast(`Created new Key Maze in ${currentSubreddit.name}`);
   },
 });
@@ -726,5 +726,7 @@ Devvit.addMenuItem({
     context.ui.showToast('Leaderboard has been reset');
   },
 });
+
+
 
 export default Devvit;
