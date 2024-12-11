@@ -2,6 +2,8 @@ import './createPost.js';
 import { Devvit, useState } from '@devvit/public-api';
 import type { Context } from '@devvit/public-api';
 import { Leaderboard, LeaderboardManager, checkPersonalHighScore } from './leaderboard.js';  // Note: use .js even though file is .tsx
+import { HowToPlay } from './howToPlay.js';
+
 // 1. TYPES & INTERFACES
 type WebViewMessage =
   | {
@@ -389,7 +391,7 @@ Devvit.addCustomPostType({
   render: (context: Context) => {
     const [currentLevel, setCurrentLevel] = useState(2);
     const [webviewVisible, setWebviewVisible] = useState(false);
-    const [currentView, setCurrentView] = useState<'menu' | 'game' | 'leaderboard'>('menu');
+    const [currentView, setCurrentView] = useState<'menu' | 'game' | 'leaderboard' | 'howToPlay'>('menu');
     const [userData] = useState<UserData | null>(async () => {
       const currUser = await context.reddit.getCurrentUser();
       return {
@@ -666,7 +668,7 @@ return (
         <vstack gap="small">
           <button onPress={onStartGame}>Play</button>
           <button onPress={() => setCurrentView('leaderboard')}>Leaderboard</button>
-          <button>How to Play</button>
+          <button onPress={() => setCurrentView('howToPlay')}>How to Play</button>
         </vstack>
       </vstack>
     ) : currentView === 'leaderboard' ? (
@@ -687,7 +689,10 @@ return (
             height={webviewVisible ? '100%' : '0%'}
           />
         </vstack>
-      </vstack>
+        
+        </vstack>
+    ) : currentView === 'howToPlay' ? (
+      <HowToPlay onBack={() => setCurrentView('menu')} />
     ) : null} 
   </vstack>
 );

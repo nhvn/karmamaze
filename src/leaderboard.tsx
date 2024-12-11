@@ -48,8 +48,20 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
     <vstack padding="medium" gap="medium" grow>
       {/* Header */}
       <vstack alignment="middle center" padding="small">
-        <text size="xlarge" weight="bold">Top Maze Masters</text>
-        <text size="small" color="#888888">Top 10 Players</text> {/* Secondary text color */}
+        <hstack width="100%">
+          <hstack width="10%" />
+          <text size="xlarge" weight="bold" grow alignment="middle center">Top Maze Masters</text>
+          <hstack width="10%" alignment="end">
+            <text 
+              size="large" 
+              weight="bold"
+              onPress={onBack}
+            >
+              ✕
+            </text>
+          </hstack>
+        </hstack>
+        <text size="small" color="#888888">Top 10 Players</text>
       </vstack>
 
       {/* Leaderboard Table */}
@@ -89,11 +101,6 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
           </vstack>
         )}
       </vstack>
-
-      {/* Back Button */}
-      <button onPress={onBack}>
-        Back to Menu
-      </button>
     </vstack>
   );
 };
