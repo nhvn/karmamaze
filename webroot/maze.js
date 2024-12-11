@@ -5,6 +5,7 @@ let isPaused = false;
 let savedTimeLeft = null;
 let initialKeys = 3;
 let initialMaze = null; 
+let playerImageUrl = '';
 let gameState = {
     cameraOffset: { x: 0, y: 0 },
     username: '',
@@ -24,7 +25,8 @@ let gameState = {
     winStreak: 0,        // Track consecutive wins
     totalScore: 0,        // Track total score
     lives: 3,
-    isCasualMode: false
+    isCasualMode: false,
+    playerOrientation: 'face-right'
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
@@ -104,7 +106,8 @@ function initializeGame(data) {
         retryCount: 0,
         winStreak: gameState.winStreak,
         totalScore: gameState.totalScore,
-        lives: playerStats.currentLives || 3
+        lives: playerStats.currentLives || 3,
+        playerOrientation: 'face-right'
     };
 
     gameState.isCasualMode = data.isCasualMode;
@@ -230,6 +233,10 @@ function renderMaze(movementClass = '') {
 
             if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
                 cellElement.classList.add('player');
+                // Add orientation class if it exists
+                if (gameState.playerOrientation) {
+                    cellElement.classList.add(gameState.playerOrientation);
+                }
                 if (movementClass) {
                     cellElement.classList.add(movementClass);
                     setTimeout(() => {
@@ -245,6 +252,39 @@ function renderMaze(movementClass = '') {
 
     updateVisibility();
 }
+// Modify your window.addEventListener('message') handler to include image URL processing
+window.addEventListener('message', (event) => {
+    log('Received message:', event.data);
+    
+    const message = event.data?.data?.message || event.data;
+    if (!message || !message.type) {
+        log('Invalid message received:', message);
+        return;
+    }
+    
+    switch (message.type) {
+        case 'initialData':
+            // Store all image URLs
+            playerImageUrl = message.data.playerImageUrl || '';
+            keyPowerupImageUrl = message.data.keyPowerupImageUrl || '';
+            mapImageUrl = message.data.mapImageUrl || '';
+            crystalBallImageUrl = message.data.crystalBallImageUrl || '';
+            
+            // Set CSS variables for all images
+            document.documentElement.style.setProperty('--player-image-url', `url('${playerImageUrl}')`);
+            document.documentElement.style.setProperty('--key-powerup-image-url', `url('${keyPowerupImageUrl}')`);
+            document.documentElement.style.setProperty('--map-image-url', `url('${mapImageUrl}')`);
+            document.documentElement.style.setProperty('--crystal-ball-image-url', `url('${crystalBallImageUrl}')`);
+            
+            initializeGame({
+                ...message.data,
+                isNewGame: !message.data.isRetry
+            });
+            break;
+        default:
+            log('Unknown message type:', message.type);
+    }
+});
 function movePlayer(x, y) {
     const oldX = gameState.playerPosition.x;
     const oldY = gameState.playerPosition.y;
@@ -252,12 +292,30 @@ function movePlayer(x, y) {
     gameState.moveCount++;
     
     let direction = '';
-    if (x > oldX) direction = 'move-right';
-    else if (x < oldX) direction = 'move-left';
-    else if (y > oldY) direction = 'move-down';
-    else if (y < oldY) direction = 'move-up';
+    let orientation = '';
+    
+    // Determine movement direction and orientation
+    if (x > oldX) {
+        direction = 'move-right';
+        orientation = 'face-right';
+    }
+    else if (x < oldX) {
+        direction = 'move-left';
+        orientation = 'face-left';
+    }
+    else if (y > oldY) {
+        direction = 'move-down';
+        orientation = 'face-down';
+    }
+    else if (y < oldY) {
+        direction = 'move-up';
+        orientation = 'face-up';
+    }
 
     gameState.playerPosition = { x, y };
+    
+    // Store the current orientation in gameState
+    gameState.playerOrientation = orientation;
     
     renderMaze(direction);
     updateVisibility();
@@ -279,6 +337,14 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
     const dx = Math.abs(x - playerX);
     const dy = Math.abs(y - playerY);
     
+    // Determine orientation based on click position
+    const setPlayerOrientation = (newX, newY) => {
+        if (newX > playerX) gameState.playerOrientation = 'face-right';
+        else if (newX < playerX) gameState.playerOrientation = 'face-left';
+        else if (newY > playerY) gameState.playerOrientation = 'face-down';
+        else if (newY < playerY) gameState.playerOrientation = 'face-up';
+    };
+    
     // Only allow clicks on directly adjacent cells (not diagonal)
     if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
         const targetCell = gameState.maze[y][x];
@@ -287,6 +353,9 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
             if (gameState.isDisarming) return;  // Exit early if already disarming
         
             if (gameState.keys >= 2) {
+                // Set orientation even when disarming
+                setPlayerOrientation(x, y);
+                
                 // Set disarming state to true
                 gameState.isDisarming = true;
                 
@@ -337,21 +406,25 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
             }
             return;  // Don't move - stay in current position
         } else if (targetCell === 'crystal-ball') {
+            setPlayerOrientation(x, y);
             movePlayer(x, y);
             activateCrystalBall();
             gameState.maze[y][x] = 'path';
             renderMaze();
         } else if (targetCell === 'map') {
+            setPlayerOrientation(x, y);
             movePlayer(x, y);
             activateMap();
             gameState.maze[y][x] = 'path';
             renderMaze();
         } else if (targetCell === 'key-powerup') {
+            setPlayerOrientation(x, y);
             movePlayer(x, y);
             activateKeyPowerup();
             gameState.maze[y][x] = 'path';
             renderMaze();
         } else if (targetCell === 'path' || targetCell === 'start' || targetCell === 'exit' || targetCell === 'fake-exit') {
+            setPlayerOrientation(x, y);
             movePlayer(x, y);
             // Check if we should trigger end game after moving to exit
             if ((targetCell === 'exit' || targetCell === 'fake-exit') && 
@@ -363,6 +436,7 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
                 }
             }
         } else if (targetCell === 'door') {
+            setPlayerOrientation(x, y);
             handleDoor(x, y);
         }
     }
@@ -616,39 +690,64 @@ function activateKeyPowerup() {
     showTopRightMessage(`Found ${keysFound} key${keysFound > 1 ? 's' : ''}!`);
 }
 function handleDoor(x, y) {
-    if (gameState.keys > 0) {
+    if (gameState.keys <= 0) {
+        const doorKey = `${x},${y}`;
+        const hits = gameState.doorHits.get(doorKey) || 0;
+        gameState.doorHits.set(doorKey, hits + 1);
+
+        // Determine orientation based on door position relative to player
+        const { x: playerX, y: playerY } = gameState.playerPosition;
+        if (x > playerX) {
+            gameState.playerOrientation = 'face-right';
+        } else if (x < playerX) {
+            gameState.playerOrientation = 'face-left';
+        } else if (y > playerY) {
+            gameState.playerOrientation = 'face-down';
+        } else if (y < playerY) {
+            gameState.playerOrientation = 'face-up';
+        }
+
+        // Calculate opacity (from 1 to 0.3)
+        const opacity = 1 - ((hits + 1) / 10) * 0.7;
+        gameState.doorOpacity.set(doorKey, opacity);
+
+        // Shake the door
+        const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        if (doorElement) {
+            doorElement.classList.add('shaking');
+            doorElement.style.opacity = opacity;
+            
+            setTimeout(() => {
+                doorElement.classList.remove('shaking');
+            }, 100);
+        }
+
+        // Break door after 10 hits
+        if (hits + 1 >= 10) {
+            gameState.maze[y][x] = 'path';
+            gameState.doorHits.delete(doorKey);
+            gameState.doorOpacity.delete(doorKey);
+            showTopRightMessage('Door broken!');
+            renderMaze();
+        } 
+    } else {
+        // Same orientation logic for unlocking with key
+        const { x: playerX, y: playerY } = gameState.playerPosition;
+        if (x > playerX) {
+            gameState.playerOrientation = 'face-right';
+        } else if (x < playerX) {
+            gameState.playerOrientation = 'face-left';
+        } else if (y > playerY) {
+            gameState.playerOrientation = 'face-down';
+        } else if (y < playerY) {
+            gameState.playerOrientation = 'face-up';
+        }
+
         unlockDoor(x, y);
-        return;
     }
 
-    // Get or initialize hit count for this door
-    const doorKey = `${x},${y}`;
-    const hits = gameState.doorHits.get(doorKey) || 0;
-    gameState.doorHits.set(doorKey, hits + 1);
-
-    // Calculate opacity (from 1 to 0.3)
-    const opacity = 1 - ((hits + 1) / 10) * 0.7;
-    gameState.doorOpacity.set(doorKey, opacity);
-
-    // Shake the door
-    const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-    if (doorElement) {
-        doorElement.classList.add('shaking');
-        doorElement.style.opacity = opacity;
-        
-        setTimeout(() => {
-            doorElement.classList.remove('shaking');
-        }, 100);
-    }
-
-    // Break door after 10 hits
-    if (hits + 1 >= 10) {
-        gameState.maze[y][x] = 'path';
-        gameState.doorHits.delete(doorKey);
-        gameState.doorOpacity.delete(doorKey);
-        showTopRightMessage('Door broken!');
-        renderMaze();
-    } 
+    // Force a re-render to update player orientation
+    renderMaze();
 }
 function unlockDoor(x, y) {
     if (gameState.keys <= 0) {

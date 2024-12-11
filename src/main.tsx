@@ -18,7 +18,11 @@ type WebViewMessage =
         isRetry?: boolean; 
         isNewGame?: boolean;
         shouldShowBonusKey?: boolean;
-        isCasualMode?: boolean; // Add this field
+        isCasualMode?: boolean;
+        playerImageUrl?: string;
+        keyPowerupImageUrl?: string;
+        mapImageUrl?: string;
+        crystalBallImageUrl?: string;
       };
     }
   | {
@@ -480,6 +484,10 @@ Devvit.addCustomPostType({
             }
             
             const newGamesPlayed = gameState.gamesPlayed + 1;
+            const gameOverPlayerImageUrl = await context.assets.getURL('snoo.png');
+            const gameOverKeyPowerupImageUrl = await context.assets.getURL('karma.png');
+            const gameOverMapImageUrl = await context.assets.getURL('map.png');
+            const gameOverCrystalBallImageUrl = await context.assets.getURL('crystal.png');
             
             setPlayerStats(prevStats => ({
               ...prevStats,
@@ -508,7 +516,11 @@ Devvit.addCustomPostType({
                   level: currentLevel,
                   gamesPlayed: newGamesPlayed,
                   lives: playerStats.currentLives,
-                  isRetry: true
+                  isRetry: true,
+                  playerImageUrl: gameOverPlayerImageUrl,
+                  keyPowerupImageUrl: gameOverKeyPowerupImageUrl,
+                  mapImageUrl: gameOverMapImageUrl,
+                  crystalBallImageUrl: gameOverCrystalBallImageUrl
                 }
               };
               context.ui.webView.postMessage('mazeGame', updateMessage);
@@ -516,63 +528,83 @@ Devvit.addCustomPostType({
             break;
           }
 
-        case 'nextGame':
-          const nextMaze = currentLevel === 1 
-          ? generateMaze(18, 9) 
-          : generateLevel2Maze(18, 9, gameState.gamesPlayed);
-  
-          // Add this first
-          if (message.data.won && message.data.shouldShowBonusKey) {
-            context.ui.webView.postMessage('mazeGame', {
-              type: 'showMessage',
-              data: { message: 'Found 1 bonus key!' }
-            });
-          }        
-      
-          const nextGameMessage: WebViewMessage = {
-              type: 'initialData',
-              data: {
-                  username: userData?.username ?? 'Developer',
-                  keys: playerStats.currentKeys || 3,
-                  maze: nextMaze,
-                  level: currentLevel,
-                  gamesPlayed: gameState.gamesPlayed,
-                  lives: playerStats.currentLives
-              }
-          };
-          context.ui.webView.postMessage('mazeGame', nextGameMessage);
-          break;
-    
-        case 'retry':
-          // Don't reset games played on retry
-          const retryMaze = currentLevel === 1 
-            ? generateMaze(18, 9) 
-            : generateLevel2Maze(18, 9, gameState.gamesPlayed);
-          
-          const retryState = {
-            ...gameState,
-            lives: playerStats.currentLives,
-            maze: retryMaze,
-            playerPosition: { x: 1, y: 1 },
-            unlockedDoors: []
-          };
-          
-          setGameState(retryState);
-          
-          const retryMessage: WebViewMessage = {
-            type: 'initialData',
-            data: {
-              username: userData?.username ?? 'Developer',
-              lives: playerStats.currentLives,
-              keys: 3,
-              maze: retryMaze,
-              level: currentLevel,
-              gamesPlayed: gameState.gamesPlayed
-            }
-          };
-          
-          context.ui.webView.postMessage('mazeGame', retryMessage);
-          break;
+          case 'nextGame':
+            const nextMaze = currentLevel === 1 
+                ? generateMaze(18, 9) 
+                : generateLevel2Maze(18, 9, gameState.gamesPlayed);
+        
+            // Get the image URLs
+            const nextGamePlayerImageUrl = await context.assets.getURL('snoo.png');
+            const nextGameKeyPowerupImageUrl = await context.assets.getURL('karma.png');
+            const nextGameMapImageUrl = await context.assets.getURL('map.png');
+            const nextGameCrystalBallImageUrl = await context.assets.getURL('crystal.png');
+        
+            // Add this first
+            if (message.data.won && message.data.shouldShowBonusKey) {
+                context.ui.webView.postMessage('mazeGame', {
+                    type: 'showMessage',
+                    data: { message: 'Found 1 bonus key!' }
+                });
+            }        
+        
+            const nextGameMessage: WebViewMessage = {
+                type: 'initialData',
+                data: {
+                    username: userData?.username ?? 'Developer',
+                    keys: playerStats.currentKeys || 3,
+                    maze: nextMaze,
+                    level: currentLevel,
+                    gamesPlayed: gameState.gamesPlayed,
+                    lives: playerStats.currentLives,
+                    playerImageUrl: nextGamePlayerImageUrl,
+                    keyPowerupImageUrl: nextGameKeyPowerupImageUrl,
+                    mapImageUrl: nextGameMapImageUrl,
+                    crystalBallImageUrl: nextGameCrystalBallImageUrl
+                }
+            };
+            context.ui.webView.postMessage('mazeGame', nextGameMessage);
+            break;
+            
+            case 'retry':
+              // Don't reset games played on retry
+              const retryMaze = currentLevel === 1 
+                  ? generateMaze(18, 9) 
+                  : generateLevel2Maze(18, 9, gameState.gamesPlayed);
+              
+              // Get the image URLs for retry
+              const retryPlayerImageUrl = await context.assets.getURL('snoo.png');
+              const retryKeyPowerupImageUrl = await context.assets.getURL('karma.png');
+              const retryMapImageUrl = await context.assets.getURL('map.png');
+              const retryCrystalBallImageUrl = await context.assets.getURL('crystal.png');
+              
+              const retryState = {
+                  ...gameState,
+                  lives: playerStats.currentLives,
+                  maze: retryMaze,
+                  playerPosition: { x: 1, y: 1 },
+                  unlockedDoors: []
+              };
+              
+              setGameState(retryState);
+              
+              const retryMessage: WebViewMessage = {
+                  type: 'initialData',
+                  data: {
+                      username: userData?.username ?? 'Developer',
+                      lives: playerStats.currentLives,
+                      keys: 3,
+                      maze: retryMaze,
+                      level: currentLevel,
+                      gamesPlayed: gameState.gamesPlayed,
+                      playerImageUrl: retryPlayerImageUrl,
+                      keyPowerupImageUrl: retryKeyPowerupImageUrl,
+                      mapImageUrl: retryMapImageUrl,
+                      crystalBallImageUrl: retryCrystalBallImageUrl
+                  }
+              };
+              
+              context.ui.webView.postMessage('mazeGame', retryMessage);
+              break;
       }
     };
 
@@ -580,47 +612,57 @@ Devvit.addCustomPostType({
       setCurrentLevel(prev => prev === 1 ? 2 : 1);
     };
 
-    const onStartGame = () => {
+    const onStartGame = async () => {
       if (!userData) {
-        console.error('No user data available');
-        return;
+          console.error('No user data available');
+          return;
       }
       
       const isCasualMode = currentLevel === 1;
       const newMaze = currentLevel === 1 
-        ? generateMaze(18, 9) 
-        : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
+          ? generateMaze(18, 9) 
+          : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
+      
+      // Get the player image URL
+      const playerImageUrl = await context.assets.getURL('snoo.png');
+      const keyPowerupImageUrl = await context.assets.getURL('karma.png');
+      const mapImageUrl = await context.assets.getURL('map.png');
+      const crystalBallImageUrl = await context.assets.getURL('crystal.png');
       
       setGameState({
-        maze: newMaze,
-        playerPosition: { x: 1, y: 1 },
-        unlockedDoors: [],
-        gamesPlayed: gameState.gamesPlayed || 0
+          maze: newMaze,
+          playerPosition: { x: 1, y: 1 },
+          unlockedDoors: [],
+          gamesPlayed: gameState.gamesPlayed || 0
       });
       
       setWebviewVisible(true);
-      setCurrentView('game');  // Add this line
+      setCurrentView('game');
       
       const message: WebViewMessage = {
-        type: 'initialData',
-        data: {
-          username: userData.username,
-          lives: playerStats.currentLives,
-          keys: 2,
-          maze: newMaze,
-          level: currentLevel,
-          gamesPlayed: gameState?.gamesPlayed || 0,
-          isNewGame: true,
-          isCasualMode: isCasualMode
-        }
+          type: 'initialData',
+          data: {
+              username: userData.username,
+              lives: playerStats.currentLives,
+              keys: 2,
+              maze: newMaze,
+              level: currentLevel,
+              gamesPlayed: gameState?.gamesPlayed || 0,
+              isNewGame: true,
+              isCasualMode: isCasualMode,
+              playerImageUrl: playerImageUrl,
+              keyPowerupImageUrl: keyPowerupImageUrl,
+              mapImageUrl: mapImageUrl,
+              crystalBallImageUrl: crystalBallImageUrl
+          }
       };
       
       try {
-        context.ui.webView.postMessage('mazeGame', message);
+          context.ui.webView.postMessage('mazeGame', message);
       } catch (error) {
-        console.error('Error sending data:', error);
+          console.error('Error sending data:', error);
       }
-    };
+  };
 
 return (
   <vstack grow padding="small">
