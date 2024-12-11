@@ -38,11 +38,23 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         {/* Row 2: Items & Hazards */}
         <hstack gap="medium" width="100%" alignment="middle center">
           <vstack gap="small" width="45%">
-            <text weight="bold">🔑 Keys & Power-ups</text>
-            <text alignment="start">• Keys unlock doors (1 key)</text>
-            <text alignment="start">• Disarm traps (2 keys)</text>
-            <text alignment="start">• Map reveals larger area</text>
-            <text alignment="start">• Crystal Ball shows traps</text>
+            <text weight="bold">Power-ups</text>
+            <hstack gap="small" alignment="center">
+              <image url="karma.png" imageWidth={20} imageHeight={20} />
+              <text alignment="start">• Karma unlocks doors (1 karma)</text>
+            </hstack>
+            <hstack gap="small">
+              <spacer size="medium" />
+              <text alignment="start">• Disarm traps (2 karma)</text>
+            </hstack>
+            <hstack gap="small" alignment="center">
+              <image url="map.png" imageWidth={20} imageHeight={20} />
+              <text alignment="start">• Map reveals larger area</text>
+            </hstack>
+            <hstack gap="small" alignment="center">
+              <image url="crystal.png" imageWidth={20} imageHeight={20} />
+              <text alignment="start">• Crystal Ball shows traps</text>
+            </hstack>
           </vstack>
 
           <vstack gap="small" width="45%">
