@@ -89,7 +89,7 @@ devvit login
 
 3. Clone the repository and install dependencies:
 ```bash
-git clone [repository-url]
+git clone https://github.com/nhvn/karmamaze.git
 cd karmamaze
 npm install
 ```
@@ -163,7 +163,7 @@ devvit upload
 ## Credits
 - Platform: Built on Reddit's Devvit platform
 - Assets: Custom game assets
-- Developer: [Your Name]
+- Developer: Alan Nhan
 
 ## License
 MIT License
