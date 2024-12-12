@@ -92,7 +92,7 @@ function initializeGame(data) {
     gameState = {
         ...gameState,
         username: data.username || 'Developer',
-        keys: playerStats.currentKeys || 3,
+        keys: data.isCasualMode ? MAX_KEYS : (playerStats.currentKeys || 3),
         initialKeysForMaze: playerStats.currentKeys || 3,
         maze: data.maze,
         playerPosition: startPosition,
@@ -1110,6 +1110,7 @@ function handleWin() {
     stopTimer();
 
     if (gameState.isCasualMode) {
+        // Simple message for casual mode
         const messageLines = [
             'You win!',
             `Games Played: ${playerStats.gamesPlayed + 1}`
@@ -1117,7 +1118,7 @@ function handleWin() {
         
         showMessage(messageLines.join('\n'), 'success');
     } else {
-
+        // Full stats for normal mode
         const timeRemaining = parseInt(document.getElementById('timer').textContent);
         const gameData = {
             timeRemaining,
@@ -1145,29 +1146,31 @@ function handleWin() {
             `Games Played: ${playerStats.gamesPlayed}`
         );
 
-        const winMessage = messageLines.join('\n');
-        showMessage(winMessage, 'success');
-
-        const retryButton = document.getElementById('retryButton');
-        if (retryButton) {
-            retryButton.style.display = 'block';
-        }
-
-        window.parent.postMessage({
-            type: 'gameOver',
-            data: { 
-                won: true,
-                remainingKeys: gameState.keys,
-                baseScore: result.baseScore,
-                streakBonus: result.streakBonus,
-                totalScore: result.totalScore,
-                gamesPlayed: playerStats.gamesPlayed,
-                winStreak: playerStats.winStreak,
-                lives: gameState.lives,
-                shouldShowBonusKey: gameState.keys < MAX_KEYS
-            }
-        }, '*');
+        showMessage(messageLines.join('\n'), 'success');
     }
+
+    const retryButton = document.getElementById('retryButton');
+    if (retryButton) {
+        retryButton.style.display = 'block';
+    }
+
+    window.parent.postMessage({
+        type: 'gameOver',
+        data: { 
+            won: true,
+            remainingKeys: gameState.keys,
+            shouldShowBonusKey: gameState.keys < MAX_KEYS,
+            lives: gameState.lives,
+            isCasualMode: gameState.isCasualMode, // Pass mode info
+            ...(gameState.isCasualMode ? {} : { // Only include score info for normal mode
+                totalScore: result?.totalScore,
+                baseScore: result?.baseScore,
+                streakBonus: result?.streakBonus,
+                gamesPlayed: playerStats.gamesPlayed,
+                winStreak: playerStats.winStreak
+            })
+        }
+    }, '*');
 }
 function handleTrap() {
     gameState.isGameOver = true;
