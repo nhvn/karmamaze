@@ -543,7 +543,11 @@ Devvit.addCustomPostType({
             if (message.data.won && message.data.shouldShowBonusKey) {
                 context.ui.webView.postMessage('mazeGame', {
                     type: 'showMessage',
-                    data: { message: 'Found 1 bonus key!' }
+                    data: { 
+                        message: currentLevel === 1 
+                            ? 'Restored to 12 karma!' 
+                            : 'Found 1 bonus karma!'
+                    }
                 });
             }        
         
@@ -551,7 +555,7 @@ Devvit.addCustomPostType({
                 type: 'initialData',
                 data: {
                     username: userData?.username ?? 'Developer',
-                    keys: playerStats.currentKeys || 3,
+                    keys: currentLevel === 1 ? 12 : (playerStats.currentKeys || 3),
                     maze: nextMaze,
                     level: currentLevel,
                     gamesPlayed: gameState.gamesPlayed,
@@ -559,7 +563,8 @@ Devvit.addCustomPostType({
                     playerImageUrl: nextGamePlayerImageUrl,
                     keyPowerupImageUrl: nextGameKeyPowerupImageUrl,
                     mapImageUrl: nextGameMapImageUrl,
-                    crystalBallImageUrl: nextGameCrystalBallImageUrl
+                    crystalBallImageUrl: nextGameCrystalBallImageUrl,
+                    isCasualMode: currentLevel === 1
                 }
             };
             context.ui.webView.postMessage('mazeGame', nextGameMessage);
