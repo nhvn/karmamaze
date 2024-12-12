@@ -1284,7 +1284,6 @@ function retryGame() {
 
 // 7. UI & MESSAGES
 function showMessage(text, type, permanent = false, showQuitOnly = false) {
-    // Get or create the message overlay
     let messageOverlay = document.getElementById('message-overlay');
     if (!messageOverlay) {
         messageOverlay = document.createElement('div');
@@ -1292,44 +1291,52 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         document.body.appendChild(messageOverlay);
     }
 
-    // Get or create the message element
     const messageEl = document.getElementById('message');
     messageEl.innerHTML = '';
+    // messageEl.className = `pause-menu`; 
     messageEl.dataset.gameWon = 'false';
     messageEl.dataset.gameRetry = 'false';
     
-    // Split text by newlines and create separate divs
+    // Create stats container
+    const statsContainer = document.createElement('div');
+    statsContainer.className = 'pause-stats';
+    
+    // Add message text with styling
     text.split('\n').forEach(line => {
         const textDiv = document.createElement('div');
+        textDiv.className = 'stat-item';
         textDiv.textContent = line;
-        textDiv.style.marginBottom = '8px';
-        messageEl.appendChild(textDiv);
+        statsContainer.appendChild(textDiv);
     });
+    
+    messageEl.appendChild(statsContainer);
 
+    // Create button container with pause menu styling
     const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.flexDirection = 'column';
-    // buttonContainer.style.gap = '10px';
-    buttonContainer.style.marginTop = '15px';
+    buttonContainer.className = 'pause-buttons';
 
     if (showQuitOnly) {
         const quitButton = document.createElement('button');
+        quitButton.className = 'pause-button';
         quitButton.textContent = 'Quit Game';
         quitButton.onclick = newGame;
         buttonContainer.appendChild(quitButton);
     } else if (type === 'success') {
         const nextButton = document.createElement('button');
+        nextButton.className = 'pause-button';
         nextButton.textContent = 'Next Game';
         nextButton.onclick = handleNextGame;
         buttonContainer.appendChild(nextButton);
         messageEl.dataset.gameWon = 'true';
 
         const quitButton = document.createElement('button');
+        quitButton.className = 'pause-button';
         quitButton.textContent = 'Quit Game';
         quitButton.onclick = newGame;
         buttonContainer.appendChild(quitButton);
     } else if (type === 'error' && permanent && !showQuitOnly) {
         const retryButton = document.createElement('button');
+        retryButton.className = 'pause-button';
         retryButton.textContent = 'Try Again';
         retryButton.onclick = () => {
             retryLevel();
@@ -1341,13 +1348,13 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
         messageEl.dataset.gameRetry = 'true';
 
         const quitButton = document.createElement('button');
+        quitButton.className = 'pause-button';
         quitButton.textContent = 'Quit Game';
         quitButton.onclick = newGame;
         buttonContainer.appendChild(quitButton);
     }
 
     messageEl.appendChild(buttonContainer);
-    messageEl.className = type;
     messageEl.style.display = 'block';
     messageOverlay.style.display = 'flex';
 }

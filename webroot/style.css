@@ -114,6 +114,11 @@ body {
   align-items: center;
   z-index: 1000;
 }
+#message-overlay .pause-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* No gap for win/lose menu */
+}
 #message {
   color: white;
   font-size: 18px;

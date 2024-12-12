@@ -683,13 +683,23 @@ return (
 
         {/* Mode Selection */}
         <hstack alignment="middle center" gap="medium">
-          <hstack onPress={toggleMode}>
+          <hstack 
+            onPress={toggleMode}
+            padding="medium"  // Added padding for larger touch target
+            alignment="middle center"
+          >
             <text size="large" weight="bold">{'<'}</text>
           </hstack>
+          
           <text size="large" weight="bold">
             {currentLevel === 1 ? 'Casual' : 'Normal'}
           </text>
-          <hstack onPress={toggleMode}>
+          
+          <hstack 
+            onPress={toggleMode}
+            padding="medium"  // Added padding for larger touch target
+            alignment="middle center"
+          >
             <text size="large" weight="bold">{'>'}</text>
           </hstack>
         </hstack>
