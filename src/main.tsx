@@ -764,7 +764,6 @@ Devvit.addMenuItem({
     context.ui.showToast(`Created new Key Maze in ${currentSubreddit.name}`);
   },
 });
-
 Devvit.addMenuItem({
   location: 'subreddit',
   label: 'Reset Maze Leaderboard',

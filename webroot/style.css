@@ -275,6 +275,16 @@ body {
   display: flex;
   align-items: center;
 }
+.powerup-indicator { /* DUPLICATE */
+  width: 25px;
+  height: 25px;
+  position: relative;
+  background: none !important;  
+}
+.powerup-indicator.powerup-inactive::after {
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
 .powerup-inactive::after {
   opacity: 1 !important;
 }
@@ -285,20 +295,14 @@ body {
 .key-orb, .map-orb, .crystal-orb {
   display: none;
 }
-/* .crystal-ball::after, .map::after, .key-powerup::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  opacity: 1 !important; 
-  transition: box-shadow 0.3s ease;
-} */
- /* Key powerup (Blue glow) */
-.key-powerup::after {
+.key-powerup.fog::after,
+.map.fog::after,
+.crystal-ball.fog::after {
+    width: 15px !important;
+    height: 15px !important;
+    opacity: 0.3;
+}
+.key-powerup::after { /* Karma (or key) */
   content: '';
   position: absolute;
   left: 50%;
@@ -314,123 +318,9 @@ body {
   animation: powerupPulseBlue 2s infinite;
   opacity: 0.9;
 }
-/* Map (Yellow glow) */
-.map::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
-  background-image: var(--map-image-url);
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
-  animation: powerupPulseYellow 2s infinite;
-  opacity: 0.9;
-}
-/* Crystal Ball (Purple glow) */
-.crystal-ball::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
-  background-image: var(--crystal-ball-image-url);
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: drop-shadow(0 0 8px rgba(147, 112, 219, 0.8));
-  animation: powerupPulsePurple 2s infinite;
-  opacity: 0.9;
-}
-/* Visible state animations */
 .key-powerup.visible::after {
   animation: powerupPulseBlue 2s infinite;
 }
-
-.map.visible::after {
-  animation: powerupPulseYellow 2s infinite;
-}
-
-.crystal-ball.visible::after {
-  animation: powerupPulsePurple 2s infinite;
-}
-/* .visible.crystal-ball::after {
-  background: rgba(153, 50, 204, 0.8);
-  box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
-              0 0 20px rgba(153, 50, 204, 0.5);
-} */
-/* .visible.map::after {
-  background: rgba(0, 191, 255, 0.8);
-  box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
-              0 0 20px rgba(0, 191, 255, 0.5);
-}
-.visible.key-powerup::after {
-  background: rgba(255, 215, 0, 0.8);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
-              0 0 20px rgba(255, 215, 0, 0.5);
-}
-.explored.crystal-ball::after {
-  background: rgba(153, 50, 204, 0.8);
-  box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
-              0 0 20px rgba(153, 50, 204, 0.5);
-  opacity: 1 !important;
-}
-.explored.map::after {
-  background: rgba(0, 191, 255, 0.8);
-  box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
-              0 0 20px rgba(0, 191, 255, 0.5);
-  opacity: 1 !important;
-}
-.explored.key-powerup::after {
-  background: rgba(255, 215, 0, 0.8);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
-              0 0 20px rgba(255, 215, 0, 0.5);
-  opacity: 1 !important;
-} */
-/* Fog state */
-.key-powerup.fog::after,
-.map.fog::after,
-.crystal-ball.fog::after {
-    width: 15px !important;
-    height: 15px !important;
-    opacity: 0.3;
-}
-.key-powerup.fog::after {
-  filter: drop-shadow(0 0 5px rgba(0, 191, 255, 0.3));
-}
-
-.map.fog::after {
-  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
-}
-
-.crystal-ball.fog::after {
-  filter: drop-shadow(0 0 5px rgba(147, 112, 219, 0.3));
-}
-/* .key-orb, .map-orb, .crystal-orb { 
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin-right: 5px;
-  position: relative;
-} */
-/* .key-orb {
-  background: rgb(178, 154, 24);
-  box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
-}
-.map-orb {
-  background: rgba(0, 191, 255, 0.8);
-  box-shadow: 0 0 5px rgba(0, 191, 255, 0.8);
-}
-.crystal-orb {
-  background: rgba(153, 50, 204, 0.8);
-  box-shadow: 0 0 5px rgba(153, 50, 204, 0.8);
-} */
 .key-stat {
   position: relative;
   width: 25px;
@@ -472,37 +362,31 @@ body {
 .key-stat[data-count="12"] #keys {
   color: #FFA500;
 }
-#timer {
-  position: absolute;
-  left: 50%;
-  top: 80%;
-  transform: translateX(-50%);
-  font-size: 18px;
-  color: white;
-  text-align: center;
+.key-powerup.fog::after {
+  filter: drop-shadow(0 0 5px rgba(0, 191, 255, 0.3));
 }
-.powerup-indicator {
-  width: 25px;
-  height: 25px;
-  position: relative;
-  background: none !important;  /* Remove the background */
-}
-
-/* Crystal Ball Indicator */
-#crystal-indicator::after {
+.map::after { /* Map */
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-image: var(--crystal-ball-image-url);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  background-image: var(--map-image-url);
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+  animation: powerupPulseYellow 2s infinite;
+  opacity: 0.9;
 }
-
-/* Map Indicator */
+.map.visible::after {
+  animation: powerupPulseYellow 2s infinite;
+}
+.map.fog::after {
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));
+}
 #map-indicator::after {
   content: '';
   position: absolute;
@@ -515,11 +399,48 @@ body {
   background-position: center;
   background-repeat: no-repeat;
 }
-
-/* Inactive state */
-.powerup-indicator.powerup-inactive::after {
-  opacity: 0.3;
-  filter: grayscale(100%);
+.crystal-ball::after { /* Crystal Ball */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  background-image: var(--crystal-ball-image-url);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px rgba(147, 112, 219, 0.8));
+  animation: powerupPulsePurple 2s infinite;
+  opacity: 0.9;
+}
+.crystal-ball.visible::after {
+  animation: powerupPulsePurple 2s infinite;
+}
+.crystal-ball.fog::after {
+  filter: drop-shadow(0 0 5px rgba(147, 112, 219, 0.3));
+}
+#crystal-indicator::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--crystal-ball-image-url);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+#timer {
+  position: absolute;
+  left: 50%;
+  top: 80%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  color: white;
+  text-align: center;
 }
 @keyframes powerupPulseBlue {
   0% {
@@ -535,7 +456,6 @@ body {
       filter: drop-shadow(0 0 8px rgba(0, 191, 255, 0.8));
   }
 }
-
 @keyframes powerupPulseYellow {
   0% {
       transform: translate(-50%, -50%) scale(1);
@@ -550,7 +470,6 @@ body {
       filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
   }
 }
-
 @keyframes powerupPulsePurple {
   0% {
       transform: translate(-50%, -50%) scale(1);
@@ -565,6 +484,72 @@ body {
       filter: drop-shadow(0 0 8px rgba(147, 112, 219, 0.8));
   }
 }
+/* .crystal-ball::after, .map::after, .key-powerup::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  opacity: 1 !important; 
+  transition: box-shadow 0.3s ease;
+} */
+ /* Key powerup (Blue glow) */
+/* Map (Yellow glow) */
+/* .key-orb, .map-orb, .crystal-orb { 
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 5px;
+  position: relative;
+} */
+/* .key-orb {
+  background: rgb(178, 154, 24);
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.8);
+}
+.map-orb {
+  background: rgba(0, 191, 255, 0.8);
+  box-shadow: 0 0 5px rgba(0, 191, 255, 0.8);
+}
+.crystal-orb {
+  background: rgba(153, 50, 204, 0.8);
+  box-shadow: 0 0 5px rgba(153, 50, 204, 0.8);
+} */
+/* .visible.crystal-ball::after {
+  background: rgba(153, 50, 204, 0.8);
+  box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
+              0 0 20px rgba(153, 50, 204, 0.5);
+} */
+/* .visible.map::after {
+  background: rgba(0, 191, 255, 0.8);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
+              0 0 20px rgba(0, 191, 255, 0.5);
+}
+.visible.key-powerup::after {
+  background: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
+              0 0 20px rgba(255, 215, 0, 0.5);
+}
+.explored.crystal-ball::after {
+  background: rgba(153, 50, 204, 0.8);
+  box-shadow: 0 0 10px rgba(153, 50, 204, 0.8),
+              0 0 20px rgba(153, 50, 204, 0.5);
+  opacity: 1 !important;
+}
+.explored.map::after {
+  background: rgba(0, 191, 255, 0.8);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.8),
+              0 0 20px rgba(0, 191, 255, 0.5);
+  opacity: 1 !important;
+}
+.explored.key-powerup::after {
+  background: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8),
+              0 0 20px rgba(255, 215, 0, 0.5);
+  opacity: 1 !important;
+} */
 
 /* 6. MAZE AND GRID */
 #maze-grid {
@@ -869,7 +854,6 @@ body {
   position: relative;
   background: #4a4a4a !important;
 }
-
 .player::after {
   content: '';
   position: absolute;
@@ -884,26 +868,19 @@ body {
   z-index: 2;
   transition: transform 0.2s ease; /* Smooth rotation transition */
 }
-
-/* Orientation classes */
-.player.face-right::after {
+.player.face-right::after { /* Orientation classes */
   transform: rotate(0deg);
 }
-
 .player.face-left::after {
   transform: rotate(180deg);
 }
-
 .player.face-down::after {
   transform: rotate(90deg);
 }
-
 .player.face-up::after {
   transform: rotate(270deg);
 }
-
-/* Keep the movement trail effects */
-.player.move-right::before,
+.player.move-right::before, /* Keep the movement trail effects */
 .player.move-left::before,
 .player.move-up::before,
 .player.move-down::before {
@@ -916,21 +893,15 @@ body {
   background: rgba(255, 255, 255, 0.9);
   z-index: 1;
 }
-
-
-/* Movement animations remain the same */
-.player.move-right::before {
+.player.move-right::before { /* Movement animations remain the same */
   animation: trailRight 0.2s ease-out;
 }
-
 .player.move-left::before {
   animation: trailLeft 0.2s ease-out;
 }
-
 .player.move-up::before {
   animation: trailUp 0.2s ease-out;
 }
-
 .player.move-down::before {
   animation: trailDown 0.2s ease-out;
 }
