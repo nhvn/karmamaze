@@ -937,20 +937,9 @@ body {
   height: calc(100% - 8px);
   background: rgba(255, 255, 255, 0.9);
   z-index: 1;
+  border-radius: 15px;
 }
 .player.move-right::before { /* Movement animations remain the same */
-  animation: trailRight 0.2s ease-out;
-}
-.player.move-left::before {
-  animation: trailLeft 0.2s ease-out;
-}
-.player.move-up::before {
-  animation: trailUp 0.2s ease-out;
-}
-.player.move-down::before {
-  animation: trailDown 0.2s ease-out;
-}
-.player.move-right::before {
   animation: trailRight 0.2s ease-out;
 }
 .player.move-left::before {
@@ -965,7 +954,7 @@ body {
 @keyframes trailRight {
   0% {
       transform: translateX(-30px) scaleX(3);
-      opacity: 0.4;
+      opacity: 0.2;
   }
   100% {
       transform: translateX(0) scaleX(1);
@@ -975,7 +964,7 @@ body {
 @keyframes trailLeft {
   0% {
       transform: translateX(30px) scaleX(3);
-      opacity: 0.4;
+      opacity: 0.2;
   }
   100% {
       transform: translateX(0) scaleX(1);
@@ -985,7 +974,7 @@ body {
 @keyframes trailUp {
   0% {
       transform: translateY(30px) scaleY(3);
-      opacity: 0.4;
+      opacity: 0.2;
   }
   100% {
       transform: translateY(0) scaleY(1);
@@ -995,7 +984,7 @@ body {
 @keyframes trailDown {
   0% {
       transform: translateY(-30px) scaleY(3);
-      opacity: 0.4;
+      opacity: 0.2;
   }
   100% {
       transform: translateY(0) scaleY(1);
