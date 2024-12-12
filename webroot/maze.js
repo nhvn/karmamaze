@@ -92,8 +92,8 @@ function initializeGame(data) {
     gameState = {
         ...gameState,
         username: data.username || 'Developer',
-        keys: data.isCasualMode ? MAX_KEYS : (playerStats.currentKeys || 3),
-        initialKeysForMaze: playerStats.currentKeys || 3,
+        keys: data.isCasualMode ? Infinity : (playerStats.currentKeys || 3),
+        initialKeysForMaze: data.isCasualMode ? Infinity : (playerStats.currentKeys || 3),
         maze: data.maze,
         playerPosition: startPosition,
         isGameOver: false,
@@ -128,10 +128,10 @@ function initializeGame(data) {
     }
     
     if (keyStat) {
-        keyStat.dataset.count = gameState.keys;
+        keyStat.dataset.count = gameState.keys === Infinity ? 'infinity' : gameState.keys;
         const keysEl = keyStat.querySelector('#keys');
         if (keysEl) {
-            keysEl.textContent = gameState.keys;
+            keysEl.textContent = gameState.keys === Infinity ? '∞' : gameState.keys;
         }
     }
 
@@ -165,7 +165,7 @@ function initializeGame(data) {
         }, 50);
     });
 
-    // Don't start timer in casual mode
+    // Handle timer based on game mode
     if (!gameState.isCasualMode) {
         startTimer();
     } else {
@@ -174,8 +174,6 @@ function initializeGame(data) {
             timerDisplay.style.display = 'none';
         }
     }
-
-    startTimer();
 
     // Add focus to game container for immediate keyboard control
     const gameContainer = document.getElementById('game-container');
@@ -701,68 +699,56 @@ function activateKeyPowerup() {
     showTopRightMessage(`Found ${keysFound} key${keysFound > 1 ? 's' : ''}!`);
 }
 function handleDoor(x, y) {
-    if (gameState.keys <= 0) {
+    // First determine orientation based on door position relative to player
+    const { x: playerX, y: playerY } = gameState.playerPosition;
+    if (x > playerX) {
+        gameState.playerOrientation = 'face-right';
+    } else if (x < playerX) {
+        gameState.playerOrientation = 'face-left';
+    } else if (y > playerY) {
+        gameState.playerOrientation = 'face-down';
+    } else if (y < playerY) {
+        gameState.playerOrientation = 'face-up';
+    }
+
+    // Then handle the door interaction
+    if (gameState.isCasualMode || gameState.keys > 0) {
+        unlockDoor(x, y);
+    } else {
         const doorKey = `${x},${y}`;
         const hits = gameState.doorHits.get(doorKey) || 0;
         gameState.doorHits.set(doorKey, hits + 1);
-
-        // Determine orientation based on door position relative to player
-        const { x: playerX, y: playerY } = gameState.playerPosition;
-        if (x > playerX) {
-            gameState.playerOrientation = 'face-right';
-        } else if (x < playerX) {
-            gameState.playerOrientation = 'face-left';
-        } else if (y > playerY) {
-            gameState.playerOrientation = 'face-down';
-        } else if (y < playerY) {
-            gameState.playerOrientation = 'face-up';
-        }
 
         // Calculate opacity (from 1 to 0.3)
         const opacity = 1 - ((hits + 1) / 10) * 0.7;
         gameState.doorOpacity.set(doorKey, opacity);
 
-        // Update player orientation first
-        renderMaze();
-
         // Shake the door
         const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
         if (doorElement) {
-            doorElement.style.opacity = opacity;
             doorElement.classList.add('shaking');
-
-            // Remove shaking class after animation completes
+            doorElement.style.opacity = opacity;
+            
             setTimeout(() => {
                 doorElement.classList.remove('shaking');
-                
-                // Break door after 10 hits
-                if (hits + 1 >= 10) {
-                    gameState.maze[y][x] = 'path';
-                    gameState.doorHits.delete(doorKey);
-                    gameState.doorOpacity.delete(doorKey);
-                    showTopRightMessage('Door broken!');
-                    renderMaze();
-                }
-            }, 300); // Increased duration to match shake animation
-        }
-    } else {
-        // Same orientation logic for unlocking with key
-        const { x: playerX, y: playerY } = gameState.playerPosition;
-        if (x > playerX) {
-            gameState.playerOrientation = 'face-right';
-        } else if (x < playerX) {
-            gameState.playerOrientation = 'face-left';
-        } else if (y > playerY) {
-            gameState.playerOrientation = 'face-down';
-        } else if (y < playerY) {
-            gameState.playerOrientation = 'face-up';
+            }, 100);
         }
 
-        unlockDoor(x, y);
+        // Break door after 10 hits
+        if (hits + 1 >= 10) {
+            gameState.maze[y][x] = 'path';
+            gameState.doorHits.delete(doorKey);
+            gameState.doorOpacity.delete(doorKey);
+            showTopRightMessage('Door broken!');
+            renderMaze();
+        }
     }
+
+    // Force a re-render to update player orientation
+    renderMaze();
 }
 function unlockDoor(x, y) {
-    if (gameState.keys <= 0) {
+    if (!gameState.isCasualMode && gameState.keys <= 0) {
         showMessage('No keys remaining!', 'error');
         return;
     }
@@ -770,10 +756,7 @@ function unlockDoor(x, y) {
     const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
     if (!doorElement) return;
 
-    // Add cell to animating set
-    gameState.animatingCells.add(`${x},${y}`);
-
-    showTopRightMessage('Used 1 key to unlock door!');
+    showTopRightMessage('Used 1 karma to unlock door!');
 
     const doorRect = doorElement.getBoundingClientRect();
     const mazeGrid = document.getElementById('maze-grid');
@@ -789,6 +772,7 @@ function unlockDoor(x, y) {
 
     gameState.keys--;
     updateKeys(gameState.keys);
+    gameState.maze[y][x] = 'path';
     
     const animContainer = document.createElement('div');
     animContainer.className = `door-animation ${isHorizontal ? 'horizontal' : 'vertical'}`;
@@ -828,7 +812,7 @@ function unlockDoor(x, y) {
             }
             // Remove cell from animating set using gameState
             gameState.animatingCells.delete(`${x},${y}`);
-        }, 600);
+        }, 400);
     });
 }
 
@@ -926,11 +910,10 @@ function updateKeys(newKeys) {
     gameState.keys = newKeys;
     const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
-        // Update the count
-        keyStat.dataset.count = newKeys;
+        keyStat.dataset.count = newKeys === Infinity ? 'infinity' : newKeys;
         const keysEl = keyStat.querySelector('#keys');
         if (keysEl) {
-            keysEl.textContent = newKeys;
+            keysEl.textContent = newKeys === Infinity ? '∞' : newKeys;
         }
     }
 }

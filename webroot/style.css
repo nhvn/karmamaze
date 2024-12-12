@@ -354,11 +354,11 @@ body {
   font-size: 14px;
   color: white;
   z-index: 2;
-  text-shadow: /* Add text shadow to make number more visible */
-    -1px -1px 0 #000,  
-     1px -1px 0 #000,
-    -1px  1px 0 #000,
-     1px  1px 0 #000;
+  text-shadow: 
+      -1px -1px 0 #000,  
+       1px -1px 0 #000,
+      -1px  1px 0 #000,
+       1px  1px 0 #000;
   pointer-events: none;
 }
 .key-stat[data-count="0"] {
@@ -370,6 +370,12 @@ body {
 .key-powerup.fog::after {
   filter: drop-shadow(0 0 5px rgba(0, 191, 255, 0.3));
 }
+#keys:not([data-count="infinity"]) { /* Special styling for infinity symbol */
+  font-size: 18px; /* Slightly larger for the infinity symbol */
+}
+/* .key-stat[data-count="infinity"] #keys {
+  color: #FFA500;
+} */
 .map::after { /* Map */
   content: '';
   position: absolute;
@@ -673,6 +679,14 @@ body {
   right: 0;
   animation: splitRightFade 1.2s forwards;
 }
+.vertical .door-piece.top,
+.vertical .door-piece.bottom,
+.horizontal .door-piece.left,
+.horizontal .door-piece.right {
+    animation-duration: 0.4s; 
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+}
 @keyframes splitTopFade {
   0% { 
     transform: translateY(0); 
@@ -680,7 +694,7 @@ body {
   }
   100% { 
     transform: translateY(-20px); 
-    opacity: 0.9;
+    opacity: 0.7;
   }
 }
 @keyframes splitBottomFade {
@@ -690,7 +704,7 @@ body {
   }
   100% { 
     transform: translateY(20px); 
-    opacity: 0.9;
+    opacity: 0.7;
   }
 }
 @keyframes splitLeftFade {
@@ -700,7 +714,7 @@ body {
   }
   100% { 
     transform: translateX(-20px); 
-    opacity: 0.9;
+    opacity: 0.7;
   }
 }
 @keyframes splitRightFade {
@@ -710,7 +724,7 @@ body {
   }
   100% { 
     transform: translateX(20px); 
-    opacity: 0.9;
+    opacity: 0.7;
   }
 }
 @keyframes shake {
@@ -742,11 +756,11 @@ body {
   transition: background-color 0.3s ease, opacity 0.5s ease;
 }
 .trap.disarming:not(.revealed)::after { /* Disarming animations */
-  background: #594a00;
+  background: #1aa5ec;
   animation: shrinkTrap 0.5s forwards;
 }
 .trap.disarming.revealed::after {
-  background: rgba(255, 17, 0, 0.7);
+  background: #1aa5ec;
   animation: fadeTrap 0.5s forwards;
 }
 @keyframes shrinkTrap {
