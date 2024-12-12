@@ -26,7 +26,8 @@ let gameState = {
     totalScore: 0,        // Track total score
     lives: 3,
     isCasualMode: false,
-    playerOrientation: 'face-right'
+    playerOrientation: 'face-right',
+    animatingCells: new Set() // To track cells with ongoing animations
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
@@ -327,6 +328,11 @@ function movePlayer(x, y) {
     }, '*');
 }
 function handleCellClick(x, y) { // MOVE PLAYER (click)
+    // Check if target cell is animating using gameState
+    if (gameState.animatingCells.has(`${x},${y}`)) {
+        return;
+    }
+
     // Don't allow moves if game is over
     if (gameState.isGameOver) return;
 
@@ -472,6 +478,11 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
             break;
         default:
             return;
+    }
+
+    // Check if target cell is animating using gameState
+    if (gameState.animatingCells.has(`${newX},${newY}`)) {
+        return;
     }
 
     if (newX >= 0 && newX < gameState.maze[0].length && 
@@ -711,25 +722,29 @@ function handleDoor(x, y) {
         const opacity = 1 - ((hits + 1) / 10) * 0.7;
         gameState.doorOpacity.set(doorKey, opacity);
 
+        // Update player orientation first
+        renderMaze();
+
         // Shake the door
         const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
         if (doorElement) {
-            doorElement.classList.add('shaking');
             doorElement.style.opacity = opacity;
-            
+            doorElement.classList.add('shaking');
+
+            // Remove shaking class after animation completes
             setTimeout(() => {
                 doorElement.classList.remove('shaking');
-            }, 100);
+                
+                // Break door after 10 hits
+                if (hits + 1 >= 10) {
+                    gameState.maze[y][x] = 'path';
+                    gameState.doorHits.delete(doorKey);
+                    gameState.doorOpacity.delete(doorKey);
+                    showTopRightMessage('Door broken!');
+                    renderMaze();
+                }
+            }, 300); // Increased duration to match shake animation
         }
-
-        // Break door after 10 hits
-        if (hits + 1 >= 10) {
-            gameState.maze[y][x] = 'path';
-            gameState.doorHits.delete(doorKey);
-            gameState.doorOpacity.delete(doorKey);
-            showTopRightMessage('Door broken!');
-            renderMaze();
-        } 
     } else {
         // Same orientation logic for unlocking with key
         const { x: playerX, y: playerY } = gameState.playerPosition;
@@ -745,9 +760,6 @@ function handleDoor(x, y) {
 
         unlockDoor(x, y);
     }
-
-    // Force a re-render to update player orientation
-    renderMaze();
 }
 function unlockDoor(x, y) {
     if (gameState.keys <= 0) {
@@ -758,6 +770,9 @@ function unlockDoor(x, y) {
     const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
     if (!doorElement) return;
 
+    // Add cell to animating set
+    gameState.animatingCells.add(`${x},${y}`);
+
     showTopRightMessage('Used 1 key to unlock door!');
 
     const doorRect = doorElement.getBoundingClientRect();
@@ -767,20 +782,20 @@ function unlockDoor(x, y) {
     const relativeLeft = doorRect.left - mazeRect.left;
     const relativeTop = doorRect.top - mazeRect.top;
 
-    // Get player position
     const { x: playerX, y: playerY } = gameState.playerPosition;
-
-    // Flip the logic: if dx > dy, split vertically (top/bottom); else split horizontally (left/right)
     const dx = Math.abs(x - playerX);
     const dy = Math.abs(y - playerY);
-    const isHorizontal = dx < dy; 
+    const isHorizontal = dx < dy;
 
+    gameState.keys--;
+    updateKeys(gameState.keys);
+    
     const animContainer = document.createElement('div');
     animContainer.className = `door-animation ${isHorizontal ? 'horizontal' : 'vertical'}`;
     animContainer.style.left = `${relativeLeft}px`;
     animContainer.style.top = `${relativeTop}px`;
-    animContainer.style.pointerEvents = 'none'; // Prevent interaction
-    mazeGrid.appendChild(animContainer);
+    animContainer.style.pointerEvents = 'none';
+    animContainer.style.zIndex = '1000';
 
     if (isHorizontal) {
         const leftPiece = document.createElement('div');
@@ -798,19 +813,23 @@ function unlockDoor(x, y) {
         animContainer.appendChild(bottomPiece);
     }
 
-    gameState.keys--;
-    updateKeys(gameState.keys);
-    gameState.maze[y][x] = 'path';
+    mazeGrid.appendChild(animContainer);
 
-    renderMaze();
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            gameState.maze[y][x] = 'path';
+            renderMaze();
+            mazeGrid.appendChild(animContainer);
+        }, 50);
 
-    mazeGrid.appendChild(animContainer); // Append again to ensure it persists
-
-    setTimeout(() => {
-        if (animContainer) {
-            animContainer.remove();
-        }
-    }, 1300); // Slightly longer than animation duration
+        setTimeout(() => {
+            if (animContainer && animContainer.parentNode) {
+                animContainer.remove();
+            }
+            // Remove cell from animating set using gameState
+            gameState.animatingCells.delete(`${x},${y}`);
+        }, 600);
+    });
 }
 
 // 4. GAME STATE MANAGEMENT
