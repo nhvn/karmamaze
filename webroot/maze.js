@@ -366,7 +366,7 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
                 // Stay in place but use 2 keys
                 gameState.keys -= 2;
         
-                showTopRightMessage('Used 2 keys to disarm trap!');
+                showTopRightMessage('Used 2 karma to disarm trap!');
                 
                 // Start disarm animation
                 const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
@@ -497,7 +497,7 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
                 // Stay in place but use 2 keys
                 gameState.keys -= 2;
         
-                showTopRightMessage('Used 2 keys to disarm trap!');
+                showTopRightMessage('Used 2 karma to disarm trap!');
                 
                 // Start disarm animation
                 const trapElement = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
@@ -696,7 +696,7 @@ function activateKeyPowerup() {
     }
     
     updateKeys(gameState.keys);
-    showTopRightMessage(`Found ${keysFound} key${keysFound > 1 ? 's' : ''}!`);
+    showTopRightMessage(`Found ${keysFound} karma!`);
 }
 function handleDoor(x, y) {
     // First determine orientation based on door position relative to player
@@ -1245,7 +1245,7 @@ function handleNextGame() {
 
     showLoading();
     if (gameState.keys < MAX_KEYS) {
-        showTopRightMessage('Found a bonus key!');
+        showTopRightMessage('Gained bonus karma!');
     }
     window.parent.postMessage({
         type: 'nextGame',

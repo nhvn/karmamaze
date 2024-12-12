@@ -583,7 +583,10 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+}
+.cell.player {
+  z-index: 2; /* Ensure player is above other elements */
 }
 .cell.visible {
   cursor: default;  /* Default cursor for all visible cells */
@@ -735,10 +738,11 @@ body {
 .shaking {
   animation: shake 0.05s linear;
 }
-.trap { /* Trap */
+.trap {
   background: #4a4a4a;
   position: relative;
 }
+
 .trap::after {
   content: '';
   position: absolute;
@@ -749,28 +753,37 @@ body {
   height: 25px;
   background: #0000008d;
   border-radius: 3px;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.5s ease, background-color 0.3s ease;
+  z-index: 1;
 }
-.trap.revealed::after { /* Revealed trap (by crystal ball) */
-  background: rgba(255, 17, 0, 0.7) !important;
-  transition: background-color 0.3s ease, opacity 0.5s ease;
+
+/* Revealed by crystal ball */
+.trap.revealed::after {
+  background: rgba(255, 17, 0, 0.7);
 }
-.trap.disarming:not(.revealed)::after { /* Disarming animations */
-  background: #1aa5ec;
+
+/* Disarming states - these need higher specificity to override revealed */
+.trap.disarming::after {
+  background: #1aa5ec !important; /* Using !important to override revealed state */
+  z-index: 1;
+}
+
+/* Animation states */
+.trap.disarming.revealed::after,
+.trap.disarming:not(.revealed)::after {
   animation: shrinkTrap 0.5s forwards;
 }
-.trap.disarming.revealed::after {
-  background: #1aa5ec;
-  animation: fadeTrap 0.5s forwards;
-}
+
 @keyframes shrinkTrap {
   0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      background-color: #1aa5ec;
   }
   100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0);
+      background-color: #1aa5ec;
   }
 }
 @keyframes fadeTrap {
@@ -897,7 +910,7 @@ body {
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  z-index: 2;
+  z-index: 3;
   transition: transform 0.2s ease; /* Smooth rotation transition */
 }
 .player.face-right::after { /* Orientation classes */
