@@ -685,18 +685,30 @@ Devvit.addCustomPostType({
       }
   };
 
-return (
-  <vstack grow padding="small">
+  return (
+<zstack width="100%" height="100%" alignment="middle center">
+  {/* Background Image */}
+  <image
+    url="menuBg.jpg"
+    imageHeight={1024}
+    imageWidth={1024}
+    height="100%"
+    width="100%"
+    resizeMode="cover"
+    description="Menu background"
+  />
+
+  {/* Content Container */}
+  <vstack grow alignment="middle center" padding="small">
     {currentView === 'menu' ? (
-      // Menu View with background image
+      // Menu View
       <vstack
         grow={!webviewVisible}
         height={webviewVisible ? '0%' : '100%'}
         alignment="middle center"
-
       >
         {/* Logo/Title */}
-        <image 
+        <image
           url="kmazeCover.png"
           imageWidth={300}
           imageHeight={150}
@@ -705,21 +717,21 @@ return (
 
         {/* Mode Selection */}
         <hstack alignment="middle center" gap="medium">
-          <hstack 
+          <hstack
             onPress={toggleMode}
-            padding="medium"  // Added padding for larger touch target
+            padding="medium" // Added padding for larger touch target
             alignment="middle center"
           >
             <text size="large" weight="bold">{'<'}</text>
           </hstack>
-          
+
           <text size="large" weight="bold">
             {currentLevel === 1 ? 'Casual' : 'Normal'}
           </text>
-          
-          <hstack 
+
+          <hstack
             onPress={toggleMode}
-            padding="medium"  // Added padding for larger touch target
+            padding="medium" // Added padding for larger touch target
             alignment="middle center"
           >
             <text size="large" weight="bold">{'>'}</text>
@@ -730,8 +742,8 @@ return (
         <vstack alignment="middle center" padding="small" width="100%">
           <vstack alignment="middle center" width="80%" maxWidth="100%">
             <text size="medium">
-              {currentLevel === 2 
-                ? 'Race against time in the unknown!' 
+              {currentLevel === 2
+                ? 'Race against time in the unknown!'
                 : 'Chill experience for a chill guy.'}
             </text>
           </vstack>
@@ -747,12 +759,12 @@ return (
       </vstack>
     ) : currentView === 'leaderboard' ? (
       // Leaderboard View
-      <Leaderboard 
+      <Leaderboard
         context={context}
         onBack={() => setCurrentView('menu')}
       />
-    ) : currentView === 'game' ? ( 
-      // Game View THIS SHOULD BE WHAT?
+    ) : currentView === 'game' ? (
+      // Game View
       <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
         <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>
           <webview
@@ -763,13 +775,15 @@ return (
             height={webviewVisible ? '100%' : '0%'}
           />
         </vstack>
-        
-        </vstack>
+      </vstack>
     ) : currentView === 'howToPlay' ? (
       <HowToPlay onBack={() => setCurrentView('menu')} />
-    ) : null} 
+    ) : null}
   </vstack>
-);
+</zstack>
+
+  );
+  
   }
 });
 
