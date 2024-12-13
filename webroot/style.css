@@ -636,18 +636,6 @@ body {
   pointer-events: none;
   z-index: 1000;
 }
-/* .door-animation {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-} */
-/* .door-piece {
-  position: absolute;
-  background: #FF4500; 
-  background: #594a00;
-  transition: transform 0.5s ease, opacity 0.5s ease;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-} */
 .door-piece {
   position: absolute;
   background: #1aa5ec;
@@ -742,7 +730,6 @@ body {
   background: #4a4a4a;
   position: relative;
 }
-
 .trap::after {
   content: '';
   position: absolute;
@@ -756,24 +743,17 @@ body {
   transition: opacity 0.5s ease, background-color 0.3s ease;
   z-index: 1;
 }
-
-/* Revealed by crystal ball */
-.trap.revealed::after {
+.trap.revealed::after { /* Revealed by crystal ball */
   background: rgba(255, 17, 0, 0.7);
 }
-
-/* Disarming states - these need higher specificity to override revealed */
 .trap.disarming::after {
   background: #1aa5ec !important; /* Using !important to override revealed state */
   z-index: 1;
 }
-
-/* Animation states */
 .trap.disarming.revealed::after,
 .trap.disarming:not(.revealed)::after {
   animation: shrinkTrap 0.5s forwards;
 }
-
 @keyframes shrinkTrap {
   0% {
       opacity: 1;

@@ -533,7 +533,6 @@ Devvit.addCustomPostType({
             }
             break;
         }
-
         case 'nextGame':
           // Calculate new count
           const updatedGamesPlayed = gameState.gamesPlayed + 1;
@@ -689,11 +688,12 @@ Devvit.addCustomPostType({
 return (
   <vstack grow padding="small">
     {currentView === 'menu' ? (
-      // Menu View
+      // Menu View with background image
       <vstack
         grow={!webviewVisible}
         height={webviewVisible ? '0%' : '100%'}
         alignment="middle center"
+
       >
         {/* Logo/Title */}
         <image 

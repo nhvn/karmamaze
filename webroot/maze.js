@@ -711,6 +711,9 @@ function handleDoor(x, y) {
         gameState.playerOrientation = 'face-up';
     }
 
+    // Update orientation first
+    renderMaze();
+
     // Then handle the door interaction
     if (gameState.isCasualMode || gameState.keys > 0) {
         unlockDoor(x, y);
@@ -729,23 +732,21 @@ function handleDoor(x, y) {
             doorElement.classList.add('shaking');
             doorElement.style.opacity = opacity;
             
+            // Remove shake after animation completes
             setTimeout(() => {
                 doorElement.classList.remove('shaking');
-            }, 100);
-        }
-
-        // Break door after 10 hits
-        if (hits + 1 >= 10) {
-            gameState.maze[y][x] = 'path';
-            gameState.doorHits.delete(doorKey);
-            gameState.doorOpacity.delete(doorKey);
-            showTopRightMessage('Door broken!');
-            renderMaze();
+                
+                // Break door after 10 hits
+                if (hits + 1 >= 10) {
+                    gameState.maze[y][x] = 'path';
+                    gameState.doorHits.delete(doorKey);
+                    gameState.doorOpacity.delete(doorKey);
+                    showTopRightMessage('Door broken!');
+                    renderMaze();
+                }
+            }, 150); // Increased slightly to ensure animation completes
         }
     }
-
-    // Force a re-render to update player orientation
-    renderMaze();
 }
 function unlockDoor(x, y) {
     if (!gameState.isCasualMode && gameState.keys <= 0) {
