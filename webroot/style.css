@@ -235,6 +235,47 @@ body {
 #retryButton:hover, #newGameButton:hover {
   background: #5a5a5a;
 }
+.idle-prompt {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 18px;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+  pointer-events: none;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes adjacentPulse {
+  0% {
+      filter: brightness(1);
+  }
+  50% {
+      filter: brightness(1.5);
+  }
+  100% {
+      filter: brightness(1);
+  }
+}
+
+.adjacent-pulse {
+  animation: adjacentPulse 2s infinite ease-in-out;
+}
+
+/* Override any existing hover effects when pulsing */
+.cell.adjacent-pulse:hover {
+  filter: brightness(1.5);
+}
 
 /* 4. STATS */
 #stats {

@@ -27,7 +27,9 @@ let gameState = {
     lives: 3,
     isCasualMode: false,
     playerOrientation: 'face-right',
-    animatingCells: new Set() // To track cells with ongoing animations
+    animatingCells: new Set(),
+    lastMoveTime: Date.now(),
+    idlePromptVisible: false
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
@@ -285,6 +287,11 @@ window.addEventListener('message', (event) => {
     }
 });
 function movePlayer(x, y) {
+    gameState.lastMoveTime = Date.now();
+    if (gameState.idlePromptVisible) {
+        hideIdlePrompt();
+        gameState.idlePromptVisible = false;
+    }
     const oldX = gameState.playerPosition.x;
     const oldY = gameState.playerPosition.y;
     
@@ -1394,6 +1401,50 @@ function hideLoading() {
         loadingOverlay.style.display = 'none';
     }
 }
+function handleIdlePrompt() {
+    const idleThreshold = 3000; // Show prompt after 3 seconds of inactivity
+    const now = Date.now();
+    
+    if (!gameState.isGameOver && !isPaused && (now - gameState.lastMoveTime > idleThreshold)) {
+        if (!gameState.idlePromptVisible) {
+            showIdlePrompt();
+            gameState.idlePromptVisible = true;
+        }
+    } else if (gameState.idlePromptVisible) {
+        hideIdlePrompt();
+        gameState.idlePromptVisible = false;
+    }
+}
+
+function showIdlePrompt() {
+    let promptContainer = document.getElementById('idle-prompt');
+    if (!promptContainer) {
+        promptContainer = document.createElement('div');
+        promptContainer.id = 'idle-prompt';
+        promptContainer.className = 'idle-prompt';
+        document.body.appendChild(promptContainer);
+    }
+    
+    promptContainer.textContent = 'Tap or use keys to move';
+    promptContainer.style.display = 'block';
+    
+    // Add pulse effect to adjacent cells
+    document.querySelectorAll('.adjacent').forEach(cell => {
+        cell.classList.add('adjacent-pulse');
+    });
+}
+
+function hideIdlePrompt() {
+    const promptContainer = document.getElementById('idle-prompt');
+    if (promptContainer) {
+        promptContainer.style.display = 'none';
+    }
+    
+    // Remove pulse effect from adjacent cells
+    document.querySelectorAll('.adjacent').forEach(cell => {
+        cell.classList.remove('adjacent-pulse');
+    });
+}
 
 // 8. PAUSE MENU
 function pauseGame() {
@@ -1541,6 +1592,10 @@ window.addEventListener('load', () => {
             newGame(); // This will take you back to the main menu
         });
     }
+
+    // Start the idle prompt checker
+    setInterval(handleIdlePrompt, 1000);
+
 });
 
 // 10. HELPER FUNCTIONS
