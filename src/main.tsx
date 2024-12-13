@@ -686,102 +686,110 @@ Devvit.addCustomPostType({
   };
 
   return (
-<zstack width="100%" height="100%" alignment="middle center">
-  {/* Background Image */}
-  <image
-    url="menuBg.jpg"
-    imageHeight={1024}
-    imageWidth={1024}
-    height="100%"
-    width="100%"
-    resizeMode="cover"
-    description="Menu background"
-  />
-
-  {/* Content Container */}
-  <vstack grow alignment="middle center" padding="small">
-    {currentView === 'menu' ? (
-      // Menu View
-      <vstack
-        grow={!webviewVisible}
-        height={webviewVisible ? '0%' : '100%'}
-        alignment="middle center"
-      >
-        {/* Logo/Title */}
-        <image
-          url="kmazeCover.png"
-          imageWidth={300}
-          imageHeight={150}
+    <vstack grow>
+      {/* Render zstack only for the menu */}
+      {currentView === 'menu' && (
+        <zstack width="100%" height="100%" alignment="middle center">
+          {/* Background Image - Only for Menu */}
+          <image
+            url="menuBg.jpg"
+            imageHeight={1024}
+            imageWidth={1024}
+            height="100%"
+            width="100%"
+            resizeMode="cover"
+            description="Menu background"
+          />
+  
+          <vstack grow padding="large">
+            {/* Menu View */}
+            <vstack
+              grow={!webviewVisible}
+              height={webviewVisible ? '0%' : '100%'}
+              alignment="middle center"
+            >
+              {/* Logo/Title */}
+              <image 
+                url="kmazeCover.png"
+                imageWidth={300}
+                imageHeight={150}
+              />
+              <spacer size="medium" />
+  
+              {/* Mode Selection */}
+              <hstack alignment="middle center" gap="medium">
+                <hstack 
+                  onPress={toggleMode}
+                  padding="medium"  // Added padding for larger touch target
+                  alignment="middle center"
+                >
+                  <text size="large" weight="bold">{'<'}</text>
+                </hstack>
+                
+                <text size="large" weight="bold">
+                  {currentLevel === 1 ? 'Casual' : 'Normal'}
+                </text>
+                
+                <hstack 
+                  onPress={toggleMode}
+                  padding="medium"  // Added padding for larger touch target
+                  alignment="middle center"
+                >
+                  <text size="large" weight="bold">{'>'}</text>
+                </hstack>
+              </hstack>
+  
+              {/* Mode Description */}
+              <vstack alignment="middle center" padding="small" width="100%">
+                <vstack alignment="middle center" width="80%" maxWidth="100%">
+                  <text size="medium">
+                    {currentLevel === 2 
+                      ? 'Race against time in the unknown!' 
+                      : 'Chill experience for a chill guy.'}
+                  </text>
+                </vstack>
+              </vstack>
+              <spacer size="medium" />
+  
+              {/* Main Buttons */}
+              <vstack gap="small">
+                <button onPress={onStartGame}>Play</button>
+                <button onPress={() => setCurrentView('leaderboard')}>Leaderboard</button>
+                <button onPress={() => setCurrentView('howToPlay')}>How to Play</button>
+              </vstack>
+            </vstack>
+          </vstack>
+        </zstack>
+      )}
+  
+      {/* Render Leaderboard */}
+      {currentView === 'leaderboard' && (
+        <Leaderboard 
+          context={context}
+          onBack={() => setCurrentView('menu')}
         />
-        <spacer size="medium" />
-
-        {/* Mode Selection */}
-        <hstack alignment="middle center" gap="medium">
-          <hstack
-            onPress={toggleMode}
-            padding="medium" // Added padding for larger touch target
-            alignment="middle center"
-          >
-            <text size="large" weight="bold">{'<'}</text>
-          </hstack>
-
-          <text size="large" weight="bold">
-            {currentLevel === 1 ? 'Casual' : 'Normal'}
-          </text>
-
-          <hstack
-            onPress={toggleMode}
-            padding="medium" // Added padding for larger touch target
-            alignment="middle center"
-          >
-            <text size="large" weight="bold">{'>'}</text>
-          </hstack>
-        </hstack>
-
-        {/* Mode Description */}
-        <vstack alignment="middle center" padding="small" width="100%">
-          <vstack alignment="middle center" width="80%" maxWidth="100%">
-            <text size="medium">
-              {currentLevel === 2
-                ? 'Race against time in the unknown!'
-                : 'Chill experience for a chill guy.'}
-            </text>
+      )}
+  
+      {/* Render Game */}
+      {currentView === 'game' && (
+        <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
+          <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>
+            <webview
+              id="mazeGame"
+              url="maze.html"
+              onMessage={(msg) => onMessage(msg as WebViewMessage)}
+              grow
+              height={webviewVisible ? '100%' : '0%'}
+            />
           </vstack>
         </vstack>
-        <spacer size="medium" />
-
-        {/* Main Buttons */}
-        <vstack gap="small">
-          <button onPress={onStartGame}>Play</button>
-          <button onPress={() => setCurrentView('leaderboard')}>Leaderboard</button>
-          <button onPress={() => setCurrentView('howToPlay')}>How to Play</button>
-        </vstack>
-      </vstack>
-    ) : currentView === 'leaderboard' ? (
-      // Leaderboard View
-      <Leaderboard
-        context={context}
-        onBack={() => setCurrentView('menu')}
-      />
-    ) : currentView === 'game' ? (
-      // Game View
-      <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
-        <vstack border="thick" borderColor="black" height={webviewVisible ? '100%' : '0%'}>
-          <webview
-            id="mazeGame"
-            url="maze.html"
-            onMessage={(msg) => onMessage(msg as WebViewMessage)}
-            grow
-            height={webviewVisible ? '100%' : '0%'}
-          />
-        </vstack>
-      </vstack>
-    ) : currentView === 'howToPlay' ? (
-      <HowToPlay onBack={() => setCurrentView('menu')} />
-    ) : null}
-  </vstack>
-</zstack>
-
+      )}
+  
+      {/* Render HowToPlay */}
+      {currentView === 'howToPlay' && (
+        <HowToPlay onBack={() => setCurrentView('menu')} />
+      )}
+    </vstack>
   );
   
   }
