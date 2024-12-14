@@ -18,7 +18,6 @@ let gameState = {
     exploredTiles: new Set(),
     crystalBallUsed: false,
     doorHits: new Map(),
-    doorOpacity: new Map(),
     isDisarming: false,
     moveCount: 0,        // Track number of moves
     retryCount: 0,       // Track retries
@@ -31,7 +30,7 @@ let gameState = {
     lastMoveTime: Date.now(),
     idlePromptVisible: false,
     isPlayerIdle: false,
-    idleAnimationTimeout: null
+    idleAnimationTimeout: null,
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
@@ -106,7 +105,6 @@ function initializeGame(data) {
         crystalBallUsed: false,
         mapUsed: false,
         doorHits: new Map(),
-        doorOpacity: new Map(),
         moveCount: 0,
         retryCount: 0,
         winStreak: gameState.winStreak,
@@ -211,17 +209,15 @@ function renderMaze(movementClass = '') {
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
 
-            if (cell.startsWith('trap') && gameState.crystalBallUsed) { 
-                cellElement.classList.add('revealed');
-                cellElement.classList.remove('fog');
-                cellElement.classList.add('visible');
-            }
-
             if (cell === 'door') {
                 const doorKey = `${x},${y}`;
-                const opacity = gameState.doorOpacity.get(doorKey);
-                if (opacity !== undefined) {
-                    cellElement.style.opacity = opacity;
+                const hits = gameState.doorHits.get(doorKey) || 0;
+                
+                // Apply crack classes based on hits
+                if (hits >= 7) {
+                    cellElement.classList.add('cracked2');
+                } else if (hits >= 3) {
+                    cellElement.classList.add('cracked1');
                 }
             }
 
@@ -264,41 +260,6 @@ function renderMaze(movementClass = '') {
 
     updateVisibility();
 }
-window.addEventListener('message', (event) => {
-    log('Received message:', event.data);
-    
-    const message = event.data?.data?.message || event.data;
-    if (!message || !message.type) {
-        log('Invalid message received:', message);
-        return;
-    }
-    
-    switch (message.type) {
-        case 'initialData':
-            // Store all image URLs
-            playerImageUrl = message.data.playerImageUrl || '';
-            keyPowerupImageUrl = message.data.keyPowerupImageUrl || '';
-            mapImageUrl = message.data.mapImageUrl || '';
-            crystalBallImageUrl = message.data.crystalBallImageUrl || '';
-            
-            // Set CSS variables for all images
-            document.documentElement.style.setProperty('--player-image-url', `url('${playerImageUrl}')`);
-            document.documentElement.style.setProperty('--key-powerup-image-url', `url('${keyPowerupImageUrl}')`);
-            document.documentElement.style.setProperty('--map-image-url', `url('${mapImageUrl}')`);
-            document.documentElement.style.setProperty('--crystal-ball-image-url', `url('${crystalBallImageUrl}')`);
-            document.documentElement.style.setProperty('--trap1-image-url', `url('${message.data.trap1ImageUrl}')`);
-            document.documentElement.style.setProperty('--trap2-image-url', `url('${message.data.trap2ImageUrl}')`);
-            document.documentElement.style.setProperty('--trap3-image-url', `url('${message.data.trap3ImageUrl}')`);
-            
-            initializeGame({
-                ...message.data,
-                isNewGame: !message.data.isRetry
-            });
-            break;
-        default:
-            log('Unknown message type:', message.type);
-    }
-});
 function movePlayer(x, y) {
     gameState.lastMoveTime = Date.now();
     if (gameState.isPlayerIdle) {
@@ -779,15 +740,20 @@ function handleDoor(x, y) {
         const hits = gameState.doorHits.get(doorKey) || 0;
         gameState.doorHits.set(doorKey, hits + 1);
 
-        // Calculate opacity (from 1 to 0.3)
-        const opacity = 1 - ((hits + 1) / 10) * 0.7;
-        gameState.doorOpacity.set(doorKey, opacity);
-
-        // Shake the door
+        // Get and update door element
         const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
         if (doorElement) {
             doorElement.classList.add('shaking');
-            doorElement.style.opacity = opacity;
+            
+            // Remove previous crack classes
+            doorElement.classList.remove('cracked1', 'cracked2');
+            
+            // Add appropriate crack class based on hits
+            if (hits + 1 >= 7) {
+                doorElement.classList.add('cracked2');
+            } else if (hits + 1 >= 3) {
+                doorElement.classList.add('cracked1');
+            }
             
             // Remove shake after animation completes
             setTimeout(() => {
@@ -797,11 +763,10 @@ function handleDoor(x, y) {
                 if (hits + 1 >= 10) {
                     gameState.maze[y][x] = 'path';
                     gameState.doorHits.delete(doorKey);
-                    gameState.doorOpacity.delete(doorKey);
                     showTopRightMessage('Door broken!');
                     renderMaze();
                 }
-            }, 150); // Increased slightly to ensure animation completes
+            }, 150);
         }
     }
 }
@@ -1278,7 +1243,6 @@ function retryLevel() {
         crystalBallUsed: false,
         mapUsed: false,
         doorHits: new Map(),
-        doorOpacity: new Map()
     };
 
     // Reset powerup UI indicators
@@ -1583,12 +1547,31 @@ window.addEventListener('message', (event) => {
                 return;
             }
             log('Initializing game with data:', message.data);
-            // Add isNewGame flag based on whether it's a retry
+            
+            // Store all image URLs
+            playerImageUrl = message.data.playerImageUrl || '';
+            keyPowerupImageUrl = message.data.keyPowerupImageUrl || '';
+            mapImageUrl = message.data.mapImageUrl || '';
+            crystalBallImageUrl = message.data.crystalBallImageUrl || '';
+            
+            // Set CSS variables for all images
+            document.documentElement.style.setProperty('--player-image-url', `url('${playerImageUrl}')`);
+            document.documentElement.style.setProperty('--key-powerup-image-url', `url('${keyPowerupImageUrl}')`);
+            document.documentElement.style.setProperty('--map-image-url', `url('${mapImageUrl}')`);
+            document.documentElement.style.setProperty('--crystal-ball-image-url', `url('${crystalBallImageUrl}')`);
+            document.documentElement.style.setProperty('--trap1-image-url', `url('${message.data.trap1ImageUrl}')`);
+            document.documentElement.style.setProperty('--trap2-image-url', `url('${message.data.trap2ImageUrl}')`);
+            document.documentElement.style.setProperty('--trap3-image-url', `url('${message.data.trap3ImageUrl}')`);
+            document.documentElement.style.setProperty('--door-crack1-url', `url('${message.data.doorCrack1ImageUrl}')`);
+            document.documentElement.style.setProperty('--door-crack2-url', `url('${message.data.doorCrack2ImageUrl}')`);
+            
+            // Initialize game with combined data
             initializeGame({
                 ...message.data,
                 isNewGame: !message.data.isRetry
             });
             break;
+            
         default:
             log('Unknown message type:', message.type);
     }
