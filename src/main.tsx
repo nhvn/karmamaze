@@ -493,7 +493,9 @@ Devvit.addCustomPostType({
                 }
             }
             
-            const gameOverPlayerImageUrl = await context.assets.getURL('snoo.png');
+            const gameOverPlayerImageUrl = await context.assets.getURL(
+                currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'
+            );
             const gameOverKeyPowerupImageUrl = await context.assets.getURL('karma.png');
             const gameOverMapImageUrl = await context.assets.getURL('map.png');
             const gameOverCrystalBallImageUrl = await context.assets.getURL('crystal.png');
@@ -542,14 +544,14 @@ Devvit.addCustomPostType({
               ? generateMaze(18, 9) 
               : generateLevel2Maze(18, 9, updatedGamesPlayed);  // Use new count directly
           
-          // Get image URLs concurrently
-          const [
+            // Get image URLs concurrently, using correct character based on mode
+            const [
               nextGamePlayerImageUrl,
               nextGameKeyPowerupImageUrl,
               nextGameMapImageUrl,
               nextGameCrystalBallImageUrl
           ] = await Promise.all([
-              context.assets.getURL('snoo.png'),
+              context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
               context.assets.getURL('karma.png'),
               context.assets.getURL('map.png'),
               context.assets.getURL('crystal.png')
@@ -600,7 +602,9 @@ Devvit.addCustomPostType({
               : generateLevel2Maze(18, 9, gameState.gamesPlayed);
           
           // Get the image URLs for retry
-          const retryPlayerImageUrl = await context.assets.getURL('snoo.png');
+          const characterImageUrl = await context.assets.getURL(
+            currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'
+          );
           const retryKeyPowerupImageUrl = await context.assets.getURL('karma.png');
           const retryMapImageUrl = await context.assets.getURL('map.png');
           const retryCrystalBallImageUrl = await context.assets.getURL('crystal.png');
@@ -624,7 +628,7 @@ Devvit.addCustomPostType({
                   maze: retryMaze,
                   level: currentLevel,
                   gamesPlayed: gameState.gamesPlayed,
-                  playerImageUrl: retryPlayerImageUrl,
+                  playerImageUrl: characterImageUrl,
                   keyPowerupImageUrl: retryKeyPowerupImageUrl,
                   mapImageUrl: retryMapImageUrl,
                   crystalBallImageUrl: retryCrystalBallImageUrl
@@ -650,9 +654,12 @@ Devvit.addCustomPostType({
       const newMaze = currentLevel === 1 
           ? generateMaze(18, 9) 
           : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
+
+        const characterImageUrl = await context.assets.getURL(
+          isCasualMode ? 'snoo1.png' : 'snoo2.png'
+      );
       
       // Get the player image URL
-      const playerImageUrl = await context.assets.getURL('snoo.png');
       const keyPowerupImageUrl = await context.assets.getURL('karma.png');
       const mapImageUrl = await context.assets.getURL('map.png');
       const crystalBallImageUrl = await context.assets.getURL('crystal.png');
@@ -671,7 +678,7 @@ Devvit.addCustomPostType({
               gamesPlayed: gameState?.gamesPlayed || 0,
               isNewGame: true,
               isCasualMode: isCasualMode,
-              playerImageUrl: playerImageUrl,
+              playerImageUrl: characterImageUrl,
               keyPowerupImageUrl: keyPowerupImageUrl,
               mapImageUrl: mapImageUrl,
               crystalBallImageUrl: crystalBallImageUrl

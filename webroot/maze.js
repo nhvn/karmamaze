@@ -1462,29 +1462,18 @@ function handleIdlePrompt() {
     }
 }
 function showIdlePrompt() {
-    let promptContainer = document.getElementById('idle-prompt');
-    if (!promptContainer) {
-        promptContainer = document.createElement('div');
-        promptContainer.id = 'idle-prompt';
-        promptContainer.className = 'idle-prompt';
-        document.body.appendChild(promptContainer);
-    }
-    
-    promptContainer.textContent = 'Tap or use keys to move';
-    promptContainer.style.display = 'block';
-    
-    // Add pulse effect to adjacent cells
+    // Skip creating the container if it's not needed
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.add('adjacent-pulse');
     });
 }
+
 function hideIdlePrompt() {
     const promptContainer = document.getElementById('idle-prompt');
     if (promptContainer) {
+        promptContainer.textContent = ''; // Clear text
         promptContainer.style.display = 'none';
     }
-    
-    // Remove pulse effect from adjacent cells
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.remove('adjacent-pulse');
     });

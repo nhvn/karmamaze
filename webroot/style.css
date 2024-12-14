@@ -142,7 +142,6 @@ body {
 #message button:hover {
   background-color: #666;
 }
-
 #top-right-messages { /* Top-right messages */
   position: fixed;
   top: 20%;
@@ -190,11 +189,9 @@ body {
   align-items: center;
   justify-content: center;
 }
-
 .icon-button:hover {
   background-color: #66666699;
 }
-
 .pause-icon {
   width: 13px;
   height: 16px;
@@ -202,7 +199,6 @@ body {
   justify-content: space-between;
   align-items: center;
 }
-
 .pause-bar {
   width: 5px;
   height: 16px;
@@ -237,11 +233,9 @@ body {
 }
 .idle-prompt {
   position: fixed;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
   padding: 12px 24px;
   border-radius: 8px;
   font-size: 18px;
@@ -250,12 +244,10 @@ body {
   pointer-events: none;
   text-align: center;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 @keyframes adjacentPulse {
   0% {
       filter: brightness(1);
@@ -267,7 +259,6 @@ body {
       filter: brightness(1);
   }
 }
-
 .adjacent-pulse {
   animation: adjacentPulse 2s infinite ease-in-out;
 }
@@ -722,41 +713,41 @@ body {
 @keyframes splitTopFade {
   0% { 
     transform: translateY(0); 
-    opacity: 1;
+    /* opacity: 1; */
   }
   100% { 
     transform: translateY(-20px); 
-    opacity: 0.7;
+    /* opacity: 0.7; */
   }
 }
 @keyframes splitBottomFade {
   0% { 
     transform: translateY(0); 
-    opacity: 1;
+    /* opacity: 1; */
   }
   100% { 
     transform: translateY(20px); 
-    opacity: 0.7;
+    /* opacity: 0.7; */
   }
 }
 @keyframes splitLeftFade {
   0% { 
     transform: translateX(0); 
-    opacity: 1;
+    /* opacity: 1; */
   }
   100% { 
     transform: translateX(-20px); 
-    opacity: 0.7;
+    /* opacity: 0.7; */
   }
 }
 @keyframes splitRightFade {
   0% { 
     transform: translateX(0); 
-    opacity: 1;
+    /* opacity: 1; */
   }
   100% { 
     transform: translateX(20px); 
-    opacity: 0.7;
+    /* opacity: 0.7; */
   }
 }
 @keyframes shake {
@@ -933,7 +924,7 @@ body {
   background-repeat: no-repeat;
   z-index: 3;
   --player-rotation: 0deg;
-  animation: playerBounce 0.3s infinite ease-in-out; /* Speed of bouncing */
+  animation: playerBounce 0.5s infinite ease-in-out;
 }
 .player.face-right::after { /* Orientation classes */
   transform: rotate(0deg);
