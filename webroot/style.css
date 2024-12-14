@@ -262,8 +262,6 @@ body {
 .adjacent-pulse {
   animation: adjacentPulse 2s infinite ease-in-out;
 }
-
-/* Override any existing hover effects when pulsing */
 .cell.adjacent-pulse:hover {
   filter: brightness(1.5);
 }
@@ -792,7 +790,7 @@ body {
   transform: translate(-50%, -50%);
   width: 30px;
   height: 30px;
-  background: rgba(255, 17, 0, 0.6);
+  background: rgba(255, 17, 0, 0.3);
   z-index: 2;
   pointer-events: none;
 }
@@ -804,7 +802,7 @@ body {
 .trap1.disarming::before,
 .trap2.disarming::before,
 .trap3.disarming::before {
-  background: rgba(26, 165, 236, 0.6) !important;
+  background: rgba(26, 165, 236, 0.3) !important;
 }
 .trap1.disarming::before,
 .trap2.disarming::before,
@@ -942,7 +940,7 @@ body {
   background-repeat: no-repeat;
   z-index: 3;
   --player-rotation: 0deg;
-  animation: playerBounce 0.7s infinite ease-in-out;
+  animation: playerBounce 1.2s infinite ease-in-out;
 }
 .player.face-right::after { /* Orientation classes */
   transform: rotate(0deg);
@@ -1005,7 +1003,7 @@ body {
       transform: scale(1) rotate(var(--player-rotation));
   }
   50% {
-      transform: scale(1.03) rotate(var(--player-rotation));
+      transform: scale(1.04) rotate(var(--player-rotation));
   }
 }
 .cell.player {

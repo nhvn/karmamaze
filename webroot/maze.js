@@ -385,7 +385,7 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
         
             if (gameState.keys >= 2) {
                 // Set orientation even when disarming
-                setPlayerOrientation(x, y);
+                setPlayerOrientation(x, y);  // For click handler only
                 
                 // Set disarming state to true
                 gameState.isDisarming = true;
@@ -393,7 +393,8 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
                 // Stay in place but use 2 keys
                 gameState.keys -= 2;
         
-                showTopRightMessage('Used 2 karma to disarm trap!');
+                // Show trap-specific message
+                showTopRightMessage(getTrapDisarmMessage(targetCell));
                 
                 // Start disarm animation
                 const trapElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
@@ -433,7 +434,7 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
                 }
             } else {
                 // Game over - fell into trap
-                handleTrap();
+                handleTrap(targetCell);
             }
             return;  // Don't move - stay in current position
         } else if (targetCell === 'crystal-ball') {
@@ -524,7 +525,8 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
                 // Stay in place but use 2 keys
                 gameState.keys -= 2;
         
-                showTopRightMessage('Used 2 karma to disarm trap!');
+                // Show trap-specific message
+                showTopRightMessage(getTrapDisarmMessage(targetCell));
                 
                 // Start disarm animation
                 const trapElement = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
@@ -564,7 +566,7 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
                 }
             } else {
                 // Game over - fell into trap
-                handleTrap();
+                handleTrap(targetCell);
             }
             return;  // Don't move - stay in current position
         } else if (targetCell === 'crystal-ball') {
@@ -1211,7 +1213,7 @@ function handleWin() {
         }
     }, '*');
 }
-function handleTrap() {
+function handleTrap(trapType = '') {
     gameState.isGameOver = true;
     stopTimer();
     
@@ -1223,9 +1225,23 @@ function handleTrap() {
     
     showTopRightMessage('Lost 1 life!');
 
+    // Get trap-specific message
+    function getTrapLoseMessage(type) {
+        switch (type) {
+            case 'trap1':
+                return 'Oh no! You fell into a hole!\nWatch your step next time!';
+            case 'trap2':
+                return 'Oh no! The snake got you!\nBe more careful around snakes!';
+            case 'trap3':
+                return 'Oh no! The spider caught you!\nKeep an eye out for webs!';
+            default:
+                return 'Oh no! You fell into a trap!\nBe more careful next time!';
+        }
+    }
+
     if (newLives > 0) {
         // Still has lives left
-        showMessage('Oh no! You fell into a trap!\nBe more careful next time!', 'error', true);
+        showMessage(getTrapLoseMessage(trapType), 'error', true);
     } else {
         // Game over - no lives left
         const finalScore = playerStats.totalScore;
@@ -1701,4 +1717,16 @@ function sendReadyMessage() {
             sendReadyMessage();
         }
     }, 1000);
+}
+function getTrapDisarmMessage(trapType) {
+    switch (trapType) {
+        case 'trap1':
+            return 'Used 2 karma to cover the hole!';
+        case 'trap2':
+            return 'Used 2 karma to charm the snake!';
+        case 'trap3':
+            return 'Used 2 karma to shoo the spider away!';
+        default:
+            return 'Used 2 karma to disarm trap!';
+    }
 }
