@@ -758,52 +758,70 @@ body {
 .shaking {
   animation: shake 0.05s linear;
 }
-.trap {
+.trap1, .trap2, .trap3 {
   background: #4a4a4a;
   position: relative;
 }
-.trap::after {
+.trap1::after,
+.trap2::after,
+.trap3::after {
   content: '';
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 25px;
-  height: 25px;
-  background: #0000008d;
-  border-radius: 3px;
-  transition: opacity 0.5s ease, background-color 0.3s ease;
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.5s ease;
   z-index: 1;
+  opacity: 0.7;
 }
-.trap.revealed::after { /* Revealed by crystal ball */
-  background: rgba(255, 17, 0, 0.7);
+.trap1::after { background-image: var(--trap1-image-url); }
+.trap2::after { background-image: var(--trap2-image-url); }
+.trap3::after { background-image: var(--trap3-image-url); }
+.trap1.revealed::before,
+.trap2.revealed::before,
+.trap3.revealed::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 17, 0, 0.6);
+  z-index: 2;
+  pointer-events: none;
 }
-.trap.disarming::after {
-  background: #1aa5ec !important; /* Using !important to override revealed state */
-  z-index: 1;
+.trap1.revealed::after,
+.trap2.revealed::after,
+.trap3.revealed::after {
+  opacity: 1;
 }
-.trap.disarming.revealed::after,
-.trap.disarming:not(.revealed)::after {
+.trap1.disarming::before,
+.trap2.disarming::before,
+.trap3.disarming::before {
+  background: rgba(26, 165, 236, 0.6) !important;
+}
+.trap1.disarming::before,
+.trap2.disarming::before,
+.trap3.disarming::before,
+.trap1.disarming::after,
+.trap2.disarming::after,
+.trap3.disarming::after {
   animation: shrinkTrap 0.5s forwards;
 }
 @keyframes shrinkTrap {
   0% {
       opacity: 1;
       transform: translate(-50%, -50%) scale(1);
-      background-color: #1aa5ec;
   }
   100% {
       opacity: 0;
       transform: translate(-50%, -50%) scale(0);
-      background-color: #1aa5ec;
-  }
-}
-@keyframes fadeTrap {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
   }
 }
 .start, .exit, .fake-exit, .exit1, .fake-exit1 { /* Start and Exit Cells */
@@ -924,7 +942,7 @@ body {
   background-repeat: no-repeat;
   z-index: 3;
   --player-rotation: 0deg;
-  animation: playerBounce 0.5s infinite ease-in-out;
+  animation: playerBounce 0.7s infinite ease-in-out;
 }
 .player.face-right::after { /* Orientation classes */
   transform: rotate(0deg);

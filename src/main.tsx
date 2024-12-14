@@ -23,8 +23,12 @@ type WebViewMessage =
         keyPowerupImageUrl?: string;
         mapImageUrl?: string;
         crystalBallImageUrl?: string;
+        trap1ImageUrl?: string;    // Add these three lines
+        trap2ImageUrl?: string;
+        trap3ImageUrl?: string;
       };
     }
+
   | {
       type: 'movePlayer';
       data: { position: Position };
@@ -47,7 +51,19 @@ type WebViewMessage =
   | {
       type: 'newGame';
     };
-type MazeCell = 'path' | 'wall' | 'door' | 'start' | 'exit' | 'fake-exit' | 'crystal-ball' | 'map' | 'key-powerup' | 'trap';
+    type MazeCell = 
+    | 'path' 
+    | 'wall' 
+    | 'door' 
+    | 'start' 
+    | 'exit' 
+    | 'fake-exit' 
+    | 'crystal-ball' 
+    | 'map' 
+    | 'key-powerup' 
+    | 'trap1' 
+    | 'trap2' 
+    | 'trap3';
 type Position = { x: number; y: number };
 type GameState = {
   maze: MazeCell[][];
@@ -363,25 +379,27 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   if (gamesPlayed >= 3) {
     let trapCount = 0;
     for (let y = 1; y < height - 1; y++) {
-      for (let x = 1; x < width - 1; x++) {
-        if (maze[y][x] === 'path') {
-          const isNearStart = x <= 2;
-          const isNearExit = x === width - 2 && y === exitPos.y;
-          const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
-            maze[y + dy]?.[x + dx] === 'door'
-          );
+        for (let x = 1; x < width - 1; x++) {
+            if (maze[y][x] === 'path') {
+                const isNearStart = x <= 2;
+                const isNearExit = x === width - 2 && y === exitPos.y;
+                const hasAdjacentDoor = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => 
+                    maze[y + dy]?.[x + dx] === 'door'
+                );
 
-          if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < trapFrequency) {
-            maze[y][x] = 'trap';
-            trapCount++;
-          }
+                if (!isNearStart && !isNearExit && !hasAdjacentDoor && Math.random() < trapFrequency) {
+                    // Randomly assign trap type (1, 2, or 3)
+                    const trapType = Math.floor(Math.random() * 3) + 1;
+                    maze[y][x] = `trap${trapType}` as MazeCell;
+                    trapCount++;
+                }
+            }
         }
-      }
     }
     console.log(`Placed ${trapCount} traps in the maze`);
-  }
+}
 
-  return maze;
+return maze;
 }
 
 // 3. DEVVIT CONFIGURATION
@@ -493,12 +511,23 @@ Devvit.addCustomPostType({
                 }
             }
             
-            const gameOverPlayerImageUrl = await context.assets.getURL(
-                currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'
-            );
-            const gameOverKeyPowerupImageUrl = await context.assets.getURL('karma.png');
-            const gameOverMapImageUrl = await context.assets.getURL('map.png');
-            const gameOverCrystalBallImageUrl = await context.assets.getURL('crystal.png');
+            const [
+              gameOverPlayerImageUrl,
+              gameOverKeyPowerupImageUrl,
+              gameOverMapImageUrl,
+              gameOverCrystalBallImageUrl,
+              gameOverTrap1ImageUrl,
+              gameOverTrap2ImageUrl,
+              gameOverTrap3ImageUrl
+          ] = await Promise.all([
+              context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
+              context.assets.getURL('karma.png'),
+              context.assets.getURL('map.png'),
+              context.assets.getURL('crystal.png'),
+              context.assets.getURL('trap1.png'),
+              context.assets.getURL('trap2.png'),
+              context.assets.getURL('trap3.png')
+          ]);
             
             setPlayerStats(prevStats => ({
                 ...prevStats,
@@ -528,7 +557,10 @@ Devvit.addCustomPostType({
                         playerImageUrl: gameOverPlayerImageUrl,
                         keyPowerupImageUrl: gameOverKeyPowerupImageUrl,
                         mapImageUrl: gameOverMapImageUrl,
-                        crystalBallImageUrl: gameOverCrystalBallImageUrl
+                        crystalBallImageUrl: gameOverCrystalBallImageUrl,
+                        trap1ImageUrl: gameOverTrap1ImageUrl,
+                        trap2ImageUrl: gameOverTrap2ImageUrl,
+                        trap3ImageUrl: gameOverTrap3ImageUrl
                     }
                 };
                 context.ui.webView.postMessage('mazeGame', updateMessage);
@@ -542,19 +574,25 @@ Devvit.addCustomPostType({
           // Generate maze immediately with new count
           const nextMaze = currentLevel === 1 
               ? generateMaze(18, 9) 
-              : generateLevel2Maze(18, 9, updatedGamesPlayed);  // Use new count directly
+              : generateLevel2Maze(18, 9, updatedGamesPlayed);  
           
-            // Get image URLs concurrently, using correct character based on mode
-            const [
+          // Get image URLs concurrently, using correct character based on mode
+          const [
               nextGamePlayerImageUrl,
               nextGameKeyPowerupImageUrl,
               nextGameMapImageUrl,
-              nextGameCrystalBallImageUrl
+              nextGameCrystalBallImageUrl,
+              nextGameTrap1ImageUrl, 
+              nextGameTrap2ImageUrl,
+              nextGameTrap3ImageUrl
           ] = await Promise.all([
               context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
               context.assets.getURL('karma.png'),
               context.assets.getURL('map.png'),
-              context.assets.getURL('crystal.png')
+              context.assets.getURL('crystal.png'),
+              context.assets.getURL('trap1.png'), 
+              context.assets.getURL('trap2.png'),
+              context.assets.getURL('trap3.png')
           ]);
           
           // Show bonus message if needed
@@ -583,6 +621,9 @@ Devvit.addCustomPostType({
                   keyPowerupImageUrl: nextGameKeyPowerupImageUrl,
                   mapImageUrl: nextGameMapImageUrl,
                   crystalBallImageUrl: nextGameCrystalBallImageUrl,
+                  trap1ImageUrl: nextGameTrap1ImageUrl,
+                  trap2ImageUrl: nextGameTrap2ImageUrl,
+                  trap3ImageUrl: nextGameTrap3ImageUrl,
                   isCasualMode: currentLevel === 1
               }
           };
@@ -602,12 +643,23 @@ Devvit.addCustomPostType({
               : generateLevel2Maze(18, 9, gameState.gamesPlayed);
           
           // Get the image URLs for retry
-          const characterImageUrl = await context.assets.getURL(
-            currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'
-          );
-          const retryKeyPowerupImageUrl = await context.assets.getURL('karma.png');
-          const retryMapImageUrl = await context.assets.getURL('map.png');
-          const retryCrystalBallImageUrl = await context.assets.getURL('crystal.png');
+          const [
+            characterImageUrl,
+            retryKeyPowerupImageUrl,
+            retryMapImageUrl,
+            retryCrystalBallImageUrl,
+            retryTrap1ImageUrl,
+            retryTrap2ImageUrl,
+            retryTrap3ImageUrl
+        ] = await Promise.all([
+            context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
+            context.assets.getURL('karma.png'),
+            context.assets.getURL('map.png'),
+            context.assets.getURL('crystal.png'),
+            context.assets.getURL('trap1.png'),
+            context.assets.getURL('trap2.png'),
+            context.assets.getURL('trap3.png')
+        ]);
           
           const retryState = {
               ...gameState,
@@ -631,7 +683,10 @@ Devvit.addCustomPostType({
                   playerImageUrl: characterImageUrl,
                   keyPowerupImageUrl: retryKeyPowerupImageUrl,
                   mapImageUrl: retryMapImageUrl,
-                  crystalBallImageUrl: retryCrystalBallImageUrl
+                  crystalBallImageUrl: retryCrystalBallImageUrl,
+                  trap1ImageUrl: retryTrap1ImageUrl,
+                  trap2ImageUrl: retryTrap2ImageUrl,
+                  trap3ImageUrl: retryTrap3ImageUrl
               }
           };
           
@@ -655,14 +710,23 @@ Devvit.addCustomPostType({
           ? generateMaze(18, 9) 
           : generateLevel2Maze(18, 9, gameState?.gamesPlayed || 0, isCasualMode);
 
-        const characterImageUrl = await context.assets.getURL(
-          isCasualMode ? 'snoo1.png' : 'snoo2.png'
-      );
-      
-      // Get the player image URL
-      const keyPowerupImageUrl = await context.assets.getURL('karma.png');
-      const mapImageUrl = await context.assets.getURL('map.png');
-      const crystalBallImageUrl = await context.assets.getURL('crystal.png');
+          const [
+            characterImageUrl,
+            keyPowerupImageUrl,
+            mapImageUrl,
+            crystalBallImageUrl,
+            trap1ImageUrl,
+            trap2ImageUrl,
+            trap3ImageUrl
+        ] = await Promise.all([
+            context.assets.getURL(isCasualMode ? 'snoo1.png' : 'snoo2.png'),
+            context.assets.getURL('karma.png'),
+            context.assets.getURL('map.png'),
+            context.assets.getURL('crystal.png'),
+            context.assets.getURL('trap1.png'),
+            context.assets.getURL('trap2.png'),
+            context.assets.getURL('trap3.png')
+        ]);
       
       setWebviewVisible(true);
       setCurrentView('game');
@@ -681,7 +745,10 @@ Devvit.addCustomPostType({
               playerImageUrl: characterImageUrl,
               keyPowerupImageUrl: keyPowerupImageUrl,
               mapImageUrl: mapImageUrl,
-              crystalBallImageUrl: crystalBallImageUrl
+              crystalBallImageUrl: crystalBallImageUrl,
+              trap1ImageUrl: trap1ImageUrl,    // Add these three lines
+              trap2ImageUrl: trap2ImageUrl,
+              trap3ImageUrl: trap3ImageUrl
           }
       };
       

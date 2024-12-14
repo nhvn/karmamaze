@@ -211,7 +211,7 @@ function renderMaze(movementClass = '') {
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
 
-            if (cell === 'trap' && gameState.crystalBallUsed) {
+            if (cell.startsWith('trap') && gameState.crystalBallUsed) { 
                 cellElement.classList.add('revealed');
                 cellElement.classList.remove('fog');
                 cellElement.classList.add('visible');
@@ -264,7 +264,6 @@ function renderMaze(movementClass = '') {
 
     updateVisibility();
 }
-// Modify your window.addEventListener('message') handler to include image URL processing
 window.addEventListener('message', (event) => {
     log('Received message:', event.data);
     
@@ -287,6 +286,9 @@ window.addEventListener('message', (event) => {
             document.documentElement.style.setProperty('--key-powerup-image-url', `url('${keyPowerupImageUrl}')`);
             document.documentElement.style.setProperty('--map-image-url', `url('${mapImageUrl}')`);
             document.documentElement.style.setProperty('--crystal-ball-image-url', `url('${crystalBallImageUrl}')`);
+            document.documentElement.style.setProperty('--trap1-image-url', `url('${message.data.trap1ImageUrl}')`);
+            document.documentElement.style.setProperty('--trap2-image-url', `url('${message.data.trap2ImageUrl}')`);
+            document.documentElement.style.setProperty('--trap3-image-url', `url('${message.data.trap3ImageUrl}')`);
             
             initializeGame({
                 ...message.data,
@@ -378,7 +380,7 @@ function handleCellClick(x, y) { // MOVE PLAYER (click)
     if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
         const targetCell = gameState.maze[y][x];
     
-        if (targetCell === 'trap') {
+        if (targetCell.startsWith('trap')) {
             if (gameState.isDisarming) return;  // Exit early if already disarming
         
             if (gameState.keys >= 2) {
@@ -512,7 +514,7 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
         newY >= 0 && newY < gameState.maze.length) {
         const targetCell = gameState.maze[newY][newX];
     
-        if (targetCell === 'trap') {
+        if (targetCell.startsWith('trap')) {
             if (gameState.isDisarming) return;  // Exit early if already disarming
         
             if (gameState.keys >= 2) {
@@ -597,7 +599,7 @@ window.addEventListener('keydown', (event) => { // MOVE PLAYER (wasd)
     }
 });
 function isWalkable(cellType) {
-    return ['path', 'door', 'crystal-ball', 'map', 'key-powerup', 'exit', 'fake-exit', 'trap'].includes(cellType);
+    return ['path', 'door', 'crystal-ball', 'map', 'key-powerup', 'exit', 'fake-exit', 'trap1', 'trap2', 'trap3'].includes(cellType);
 }
 function findStartPosition(maze) {
     for (let y = 0; y < maze.length; y++) {
@@ -713,7 +715,7 @@ function activateCrystalBall() {
             if (cell === 'exit') {
                 cellElement.classList.add('revealed-exit');
                 gameState.visibleTiles.add(`${x},${y}`);
-            } else if (cell === 'trap') {
+            } else if (cell.startsWith('trap')) {  // Changed this line
                 cellElement.classList.add('revealed');
                 cellElement.classList.remove('fog');
                 cellElement.classList.add('visible');
