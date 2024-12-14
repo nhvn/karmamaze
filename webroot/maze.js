@@ -95,8 +95,8 @@ function initializeGame(data) {
     gameState = {
         ...gameState,
         username: data.username || 'Developer',
-        keys: data.isCasualMode ? Infinity : (playerStats.currentKeys || 3),
-        initialKeysForMaze: data.isCasualMode ? Infinity : (playerStats.currentKeys || 3),
+        keys: data.isCasualMode ? 99999 : (playerStats.currentKeys || 3),
+        initialKeysForMaze: data.isCasualMode ? 99999 : (playerStats.currentKeys || 3),
         maze: data.maze,
         playerPosition: startPosition,
         isGameOver: false,
@@ -111,7 +111,7 @@ function initializeGame(data) {
         totalScore: gameState.totalScore,
         lives: playerStats.currentLives || 3,
         playerOrientation: 'face-right'
-    };
+    };    
 
     gameState.isCasualMode = data.isCasualMode;
 
@@ -120,20 +120,26 @@ function initializeGame(data) {
     grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, 40px)`;
 
     updateLives(gameState.lives);
-
-    // Update UI elements safely
     const usernameEl = document.getElementById('username');
-    const keyStat = document.querySelector('.key-stat');
     
     if (usernameEl) {
         usernameEl.textContent = gameState.username;
     }
     
+    const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
-        keyStat.dataset.count = gameState.keys === Infinity ? 'infinity' : gameState.keys;
-        const keysEl = keyStat.querySelector('#keys');
-        if (keysEl) {
-            keysEl.textContent = gameState.keys === Infinity ? '∞' : gameState.keys;
+        if (data.isCasualMode) {
+            keyStat.dataset.count = 'infinity';
+            const keysEl = keyStat.querySelector('#keys');
+            if (keysEl) {
+                keysEl.textContent = '∞';
+            }
+        } else {
+            keyStat.dataset.count = gameState.keys.toString();
+            const keysEl = keyStat.querySelector('#keys');
+            if (keysEl) {
+                keysEl.textContent = gameState.keys.toString();
+            }
         }
     }
 
@@ -733,7 +739,7 @@ function handleDoor(x, y) {
     renderMaze();
 
     // Then handle the door interaction
-    if (gameState.isCasualMode || gameState.keys > 0) {
+    if (gameState.isCasualMode || (typeof gameState.keys === 'number' && gameState.keys > 0)) {
         unlockDoor(x, y);
     } else {
         const doorKey = `${x},${y}`;
@@ -933,10 +939,18 @@ function updateKeys(newKeys) {
     gameState.keys = newKeys;
     const keyStat = document.querySelector('.key-stat');
     if (keyStat) {
-        keyStat.dataset.count = newKeys === Infinity ? 'infinity' : newKeys;
-        const keysEl = keyStat.querySelector('#keys');
-        if (keysEl) {
-            keysEl.textContent = newKeys === Infinity ? '∞' : newKeys;
+        if (gameState.isCasualMode) {
+            keyStat.dataset.count = 'infinity';
+            const keysEl = keyStat.querySelector('#keys');
+            if (keysEl) {
+                keysEl.textContent = '∞';
+            }
+        } else {
+            keyStat.dataset.count = newKeys.toString();
+            const keysEl = keyStat.querySelector('#keys');
+            if (keysEl) {
+                keysEl.textContent = newKeys.toString();
+            }
         }
     }
 }

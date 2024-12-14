@@ -567,6 +567,8 @@ Devvit.addCustomPostType({
                         trap1ImageUrl: gameOverTrap1ImageUrl,
                         trap2ImageUrl: gameOverTrap2ImageUrl,
                         trap3ImageUrl: gameOverTrap3ImageUrl,
+                        doorCrack1ImageUrl: doorCrack1ImageUrl, 
+                        doorCrack2ImageUrl: doorCrack2ImageUrl 
                     }
                 };
                 context.ui.webView.postMessage('mazeGame', updateMessage);
@@ -622,7 +624,7 @@ Devvit.addCustomPostType({
               type: 'initialData',
               data: {
                   username: userData?.username ?? 'Developer',
-                  keys: currentLevel === 1 ? Infinity : (playerStats.currentKeys || 3),
+                  keys: currentLevel === 1 ? 99999 : (playerStats.currentKeys || 3),
                   maze: nextMaze,
                   level: currentLevel,
                   gamesPlayed: updatedGamesPlayed,
@@ -692,7 +694,7 @@ Devvit.addCustomPostType({
               data: {
                   username: userData?.username ?? 'Developer',
                   lives: playerStats.currentLives,
-                  keys: currentLevel === 1 ? Infinity : 3,
+                  keys: currentLevel === 1 ? 99999 : 3,
                   maze: retryMaze,
                   level: currentLevel,
                   gamesPlayed: gameState.gamesPlayed,
@@ -702,7 +704,9 @@ Devvit.addCustomPostType({
                   crystalBallImageUrl: retryCrystalBallImageUrl,
                   trap1ImageUrl: retryTrap1ImageUrl,
                   trap2ImageUrl: retryTrap2ImageUrl,
-                  trap3ImageUrl: retryTrap3ImageUrl
+                  trap3ImageUrl: retryTrap3ImageUrl,
+                  doorCrack1ImageUrl: doorCrack1ImageUrl,
+                  doorCrack2ImageUrl: doorCrack2ImageUrl
               }
           };
           
@@ -756,7 +760,7 @@ Devvit.addCustomPostType({
           data: {
               username: userData.username,
               lives: playerStats.currentLives,
-              keys: currentLevel === 1 ? Infinity : 3,
+              keys: currentLevel === 1 ? 99999 : 3,
               maze: newMaze,
               level: currentLevel,
               gamesPlayed: gameState?.gamesPlayed || 0,
