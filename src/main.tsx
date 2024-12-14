@@ -488,30 +488,42 @@ Devvit.addCustomPostType({
                 gamesPlayed: newGamesPlayed
             }));
         
-            if (message.data.won && message.data.totalScore) {
-                try {
-                    const username = userData?.username ?? 'Developer';
-                    const newScore = message.data.totalScore;
-                    
-                    const isPersonalBest = await checkPersonalHighScore(context, username, newScore);
-                    
-                    await LeaderboardManager.updateLeaderboard(context, {
-                        username,
-                        score: newScore
-                    });
-              
-                    context.ui.webView.postMessage('mazeGame', {
-                        type: 'highScoreResult',
-                        isPersonalBest
-                    });
-                } catch (error) {
-                    console.error('Error in game over:', error);
-                    context.ui.webView.postMessage('mazeGame', {
-                        type: 'highScoreResult',
-                        isPersonalBest: false
-                    });
-                }
-            }
+            if (message.data.won && message.data.totalScore) { // Make sure totalScore exists
+              try {
+                  const username = userData?.username ?? 'Developer';
+                  const newScore = message.data.totalScore;
+                  
+                  // Add logging to debug
+                  console.log('Updating leaderboard with:', {
+                      username,
+                      score: newScore
+                  });
+                  
+                  const isPersonalBest = await checkPersonalHighScore(context, username, newScore);
+                  
+                  await LeaderboardManager.updateLeaderboard(context, {
+                      username,
+                      score: newScore
+                  });
+            
+                  context.ui.webView.postMessage('mazeGame', {
+                      type: 'highScoreResult',
+                      isPersonalBest
+                  });
+              } catch (error) {
+                  console.error('Error in game over:', error);
+                  // Add more detailed error logging
+                  console.error('Error details:', {
+                      error,
+                      data: message.data,
+                      userData
+                  });
+              }
+          } else {
+              // Add debug logging
+              console.log('No score to update:', message.data);
+          }
+      
             
             const [
               gameOverPlayerImageUrl,

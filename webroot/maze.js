@@ -1167,30 +1167,29 @@ function handleWin() {
         );
 
         showMessage(messageLines.join('\n'), 'success');
+        
+        // Send game over message after result is calculated
+        window.parent.postMessage({
+            type: 'gameOver',
+            data: { 
+                won: true,
+                remainingKeys: gameState.keys,
+                shouldShowBonusKey: gameState.keys < MAX_KEYS,
+                lives: gameState.lives,
+                isCasualMode: gameState.isCasualMode,
+                totalScore: result.totalScore,
+                baseScore: result.baseScore,
+                streakBonus: result.streakBonus,
+                gamesPlayed: playerStats.gamesPlayed,
+                winStreak: playerStats.winStreak
+            }
+        }, '*');
     }
 
     const retryButton = document.getElementById('retryButton');
     if (retryButton) {
         retryButton.style.display = 'block';
     }
-
-    window.parent.postMessage({
-        type: 'gameOver',
-        data: { 
-            won: true,
-            remainingKeys: gameState.keys,
-            shouldShowBonusKey: gameState.keys < MAX_KEYS,
-            lives: gameState.lives,
-            isCasualMode: gameState.isCasualMode, // Pass mode info
-            ...(gameState.isCasualMode ? {} : { // Only include score info for normal mode
-                totalScore: result?.totalScore,
-                baseScore: result?.baseScore,
-                streakBonus: result?.streakBonus,
-                gamesPlayed: playerStats.gamesPlayed,
-                winStreak: playerStats.winStreak
-            })
-        }
-    }, '*');
 }
 function handleTrap(trapType = '') {
     gameState.isGameOver = true;

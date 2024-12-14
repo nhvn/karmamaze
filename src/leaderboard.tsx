@@ -34,10 +34,12 @@ export async function checkPersonalHighScore(
 
 // Leaderboard Component
 export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () => void }) => {
-  const [entries] = useState<LeaderboardEntry[]>(async () => {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>(async () => {
     try {
       const leaderboardData = await context.redis.get(LEADERBOARD_KEY);
-      return leaderboardData ? JSON.parse(leaderboardData) : [];
+      const parsedData = leaderboardData ? JSON.parse(leaderboardData) : [];
+      console.log('Loaded leaderboard data:', parsedData); // Debug log
+      return parsedData;
     } catch (error) {
       console.error('Error loading leaderboard:', error);
       return [];
@@ -49,7 +51,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
       {/* Header */}
       <vstack alignment="middle center" padding="small">
         <hstack width="100%" alignment="middle center">
-          <hstack width="10%" /> {/* Spacer for alignment */}
+          <hstack width="10%" />
           <text size="xlarge" weight="bold" grow alignment="middle center">Top Maze Masters</text>
           <hstack 
             width="10%" 
@@ -69,16 +71,16 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
         padding="none"
         gap="none"
       >
-      {/* Table Header */}
-      <hstack
-        padding="small"
-        gap="medium"
-        backgroundColor="black"
-      >
-        <text width="5%" weight="bold" color="white">#</text>
-        <text width="65%" weight="bold" color="white">Player</text>
-        <text width="30%" weight="bold" alignment="end" color="white">Score</text>
-      </hstack>
+        {/* Table Header */}
+        <hstack
+          padding="small"
+          gap="medium"
+          backgroundColor="black"
+        >
+          <text width="5%" weight="bold" color="white">#</text>
+          <text width="65%" weight="bold" color="white">Player</text>
+          <text width="30%" weight="bold" alignment="end" color="white">Score</text>
+        </hstack>
 
         {/* Table Body */}
         {entries && entries.length > 0 ? (
