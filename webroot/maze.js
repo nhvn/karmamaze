@@ -29,7 +29,9 @@ let gameState = {
     playerOrientation: 'face-right',
     animatingCells: new Set(),
     lastMoveTime: Date.now(),
-    idlePromptVisible: false
+    idlePromptVisible: false,
+    isPlayerIdle: false,
+    idleAnimationTimeout: null
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
@@ -251,6 +253,15 @@ function renderMaze(movementClass = '') {
         });
     });
 
+    // After creating the player cell, check if we should add the idle animation
+    if (gameState.isPlayerIdle) {
+        const playerCell = document.querySelector('.cell.player');
+        if (playerCell) {
+            playerCell.classList.add('idle-animation');
+        }
+    }
+    
+
     updateVisibility();
 }
 // Modify your window.addEventListener('message') handler to include image URL processing
@@ -288,6 +299,9 @@ window.addEventListener('message', (event) => {
 });
 function movePlayer(x, y) {
     gameState.lastMoveTime = Date.now();
+    if (gameState.isPlayerIdle) {
+        stopPlayerIdleAnimation();
+    }
     if (gameState.idlePromptVisible) {
         hideIdlePrompt();
         gameState.idlePromptVisible = false;
@@ -316,6 +330,10 @@ function movePlayer(x, y) {
     else if (y < oldY) {
         direction = 'move-up';
         orientation = 'face-up';
+    }
+    // Only update position and orientation if we actually moved
+    if (direction) {
+        gameState.playerPosition = { x, y };
     }
 
     gameState.playerPosition = { x, y };
@@ -613,6 +631,34 @@ function markAdjacentCells() {
             cell.classList.add('adjacent');
         }
     });
+}
+function handlePlayerIdle() {
+    const idleThreshold = 2000; // Start idle animation after 2 seconds
+    const now = Date.now();
+    
+    if (!gameState.isGameOver && !isPaused && (now - gameState.lastMoveTime > idleThreshold)) {
+        if (!gameState.isPlayerIdle) {
+            startPlayerIdleAnimation();
+        }
+    } else if (gameState.isPlayerIdle) {
+        stopPlayerIdleAnimation();
+    }
+}
+
+function startPlayerIdleAnimation() {
+    const playerCell = document.querySelector('.cell.player');
+    if (playerCell) {
+        playerCell.classList.add('idle-animation');
+        gameState.isPlayerIdle = true;
+    }
+}
+
+function stopPlayerIdleAnimation() {
+    const playerCell = document.querySelector('.cell.player');
+    if (playerCell) {
+        playerCell.classList.remove('idle-animation');
+        gameState.isPlayerIdle = false;
+    }
 }
 
 // 3. POWERUPS & MECHANICS
@@ -1415,7 +1461,6 @@ function handleIdlePrompt() {
         gameState.idlePromptVisible = false;
     }
 }
-
 function showIdlePrompt() {
     let promptContainer = document.getElementById('idle-prompt');
     if (!promptContainer) {
@@ -1433,7 +1478,6 @@ function showIdlePrompt() {
         cell.classList.add('adjacent-pulse');
     });
 }
-
 function hideIdlePrompt() {
     const promptContainer = document.getElementById('idle-prompt');
     if (promptContainer) {
@@ -1595,6 +1639,9 @@ window.addEventListener('load', () => {
 
     // Start the idle prompt checker
     setInterval(handleIdlePrompt, 1000);
+
+    // Check for player idle state every 500ms
+    setInterval(handlePlayerIdle, 500);
 
 });
 

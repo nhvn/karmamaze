@@ -932,7 +932,8 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   z-index: 3;
-  transition: transform 0.2s ease; /* Smooth rotation transition */
+  --player-rotation: 0deg;
+  animation: playerBounce 0.3s infinite ease-in-out; /* Speed of bouncing */
 }
 .player.face-right::after { /* Orientation classes */
   transform: rotate(0deg);
@@ -971,6 +972,35 @@ body {
 }
 .player.move-down::before {
   animation: trailDown 0.2s ease-out;
+}
+.player.face-right::after {
+  --player-rotation: 0deg;
+}
+.player.face-left::after {
+  --player-rotation: 180deg;
+}
+.player.face-down::after {
+  --player-rotation: 90deg;
+}
+.player.face-up::after {
+  --player-rotation: 270deg;
+}
+.player.move-right::after,
+.player.move-left::after,
+.player.move-up::after,
+.player.move-down::after {
+    animation: none;
+}
+@keyframes playerBounce {
+  0%, 100% {
+      transform: scale(1) rotate(var(--player-rotation));
+  }
+  50% {
+      transform: scale(1.03) rotate(var(--player-rotation));
+  }
+}
+.cell.player {
+  animation: none;
 }
 @keyframes trailRight {
   0% {
