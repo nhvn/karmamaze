@@ -34,7 +34,6 @@ let gameState = {
 };
 const MAX_KEYS = 12;
 const MAX_ATTEMPTS = 5;
-const GAME_TIME = 90;
 const SCORING_CONFIG = {
     // Base points
     BASE_COMPLETION_POINTS: 1000,
@@ -69,6 +68,16 @@ const SCORING_CONFIG = {
 };
 
 // 2. CORE GAME LOGIC
+function getGameTime(gamesPlayed) {
+    console.log('Getting game time for games played:', gamesPlayed);  // Add this line
+    if (gamesPlayed >= 20) {
+        return 30;  // 30 seconds after 20 games
+    } else if (gamesPlayed >= 10) {
+        return 60;  // 60 seconds after 10 games
+    } else {
+        return 90;  // Default 90 seconds for first 10 games
+    }
+}
 function initializeGame(data) {
     showLoading();
     log('Initializing game with data:', data);
@@ -110,7 +119,8 @@ function initializeGame(data) {
         winStreak: gameState.winStreak,
         totalScore: gameState.totalScore,
         lives: playerStats.currentLives || 3,
-        playerOrientation: 'face-right'
+        playerOrientation: 'face-right',
+        gamesPlayed: data.gamesPlayed || 0
     };    
 
     gameState.isCasualMode = data.isCasualMode;
@@ -695,6 +705,7 @@ function activateCrystalBall() {
 
     showTopRightMessage('Found a crystal ball!');
 }
+
 function activateKeyPowerup() {
     if (gameState.keys >= MAX_KEYS) {
         showTopRightMessage('Bag full!');
@@ -973,16 +984,20 @@ function calculateGameScore(gameData) { // Score for single game
         movesUsed,
         optimalMoves,
         retryCount,
-        winStreak
+        winStreak,
+        gamesPlayed
     } = gameData;
     
     // Start with base points
     let baseScore = SCORING_CONFIG.BASE_COMPLETION_POINTS;
     
-    // Add time bonus
-    const timeUsed = 30 - timeRemaining;
+    // Add time bonus adjusted for total game time
+    const totalGameTime = getGameTime(gamesPlayed);
+    const timeUsed = totalGameTime - timeRemaining;
+    const timePercentageUsed = (timeUsed / totalGameTime) * 30; // Normalize to 30 seconds for scoring
+
     for (const bracket of SCORING_CONFIG.TIME_BRACKETS) {
-        if (timeUsed <= bracket.threshold) {
+        if (timePercentageUsed <= bracket.threshold) {
             baseScore += bracket.bonus;
             break;
         }
@@ -1041,6 +1056,7 @@ const playerStats = {
         
         this.totalScore += scores.totalScore;
         this.gamesPlayed++;
+        console.log('Updated games played:', this.gamesPlayed);
         
         // Update win streak - include current win
         this.winStreak = gameData.winStreak + 1;
@@ -1068,7 +1084,7 @@ const playerStats = {
 
 // 6. GAME FLOW CONTROL
 function startTimer() {
-    let timeLeft = GAME_TIME;
+    let timeLeft = getGameTime(gameState.gamesPlayed);
     
     function updateTimer() {
         const timerDisplay = document.getElementById('timer');
@@ -1146,7 +1162,8 @@ function handleWin() {
             optimalMoves: calculateOptimalMoves(gameState.maze),
             retryCount: gameState.retryCount,
             winStreak: gameState.winStreak,
-            lives: gameState.lives
+            lives: gameState.lives,
+            gamesPlayed: playerStats.gamesPlayed
         };
 
         const result = playerStats.addGameResult(`level${gameState.level}`, gameData);

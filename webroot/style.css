@@ -776,10 +776,23 @@ body {
 .shaking {
   animation: shake 0.05s linear;
 }
+/* Base trap styles */
 .trap1, .trap2, .trap3 {
   background: #4a4a4a;
   position: relative;
+  overflow: visible;
 }
+
+/* Make sure revealed cells are visible */
+.cell.visible.trap1.revealed,
+.cell.visible.trap2.revealed,
+.cell.visible.trap3.revealed {
+  background: rgba(255, 0, 0, 0.2);
+  position: relative;
+  opacity: 1;
+}
+
+/* Trap icons */
 .trap1::after,
 .trap2::after,
 .trap3::after {
@@ -793,45 +806,77 @@ body {
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  transition: opacity 0.5s ease;
-  z-index: 1;
-  opacity: 0.7;
+  z-index: 2;
 }
+
+/* Trap specific images */
 .trap1::after { background-image: var(--trap1-image-url); }
 .trap2::after { background-image: var(--trap2-image-url); }
 .trap3::after { background-image: var(--trap3-image-url); }
+
+/* Red overlay for revealed traps */
 .trap1.revealed::before,
 .trap2.revealed::before,
 .trap3.revealed::before {
   content: '';
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
-  background: rgba(255, 17, 0, 0.3);
-  z-index: 2;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 0, 0, 0.3);
+  z-index: 1;
   pointer-events: none;
 }
+
+/* Make sure the trap icons are visible when revealed */
 .trap1.revealed::after,
 .trap2.revealed::after,
 .trap3.revealed::after {
   opacity: 1;
+  z-index: 3;
 }
+
+/* Disarming styles */
+.trap1.disarming,
+.trap2.disarming,
+.trap3.disarming {
+  background: rgba(26, 165, 236, 0.2);
+}
+
 .trap1.disarming::before,
 .trap2.disarming::before,
 .trap3.disarming::before {
-  background: rgba(26, 165, 236, 0.3) !important;
+  background: rgba(26, 165, 236, 0.3);
 }
-.trap1.disarming::before,
-.trap2.disarming::before,
-.trap3.disarming::before,
+
 .trap1.disarming::after,
 .trap2.disarming::after,
-.trap3.disarming::after {
+.trap3.disarming::after,
+.trap1.disarming::before,
+.trap2.disarming::before,
+.trap3.disarming::before {
   animation: shrinkTrap 0.5s forwards;
 }
+
+@keyframes shrinkTrap {
+  0% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0);
+  }
+}
+
+/* Animation keyframes */
+@keyframes pulseReveal {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.5; }
+  100% { opacity: 0.3; }
+}
+
 @keyframes shrinkTrap {
   0% {
       opacity: 1;

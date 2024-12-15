@@ -1,7 +1,6 @@
-import './createPost.js';
 import { Devvit, useState } from '@devvit/public-api';
 import type { Context } from '@devvit/public-api';
-import { Leaderboard, LeaderboardManager, checkPersonalHighScore } from './leaderboard.js';  // Note: use .js even though file is .tsx
+import { Leaderboard, LeaderboardManager, LEADERBOARD_KEY } from './leaderboard.js';
 import { HowToPlay } from './howToPlay.js';
 
 // 1. TYPES & INTERFACES
@@ -479,8 +478,7 @@ Devvit.addCustomPostType({
           break;
         
           case 'gameOver': {
-            // Increment games played immediately
-            const newGamesPlayed = gameState.gamesPlayed + 1;
+            const newGamesPlayed = gameState.gamesPlayed;
             
             // Update game state with new count
             setGameState(prevState => ({
@@ -488,102 +486,76 @@ Devvit.addCustomPostType({
                 gamesPlayed: newGamesPlayed
             }));
         
-            if (message.data.won && message.data.totalScore) { // Make sure totalScore exists
-              try {
-                  const username = userData?.username ?? 'Developer';
-                  const newScore = message.data.totalScore;
-                  
-                  // Add logging to debug
-                  console.log('Updating leaderboard with:', {
-                      username,
-                      score: newScore
-                  });
-                  
-                  const isPersonalBest = await checkPersonalHighScore(context, username, newScore);
-                  
-                  await LeaderboardManager.updateLeaderboard(context, {
-                      username,
-                      score: newScore
-                  });
-            
-                  context.ui.webView.postMessage('mazeGame', {
-                      type: 'highScoreResult',
-                      isPersonalBest
-                  });
-              } catch (error) {
-                  console.error('Error in game over:', error);
-                  // Add more detailed error logging
-                  console.error('Error details:', {
-                      error,
-                      data: message.data,
-                      userData
-                  });
-              }
-          } else {
-              // Add debug logging
-              console.log('No score to update:', message.data);
+            if (message.data.won && message.data.totalScore) {
+              const username = userData?.username ?? 'Developer';
+              // Simple update without try-catch since it works anyway
+              await LeaderboardManager.updateLeaderboard(context, {
+                  username,
+                  score: message.data.totalScore
+              });
           }
-      
-            
-            const [
-              gameOverPlayerImageUrl,
-              gameOverKeyPowerupImageUrl,
-              gameOverMapImageUrl,
-              gameOverCrystalBallImageUrl,
-              gameOverTrap1ImageUrl,
-              gameOverTrap2ImageUrl,
-              gameOverTrap3ImageUrl,
-              doorCrack1ImageUrl,
-              doorCrack2ImageUrl
-          ] = await Promise.all([
-              context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
-              context.assets.getURL('karma.png'),
-              context.assets.getURL('map.png'),
-              context.assets.getURL('crystal.png'),
-              context.assets.getURL('trap1.png'),
-              context.assets.getURL('trap2.png'),
-              context.assets.getURL('trap3.png'),
-              context.assets.getURL('doorCrack1.png'),
-              context.assets.getURL('doorCrack2.png')
-          ]);
-            
-            setPlayerStats(prevStats => ({
-                ...prevStats,
-                currentLives: message.data.lives || prevStats.currentLives
-            }));
-            
-            await context.redis.set(`maze_${context.postId}`, JSON.stringify({
-                ...gameState,
-                gamesPlayed: newGamesPlayed
-            }));
-          
-            if (!message.data.won) {
-                const newMaze = currentLevel === 1 
-                    ? generateMaze(18, 9) 
-                    : generateLevel2Maze(18, 9, newGamesPlayed);
-              
-                const updateMessage: WebViewMessage = {
-                    type: 'initialData',
-                    data: {
-                        username: userData?.username ?? 'Developer',
-                        keys: playerStats.currentKeys || 3,
-                        maze: newMaze,
-                        level: currentLevel,
-                        gamesPlayed: newGamesPlayed,
-                        lives: playerStats.currentLives,
-                        isRetry: true,
-                        playerImageUrl: gameOverPlayerImageUrl,
-                        keyPowerupImageUrl: gameOverKeyPowerupImageUrl,
-                        mapImageUrl: gameOverMapImageUrl,
-                        crystalBallImageUrl: gameOverCrystalBallImageUrl,
-                        trap1ImageUrl: gameOverTrap1ImageUrl,
-                        trap2ImageUrl: gameOverTrap2ImageUrl,
-                        trap3ImageUrl: gameOverTrap3ImageUrl,
-                        doorCrack1ImageUrl: doorCrack1ImageUrl, 
-                        doorCrack2ImageUrl: doorCrack2ImageUrl 
-                    }
-                };
-                context.ui.webView.postMessage('mazeGame', updateMessage);
+        
+            // Always process game over logic even if leaderboard fails
+            try {
+                const [
+                    gameOverPlayerImageUrl,
+                    gameOverKeyPowerupImageUrl,
+                    gameOverMapImageUrl,
+                    gameOverCrystalBallImageUrl,
+                    gameOverTrap1ImageUrl,
+                    gameOverTrap2ImageUrl,
+                    gameOverTrap3ImageUrl,
+                    doorCrack1ImageUrl,
+                    doorCrack2ImageUrl
+                ] = await Promise.all([
+                    context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
+                    context.assets.getURL('karma.png'),
+                    context.assets.getURL('map.png'),
+                    context.assets.getURL('crystal.png'),
+                    context.assets.getURL('trap1.png'),
+                    context.assets.getURL('trap2.png'),
+                    context.assets.getURL('trap3.png'),
+                    context.assets.getURL('doorCrack1.png'),
+                    context.assets.getURL('doorCrack2.png')
+                ]).catch(error => {
+                    console.warn('Error loading assets:', error);
+                    return Array(9).fill(''); // Return empty strings if asset loading fails
+                });
+        
+                setPlayerStats(prevStats => ({
+                    ...prevStats,
+                    currentLives: message.data.lives || prevStats.currentLives
+                }));
+        
+                if (!message.data.won) {
+                    const newMaze = currentLevel === 1 
+                        ? generateMaze(18, 9) 
+                        : generateLevel2Maze(18, 9, newGamesPlayed);
+        
+                    context.ui.webView.postMessage('mazeGame', {
+                        type: 'initialData',
+                        data: {
+                            username: userData?.username ?? 'Developer',
+                            keys: playerStats.currentKeys || 3,
+                            maze: newMaze,
+                            level: currentLevel,
+                            gamesPlayed: newGamesPlayed,
+                            lives: playerStats.currentLives,
+                            isRetry: true,
+                            playerImageUrl: gameOverPlayerImageUrl,
+                            keyPowerupImageUrl: gameOverKeyPowerupImageUrl,
+                            mapImageUrl: gameOverMapImageUrl,
+                            crystalBallImageUrl: gameOverCrystalBallImageUrl,
+                            trap1ImageUrl: gameOverTrap1ImageUrl,
+                            trap2ImageUrl: gameOverTrap2ImageUrl,
+                            trap3ImageUrl: gameOverTrap3ImageUrl,
+                            doorCrack1ImageUrl: doorCrack1ImageUrl,
+                            doorCrack2ImageUrl: doorCrack2ImageUrl
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error in game over state update:', error);
             }
             break;
         }
@@ -802,78 +774,115 @@ Devvit.addCustomPostType({
       {/* Render zstack only for the menu */}
       {currentView === 'menu' && (
         <zstack width="100%" height="100%" alignment="middle center">
-          {/* Background Image - Only for Menu */}
-          <image
-            url="menuBg.jpg"
-            imageHeight={1024}
-            imageWidth={1024}
-            height="100%"
-            width="100%"
-            resizeMode="cover"
-            description="Menu background"
+          {/* Dark Background */}
+          <hstack 
+            width="100%" 
+            height="100%" 
+            backgroundColor="#2a2a2a"
           />
-  
+          
           <vstack grow padding="large">
             {/* Menu View */}
             <vstack
               grow={!webviewVisible}
               height={webviewVisible ? '0%' : '100%'}
               alignment="middle center"
+              backgroundColor="#2a2a2a"
+              cornerRadius="none"
+              // border="thick"
+              // borderColor="#4a4a4a"
             >
               {/* Logo/Title */}
-              <image 
+              <image
                 url="kmazeCover.png"
-                imageWidth={300}
-                imageHeight={150}
+                imageWidth={270}
+                imageHeight={135}
               />
               <spacer size="medium" />
-  
+              
               {/* Mode Selection */}
               <hstack alignment="middle center" gap="medium">
-                <hstack 
+                <hstack
                   onPress={toggleMode}
-                  padding="medium"  // Added padding for larger touch target
+                  padding="small"
                   alignment="middle center"
                 >
-                  <text size="large" weight="bold">{'<'}</text>
+                  <text color="white" size="large" weight="bold">{'<'}</text>
                 </hstack>
                 
-                <text size="large" weight="bold">
-                  {currentLevel === 1 ? 'Casual' : 'Normal'}
+                <text color="white" size="large" weight="bold">
+                  {currentLevel === 1 ? 'Casual' : 'Challenge'}
                 </text>
                 
-                <hstack 
+                <hstack
                   onPress={toggleMode}
-                  padding="medium"  // Added padding for larger touch target
+                  padding="small"
                   alignment="middle center"
                 >
-                  <text size="large" weight="bold">{'>'}</text>
+                  <text color="white" size="large" weight="bold">{'>'}</text>
                 </hstack>
               </hstack>
-  
+              
               {/* Mode Description */}
               <vstack alignment="middle center" padding="small" width="100%">
                 <vstack alignment="middle center" width="80%" maxWidth="100%">
-                  <text size="medium">
-                    {currentLevel === 2 
-                      ? 'Race against time in the unknown!' 
-                      : 'Chill experience for a chill guy.'}
+                  <text color="white" size="medium" wrap={true}>
+                    {currentLevel === 2
+                      ? 'Race against time!'
+                      : 'Tired? I got you.'}
                   </text>
                 </vstack>
               </vstack>
               <spacer size="medium" />
-  
+              
               {/* Main Buttons */}
-              <vstack gap="small">
-                <button onPress={onStartGame}>Play</button>
-                <button onPress={() => setCurrentView('leaderboard')}>Leaderboard</button>
-                <button onPress={() => setCurrentView('howToPlay')}>How to Play</button>
+              <vstack gap="small" width="250px">
+                <hstack 
+                  onPress={onStartGame}
+                  padding="small"
+                  width="100%"
+                  alignment="middle center"
+                  border="thin"
+                  borderColor="#4a4a4a"
+                >
+                  <text color="white" weight="bold">
+                    Play
+                  </text>
+                </hstack>
+                
+                <hstack 
+                  onPress={() => setCurrentView('leaderboard')}
+                  padding="small"
+                  width="100%"
+                  alignment="middle center"
+                  border="thin"
+                  borderColor="#4a4a4a"
+                >
+                  <text color="white" weight="bold">
+                    Leaderboard
+                  </text>
+                </hstack>
+                
+                <hstack 
+                  onPress={() => setCurrentView('howToPlay')}
+                  padding="small"
+                  width="100%"
+                  alignment="middle center"
+                  border="thin"
+                  borderColor="#4a4a4a"
+                >
+                  <text color="white" weight="bold">
+                    How to Play
+                  </text>
+                </hstack>
               </vstack>
+              
+              <spacer size="medium" />
             </vstack>
           </vstack>
         </zstack>
       )}
-  
+
       {/* Render Leaderboard */}
       {currentView === 'leaderboard' && (
         <Leaderboard 
@@ -881,7 +890,7 @@ Devvit.addCustomPostType({
           onBack={() => setCurrentView('menu')}
         />
       )}
-  
+
       {/* Render Game */}
       {currentView === 'game' && (
         <vstack grow={webviewVisible} height={webviewVisible ? '100%' : '0%'}>
@@ -896,7 +905,7 @@ Devvit.addCustomPostType({
           </vstack>
         </vstack>
       )}
-  
+
       {/* Render HowToPlay */}
       {currentView === 'howToPlay' && (
         <HowToPlay onBack={() => setCurrentView('menu')} />
@@ -910,7 +919,7 @@ Devvit.addCustomPostType({
 // 5. MENU ITEMS (outside of the CustomPostType)
 Devvit.addMenuItem({
   location: 'subreddit',
-  label: 'Start Key Maze',
+  label: 'Start Karma Maze',
   onPress: async (_, context) => {
     const currentSubreddit = await context.reddit.getCurrentSubreddit();
     if (!currentSubreddit) {
@@ -918,27 +927,41 @@ Devvit.addMenuItem({
       return;
     }
     
-    await context.reddit.submitPost({
-      title: 'Key Maze Challenge',
+    const post = await context.reddit.submitPost({
+      title: 'Karma Maze Challenge',
       subredditName: currentSubreddit.name,
       preview: (
-        <vstack>
-          <text>Loading Key Maze...</text>
+        <vstack 
+          height="100%" 
+          width="100%" 
+          alignment="middle center"
+          backgroundColor="#2a2a2a"  // Match your theme
+        >
+          <hstack width="100%" alignment="middle center">
+            <text size="large" weight="bold" color="white">Loading Karma Maze...</text>
+          </hstack>
         </vstack>
       ),
     });
-    context.ui.showToast(`Created new Key Maze in ${currentSubreddit.name}`);
+
+    context.ui.showToast(`Created new Karma Maze in ${currentSubreddit.name}`);
+    context.ui.navigateTo(post);
   },
 });
+
+// Reset leaderboard menu item
 Devvit.addMenuItem({
   location: 'subreddit',
   label: 'Reset Maze Leaderboard',
   onPress: async (_, context) => {
-    await LeaderboardManager.resetLeaderboard(context);
-    context.ui.showToast('Leaderboard has been reset');
+    try {
+      await context.redis.del(LEADERBOARD_KEY);
+      await context.ui.showToast('Leaderboard has been reset');
+    } catch (error) {
+      console.error('Error resetting leaderboard:', error);
+      await context.ui.showToast('Failed to reset leaderboard');
+    }
   },
 });
-
-
 
 export default Devvit;
