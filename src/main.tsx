@@ -926,20 +926,33 @@ Devvit.addMenuItem({
       console.error('No subreddit found');
       return;
     }
-    
+
     const post = await context.reddit.submitPost({
       title: 'Karma Maze Challenge',
       subredditName: currentSubreddit.name,
       preview: (
-        <vstack 
-          height="100%" 
-          width="100%" 
-          alignment="middle center"
-          backgroundColor="#2a2a2a"  // Match your theme
-        >
-          <hstack width="100%" alignment="middle center">
-            <text size="large" weight="bold" color="white">Loading Karma Maze...</text>
-          </hstack>
+        <vstack grow>
+          <zstack width="100%" height="100%" alignment="top center">
+            <hstack width="100%" height="100%" backgroundColor="#2a2a2a" />
+            <vstack grow padding="large" alignment="top center">
+              {/* Logo/Title - Matches Main Menu */}
+              <vstack alignment="top center">
+                <spacer size="large" /> {/* Adjust vertical spacing */}
+                <image url="kmazeCover.png" imageWidth={270} imageHeight={135} />
+              </vstack>
+
+              {/* Spacer to fine-tune Loading text positioning */}
+              <spacer size="large" />
+              <spacer size="large" />
+              <spacer size="large" />
+
+              {/* Loading Text */}
+              <text color="white" size="large" weight="bold" alignment="middle center">
+                Loading...
+              </text>
+              <spacer grow /> {/* Fills remaining space at the bottom */}
+            </vstack>
+          </zstack>
         </vstack>
       ),
     });
@@ -948,6 +961,9 @@ Devvit.addMenuItem({
     context.ui.navigateTo(post);
   },
 });
+
+
+
 
 // Reset leaderboard menu item
 Devvit.addMenuItem({

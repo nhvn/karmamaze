@@ -29,7 +29,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         backgroundColor="#4a4a4a" 
         padding="large" 
         gap="medium"
-        cornerRadius="small"
+        // cornerRadius="small"
       >
         {/* Objective Section */}
         <vstack gap="small">
