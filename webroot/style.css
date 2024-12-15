@@ -671,13 +671,14 @@ body {
   background-position: center;
   background-repeat: no-repeat;
 }
-
 .door.cracked1::after {
   background-image: var(--door-crack1-url);
 }
-
 .door.cracked2::after {
   background-image: var(--door-crack2-url);
+}
+.door.cracked3::after {
+  background-image: var(--door-crack3-url);
 }
 .door-animation {
   position: absolute;

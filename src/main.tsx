@@ -27,6 +27,7 @@ type WebViewMessage =
         trap3ImageUrl?: string;
         doorCrack1ImageUrl?: string;
         doorCrack2ImageUrl?: string;
+        doorCrack3ImageUrl?: string;
       };
     }
 
@@ -506,7 +507,8 @@ Devvit.addCustomPostType({
                     gameOverTrap2ImageUrl,
                     gameOverTrap3ImageUrl,
                     doorCrack1ImageUrl,
-                    doorCrack2ImageUrl
+                    doorCrack2ImageUrl,
+                    doorCrack3ImageUrl
                 ] = await Promise.all([
                     context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
                     context.assets.getURL('karma.png'),
@@ -516,7 +518,8 @@ Devvit.addCustomPostType({
                     context.assets.getURL('trap2.png'),
                     context.assets.getURL('trap3.png'),
                     context.assets.getURL('doorCrack1.png'),
-                    context.assets.getURL('doorCrack2.png')
+                    context.assets.getURL('doorCrack2.png'),
+                    context.assets.getURL('doorCrack3.png')
                 ]).catch(error => {
                     console.warn('Error loading assets:', error);
                     return Array(9).fill(''); // Return empty strings if asset loading fails
@@ -550,7 +553,8 @@ Devvit.addCustomPostType({
                             trap2ImageUrl: gameOverTrap2ImageUrl,
                             trap3ImageUrl: gameOverTrap3ImageUrl,
                             doorCrack1ImageUrl: doorCrack1ImageUrl,
-                            doorCrack2ImageUrl: doorCrack2ImageUrl
+                            doorCrack2ImageUrl: doorCrack2ImageUrl,
+                            doorCrack3ImageUrl: doorCrack3ImageUrl
                         }
                     });
                 }
@@ -577,8 +581,9 @@ Devvit.addCustomPostType({
               nextGameTrap1ImageUrl, 
               nextGameTrap2ImageUrl,
               nextGameTrap3ImageUrl,
-              nextGameDoorCrack1ImageUrl,    // Renamed
-              nextGameDoorCrack2ImageUrl     // Renamed
+              nextGameDoorCrack1ImageUrl, 
+              nextGameDoorCrack2ImageUrl,
+              nextGameDoorCrack3ImageUrl     
           ] = await Promise.all([
               context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
               context.assets.getURL('karma.png'),
@@ -588,7 +593,8 @@ Devvit.addCustomPostType({
               context.assets.getURL('trap2.png'),
               context.assets.getURL('trap3.png'),
               context.assets.getURL('doorCrack1.png'),
-              context.assets.getURL('doorCrack2.png')
+              context.assets.getURL('doorCrack2.png'),
+              context.assets.getURL('doorCrack3.png')
           ]);
           
           // Show bonus message if needed
@@ -622,7 +628,8 @@ Devvit.addCustomPostType({
                   trap3ImageUrl: nextGameTrap3ImageUrl,
                   isCasualMode: currentLevel === 1,
                   doorCrack1ImageUrl: nextGameDoorCrack1ImageUrl,    // Added with renamed variable
-                  doorCrack2ImageUrl: nextGameDoorCrack2ImageUrl 
+                  doorCrack2ImageUrl: nextGameDoorCrack2ImageUrl,
+                  doorCrack3ImageUrl: nextGameDoorCrack3ImageUrl
               }
           };
           context.ui.webView.postMessage('mazeGame', nextGameMessage);
@@ -650,7 +657,8 @@ Devvit.addCustomPostType({
             retryTrap2ImageUrl,
             retryTrap3ImageUrl,
             doorCrack1ImageUrl,
-            doorCrack2ImageUrl
+            doorCrack2ImageUrl,
+            doorCrack3ImageUrl
         ] = await Promise.all([
             context.assets.getURL(currentLevel === 1 ? 'snoo1.png' : 'snoo2.png'),
             context.assets.getURL('karma.png'),
@@ -660,7 +668,8 @@ Devvit.addCustomPostType({
             context.assets.getURL('trap2.png'),
             context.assets.getURL('trap3.png'),
             context.assets.getURL('doorCrack1.png'),
-            context.assets.getURL('doorCrack2.png')
+            context.assets.getURL('doorCrack2.png'),
+            context.assets.getURL('doorCrack3.png')
         ]);
           
           const retryState = {
@@ -690,7 +699,8 @@ Devvit.addCustomPostType({
                   trap2ImageUrl: retryTrap2ImageUrl,
                   trap3ImageUrl: retryTrap3ImageUrl,
                   doorCrack1ImageUrl: doorCrack1ImageUrl,
-                  doorCrack2ImageUrl: doorCrack2ImageUrl
+                  doorCrack2ImageUrl: doorCrack2ImageUrl,
+                  doorCrack3ImageUrl: doorCrack3ImageUrl,
               }
           };
           
@@ -723,7 +733,8 @@ Devvit.addCustomPostType({
             trap2ImageUrl,
             trap3ImageUrl,
             doorCrack1ImageUrl,
-            doorCrack2ImageUrl
+            doorCrack2ImageUrl,
+            doorCrack3ImageUrl
         ] = await Promise.all([
             context.assets.getURL(isCasualMode ? 'snoo1.png' : 'snoo2.png'),
             context.assets.getURL('karma.png'),
@@ -733,7 +744,8 @@ Devvit.addCustomPostType({
             context.assets.getURL('trap2.png'),
             context.assets.getURL('trap3.png'),
             context.assets.getURL('doorCrack1.png'),
-            context.assets.getURL('doorCrack2.png')
+            context.assets.getURL('doorCrack2.png'),
+            context.assets.getURL('doorCrack3.png'),
         ]);
       
       setWebviewVisible(true);
@@ -758,7 +770,8 @@ Devvit.addCustomPostType({
               trap2ImageUrl: trap2ImageUrl,
               trap3ImageUrl: trap3ImageUrl,
               doorCrack1ImageUrl: doorCrack1ImageUrl,
-              doorCrack2ImageUrl: doorCrack2ImageUrl
+              doorCrack2ImageUrl: doorCrack2ImageUrl,
+              doorCrack3ImageUrl: doorCrack3ImageUrl,
           }
       };
       

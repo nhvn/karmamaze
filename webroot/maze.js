@@ -225,14 +225,16 @@ function renderMaze(movementClass = '') {
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
 
+            // In renderMaze function
             if (cell === 'door') {
                 const doorKey = `${x},${y}`;
                 const hits = gameState.doorHits.get(doorKey) || 0;
                 
-                // Apply crack classes based on hits
-                if (hits >= 7) {
+                if (hits + 1 >= 8) {
+                    cellElement.classList.add('cracked3');
+                } else if (hits + 1 >= 5) {
                     cellElement.classList.add('cracked2');
-                } else if (hits >= 3) {
+                } else if (hits + 1 >= 3) {
                     cellElement.classList.add('cracked1');
                 }
             }
@@ -756,23 +758,23 @@ function handleDoor(x, y) {
         const doorKey = `${x},${y}`;
         const hits = gameState.doorHits.get(doorKey) || 0;
         gameState.doorHits.set(doorKey, hits + 1);
-
-        // Get and update door element
+    
         const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
         if (doorElement) {
-            doorElement.classList.add('shaking');
+            // Remove previous crack classes first
+            doorElement.classList.remove('cracked1', 'cracked2', 'cracked3');
             
-            // Remove previous crack classes
-            doorElement.classList.remove('cracked1', 'cracked2');
-            
-            // Add appropriate crack class based on hits
-            if (hits + 1 >= 7) {
+            // Then add appropriate crack class based on hits
+            if (hits + 1 >= 8) {
+                doorElement.classList.add('cracked3');
+            } else if (hits + 1 >= 5) {
                 doorElement.classList.add('cracked2');
             } else if (hits + 1 >= 3) {
                 doorElement.classList.add('cracked1');
             }
+    
+            doorElement.classList.add('shaking');
             
-            // Remove shake after animation completes
             setTimeout(() => {
                 doorElement.classList.remove('shaking');
                 
@@ -1594,6 +1596,7 @@ window.addEventListener('message', (event) => {
             document.documentElement.style.setProperty('--trap3-image-url', `url('${message.data.trap3ImageUrl}')`);
             document.documentElement.style.setProperty('--door-crack1-url', `url('${message.data.doorCrack1ImageUrl}')`);
             document.documentElement.style.setProperty('--door-crack2-url', `url('${message.data.doorCrack2ImageUrl}')`);
+            document.documentElement.style.setProperty('--door-crack3-url', `url('${message.data.doorCrack3ImageUrl}')`);
             
             // Initialize game with combined data
             initializeGame({
