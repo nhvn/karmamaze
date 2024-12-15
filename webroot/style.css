@@ -1137,5 +1137,8 @@ body {
   .pause-buttons {
     padding: 10px 20px;
   }
+  .top-right-message {
+    font-size: 10px;
+  }
 }
 

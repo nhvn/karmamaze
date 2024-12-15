@@ -7,7 +7,7 @@ interface HowToPlayProps {
 
 export const HowToPlay = ({ onBack }: HowToPlayProps) => {
   return (
-    <vstack padding="medium" gap="medium" grow backgroundColor="#2a2a2a">
+    <vstack padding="medium" gap="medium" grow backgroundColor="#2a2a2a" width="100%">
       {/* Header - Matching leaderboard style */}
       <vstack alignment="middle center" padding="small">
         <hstack width="100%" alignment="middle center">
@@ -30,6 +30,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         padding="large" 
         gap="medium"
         // cornerRadius="small"
+        width='100%'
       >
         {/* Objective Section */}
         <vstack gap="small">

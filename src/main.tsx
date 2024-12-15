@@ -28,6 +28,7 @@ type WebViewMessage =
         doorCrack1ImageUrl?: string;
         doorCrack2ImageUrl?: string;
         doorCrack3ImageUrl?: string;
+        isFirstGame?: boolean;
       };
     }
 
@@ -761,6 +762,7 @@ Devvit.addCustomPostType({
               level: currentLevel,
               gamesPlayed: gameState?.gamesPlayed || 0,
               isNewGame: true,
+              isFirstGame: true,
               isCasualMode: isCasualMode,
               playerImageUrl: characterImageUrl,
               keyPowerupImageUrl: keyPowerupImageUrl,

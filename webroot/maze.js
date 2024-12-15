@@ -125,6 +125,15 @@ function initializeGame(data) {
 
     gameState.isCasualMode = data.isCasualMode;
 
+    // Show prompt only for new games (not retries or next games)
+    if (data.isFirstGame && !data.isCasualMode) {
+        showGamePrompt("Survive, collect karma, and find the way out!");
+    }
+
+    if (data.isFirstGame && data.isCasualMode) {
+        showGamePrompt("Breeze through the maze with endless karma.");
+    }
+
     // Setup basic grid
     const grid = document.getElementById('maze-grid');
     grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, 40px)`;
@@ -754,40 +763,40 @@ function handleDoor(x, y) {
     // Then handle the door interaction
     if (gameState.isCasualMode || (typeof gameState.keys === 'number' && gameState.keys > 0)) {
         unlockDoor(x, y);
-    } else {
-        const doorKey = `${x},${y}`;
-        const hits = gameState.doorHits.get(doorKey) || 0;
-        gameState.doorHits.set(doorKey, hits + 1);
-    
-        const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-        if (doorElement) {
-            // Remove previous crack classes first
-            doorElement.classList.remove('cracked1', 'cracked2', 'cracked3');
-            
-            // Then add appropriate crack class based on hits
-            if (hits + 1 >= 8) {
-                doorElement.classList.add('cracked3');
-            } else if (hits + 1 >= 5) {
-                doorElement.classList.add('cracked2');
-            } else if (hits + 1 >= 3) {
-                doorElement.classList.add('cracked1');
-            }
-    
-            doorElement.classList.add('shaking');
-            
-            setTimeout(() => {
-                doorElement.classList.remove('shaking');
-                
-                // Break door after 10 hits
-                if (hits + 1 >= 10) {
-                    gameState.maze[y][x] = 'path';
-                    gameState.doorHits.delete(doorKey);
-                    showTopRightMessage('Door broken!');
-                    renderMaze();
-                }
-            }, 150);
+} else {
+    const doorKey = `${x},${y}`;
+    const hits = gameState.doorHits.get(doorKey) || 0;
+    gameState.doorHits.set(doorKey, hits + 1);
+
+    const doorElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+    if (doorElement) {
+        // Remove previous crack classes first
+        doorElement.classList.remove('cracked1', 'cracked2', 'cracked3');
+        
+        // Then add appropriate crack class based on hits
+        if (hits + 1 >= 8) {
+            doorElement.classList.add('cracked3');
+        } else if (hits + 1 >= 5) {
+            doorElement.classList.add('cracked2');
+        } else if (hits + 1 >= 3) {
+            doorElement.classList.add('cracked1');
         }
+
+        doorElement.classList.add('shaking');
+        
+        setTimeout(() => {
+            doorElement.classList.remove('shaking');
+            
+            // Break door after 10 hits
+            if (hits + 1 >= 10) {
+                gameState.maze[y][x] = 'path';
+                gameState.doorHits.delete(doorKey);
+                showTopRightMessage('Door broken!');
+                renderMaze();
+            }
+        }, 150);
     }
+}
 }
 function unlockDoor(x, y) {
     if (!gameState.isCasualMode && gameState.keys <= 0) {
@@ -1318,9 +1327,11 @@ function handleNextGame() {
     window.parent.postMessage({
         type: 'nextGame',
         data: { 
-            lives: gameState.lives
+            lives: gameState.lives,
+            isFirstGame: false 
         }
     }, '*');
+    
 }
 function newGame() {
     console.log('New Game button clicked');
@@ -1481,7 +1492,6 @@ function showIdlePrompt() {
         cell.classList.add('adjacent-pulse');
     });
 }
-
 function hideIdlePrompt() {
     const promptContainer = document.getElementById('idle-prompt');
     if (promptContainer) {
@@ -1491,6 +1501,35 @@ function hideIdlePrompt() {
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.remove('adjacent-pulse');
     });
+}
+function showGamePrompt(message) {
+    const existingPrompt = document.getElementById('game-prompt');
+    if (existingPrompt) {
+        existingPrompt.remove();
+    }
+
+    const promptElement = document.createElement('div');
+    promptElement.id = 'game-prompt';
+    promptElement.style.position = 'fixed';
+    promptElement.style.top = '80px';  // Below timer
+    promptElement.style.left = '50%';
+    promptElement.style.transform = 'translateX(-50%)';
+    promptElement.style.color = 'white';
+    promptElement.style.fontSize = '18px';
+    promptElement.style.padding = '10px';
+    promptElement.style.zIndex = '1000';
+    promptElement.style.textAlign = 'center';
+    promptElement.style.opacity = '1';
+    promptElement.style.transition = 'opacity 0.5s ease-in-out';
+    promptElement.textContent = message;
+
+    document.body.appendChild(promptElement);
+
+    // Fade out and remove after 5 seconds
+    setTimeout(() => {
+        promptElement.style.opacity = '0';
+        setTimeout(() => promptElement.remove(), 500);
+    }, 5000);
 }
 
 // 8. PAUSE MENU
