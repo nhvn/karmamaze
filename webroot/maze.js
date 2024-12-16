@@ -690,28 +690,27 @@ function activateMap() {
 function activateCrystalBall() {
     gameState.crystalBallUsed = true;
     
-    // Show crystal ball indicator
     const crystalIndicator = document.getElementById('crystal-indicator');
     if (crystalIndicator) {
         crystalIndicator.style.display = 'flex';
     }
 
-    // Reveal both exits and traps
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
             const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
             if (!cellElement) return;
             
-            if (cell === 'exit') {
+            if (cell === 'exit' || cell === 'fake-exit') {
                 cellElement.classList.add('crystal-ball-revealed');
-                cellElement.classList.add('revealed-exit');
-                gameState.visibleTiles.add(`${x},${y}`);
+                if (cell === 'exit') {
+                    cellElement.classList.add('revealed-exit');
+                }
             } else if (cell.startsWith('trap')) {
-                console.log(`Trap found at (${x}, ${y})`);
                 cellElement.classList.add('crystal-ball-revealed');
-                // Keep fog class for proper fog effect
-                cellElement.classList.add('fog'); 
-                gameState.visibleTiles.add(`${x},${y}`);
+                // Keep fog/explored state if not directly visible
+                if (!cellElement.classList.contains('visible')) {
+                    cellElement.classList.add('fog');
+                }
             }
         });
     });
