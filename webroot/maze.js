@@ -127,7 +127,7 @@ function initializeGame(data) {
 
     // Show prompt only for new games (not retries or next games)
     if (data.isFirstGame && !data.isCasualMode) {
-        showGamePrompt("Survive, collect karma, and find the way out!");
+        showGamePrompt("Find karma and escape the maze!");
     }
 
     if (data.isFirstGame && data.isCasualMode) {
@@ -703,12 +703,14 @@ function activateCrystalBall() {
             if (!cellElement) return;
             
             if (cell === 'exit') {
+                cellElement.classList.add('crystal-ball-revealed');
                 cellElement.classList.add('revealed-exit');
                 gameState.visibleTiles.add(`${x},${y}`);
-            } else if (cell.startsWith('trap')) {  // Changed this line
-                cellElement.classList.add('revealed');
-                cellElement.classList.remove('fog');
-                cellElement.classList.add('visible');
+            } else if (cell.startsWith('trap')) {
+                console.log(`Trap found at (${x}, ${y})`);
+                cellElement.classList.add('crystal-ball-revealed');
+                // Keep fog class for proper fog effect
+                cellElement.classList.add('fog'); 
                 gameState.visibleTiles.add(`${x},${y}`);
             }
         });
@@ -716,7 +718,6 @@ function activateCrystalBall() {
 
     showTopRightMessage('Found a crystal ball!');
 }
-
 function activateKeyPowerup() {
     if (gameState.keys >= MAX_KEYS) {
         showTopRightMessage('Bag full!');
@@ -1473,10 +1474,15 @@ function hideLoading() {
     }
 }
 function handleIdlePrompt() {
-    const idleThreshold = 3000; // Show prompt after 3 seconds of inactivity
+    // Different threshold for first time vs subsequent times
+    const initialIdleThreshold = 6000; // 6 seconds for first idle
+    const subsequentIdleThreshold = 2000; // 2 seconds for subsequent idles
     const now = Date.now();
     
-    if (!gameState.isGameOver && !isPaused && (now - gameState.lastMoveTime > idleThreshold)) {
+    // Determine which threshold to use based on whether player has moved
+    const currentThreshold = gameState.hasPlayerMoved ? subsequentIdleThreshold : initialIdleThreshold;
+    
+    if (!gameState.isGameOver && !isPaused && (now - gameState.lastMoveTime > currentThreshold)) {
         if (!gameState.idlePromptVisible) {
             showIdlePrompt();
             gameState.idlePromptVisible = true;
@@ -1486,22 +1492,50 @@ function handleIdlePrompt() {
         gameState.idlePromptVisible = false;
     }
 }
+
 function showIdlePrompt() {
-    // Skip creating the container if it's not needed
+    // Create prompt with same styling as game prompt
+    const existingPrompt = document.getElementById('idle-prompt');
+    if (existingPrompt) {
+        existingPrompt.remove();
+    }
+
+    const promptElement = document.createElement('div');
+    promptElement.id = 'idle-prompt';
+    promptElement.style.position = 'fixed';
+    promptElement.style.top = '90px';  // Below timer
+    promptElement.style.left = '50%';
+    promptElement.style.transform = 'translateX(-50%)';
+    promptElement.style.color = 'white';
+    promptElement.style.fontSize = '17px';
+    promptElement.style.padding = '10px';
+    promptElement.style.zIndex = '1000';
+    promptElement.style.textAlign = 'center';
+    promptElement.style.opacity = '1';
+    promptElement.style.transition = 'opacity 0.5s ease-in-out';
+    promptElement.style.backgroundColor = '#1a1a1a';
+    promptElement.style.borderRadius = '8px';
+    promptElement.textContent = 'Interact to move!';
+
+    document.body.appendChild(promptElement);
+
+    // Add pulse effect to adjacent cells
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.add('adjacent-pulse');
     });
 }
+
 function hideIdlePrompt() {
     const promptContainer = document.getElementById('idle-prompt');
     if (promptContainer) {
-        promptContainer.textContent = ''; // Clear text
-        promptContainer.style.display = 'none';
+        promptContainer.style.opacity = '0';
+        setTimeout(() => promptContainer.remove(), 500);
     }
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.remove('adjacent-pulse');
     });
 }
+
 function showGamePrompt(message) {
     const existingPrompt = document.getElementById('game-prompt');
     if (existingPrompt) {
@@ -1511,16 +1545,18 @@ function showGamePrompt(message) {
     const promptElement = document.createElement('div');
     promptElement.id = 'game-prompt';
     promptElement.style.position = 'fixed';
-    promptElement.style.top = '80px';  // Below timer
+    promptElement.style.top = '90px';  // Below timer
     promptElement.style.left = '50%';
     promptElement.style.transform = 'translateX(-50%)';
     promptElement.style.color = 'white';
-    promptElement.style.fontSize = '18px';
+    promptElement.style.fontSize = '17px';
     promptElement.style.padding = '10px';
     promptElement.style.zIndex = '1000';
     promptElement.style.textAlign = 'center';
     promptElement.style.opacity = '1';
     promptElement.style.transition = 'opacity 0.5s ease-in-out';
+    promptElement.style.backgroundColor = '#1a1a1a';
+    promptElement.style.borderRadius = '8px';
     promptElement.textContent = message;
 
     document.body.appendChild(promptElement);

@@ -778,25 +778,49 @@ body {
   animation: shake 0.05s linear;
 }
 /* Base trap styles */
-.trap1, .trap2, .trap3 {
+.cell.trap1,
+.cell.trap2,
+.cell.trap3 {
   background: #4a4a4a;
   position: relative;
   overflow: visible;
+}
+
+.cell.trap1.revealed,
+.cell.trap2.revealed,
+.cell.trap3.revealed {
+  position: relative;
+  opacity: 1;
+}
+
+.cell.trap1.visible::after,
+.cell.trap2.visible::after,
+.cell.trap3.visible::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 2;
 }
 
 /* Make sure revealed cells are visible */
 .cell.visible.trap1.revealed,
 .cell.visible.trap2.revealed,
 .cell.visible.trap3.revealed {
-  background: rgba(255, 0, 0, 0.2);
+  background: #4a4a4a !important;
   position: relative;
-  opacity: 1;
+  opacity: 1 !important;
 }
 
-/* Trap icons */
-.trap1::after,
-.trap2::after,
-.trap3::after {
+.cell.trap1::after,
+.cell.trap2::after,
+.cell.trap3::after {
   content: '';
   position: absolute;
   left: 50%;
@@ -816,9 +840,9 @@ body {
 .trap3::after { background-image: var(--trap3-image-url); }
 
 /* Red overlay for revealed traps */
-.trap1.revealed::before,
-.trap2.revealed::before,
-.trap3.revealed::before {
+.cell.trap1.revealed::before,
+.cell.trap2.revealed::before,
+.cell.trap3.revealed::before {
   content: '';
   position: absolute;
   left: 0;
@@ -953,17 +977,103 @@ body {
   opacity: 1;
   visibility: visible;
 }
-.fog.crystal-ball, .fog.map, .fog.key-powerup {
-  background: #1a1a1a !important;  /* Dark background in fog */
+/* TESTING */
+.fog.cell.trap1.crystal-ball-revealed::before {
+  content: '';
+  display: block; /* Ensure the pseudo-element renders */
+  position: absolute; /* Allows precise placement */
+  top: 0;
+  left: 0;
+  width: 100%; /* Match the size of the parent */
+  height: 100%; /* Match the size of the parent */
+  background: rgba(255, 0, 0, 0.3); /* Semi-transparent red */
+  z-index: 1; /* Ensure it's above other content */
+}
+
+
+.fog.cell.trap1.crystal-ball-revealed,
+.fog.cell.trap2.crystal-ball-revealed,
+.fog.cell.trap3.crystal-ball-revealed {
+  background: #1a1a1a !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative;
+}
+.fog.cell.trap1.crystal-ball-revealed::after,
+.fog.cell.trap2.crystal-ball-revealed::after,
+.fog.cell.trap3.crystal-ball-revealed::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px !important;
+  height: 8px !important;
+  background: rgba(255, 0, 0, 0.6) !important;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.4) !important;
+  background-image: none !important;
+  z-index: 5;
+  animation: enemyPulse 2s infinite;
+}
+.cell.fog.exit.crystal-ball-revealed {
+  background: #1a1a1a !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
-.fog.crystal-ball::after, .fog.map::after, .fog.key-powerup::after {
-  width: 8px !important;
-  height: 8px !important;
-  background: rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3) !important;
-  animation: mysteryPulse 2s infinite;
+@keyframes enemyPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+}
+
+/* New animation for exit glow */
+@keyframes exitGlow {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.5; }
+  100% { opacity: 0.3; }
+}
+.cell.fog.exit.crystal-ball-revealed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to left, rgba(0, 255, 0, 0.4), rgba(0, 255, 0, 0));
+  pointer-events: none;
+  z-index: 3;
+  animation: exitGlow 2s infinite;
+}
+.fog.crystal-ball, .fog.map, .fog.key-powerup {
+  background: #1a1a1a !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.fog.crystal-ball::after,
+.fog.map::after,
+.fog.key-powerup::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  z-index: 4;
+  animation: powerupPulse 2s infinite;
 }
 @keyframes glow {
   from {
@@ -975,16 +1085,16 @@ body {
 }
 @keyframes powerupPulse {
   0% {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
   }
   50% {
-      transform: translate(-50%, -50%) scale(1.2);
-      opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
   }
   100% {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
   }
 }
 
