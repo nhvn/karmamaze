@@ -27,16 +27,13 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => (
     </vstack>
 
     {/* Main Content Container */}
-    <vstack alignment="center">
+    <vstack alignment="center middle" backgroundColor="#4a4a4a" cornerRadius="small">
       <vstack
-        border="thin"
-        borderColor="#4a4a4a"
         padding="none"
         gap="none"
-        cornerRadius="small"
-        // maxWidth="600px"
+        maxWidth="600px"
       >
-        <vstack padding="medium" gap="medium" backgroundColor="#4a4a4a">
+        <vstack padding="medium" gap="medium">
           {/* Game Modes */}
           <vstack gap="small" width="100%">
             <text color="white" wrap={true} grow>
