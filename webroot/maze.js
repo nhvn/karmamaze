@@ -1474,7 +1474,7 @@ function hideLoading() {
 }
 function handleIdlePrompt() {
     // Different threshold for first time vs subsequent times
-    const initialIdleThreshold = 6000; // 6 seconds for first idle
+    const initialIdleThreshold = 5000; // 5 seconds for first idle
     const subsequentIdleThreshold = 2000; // 2 seconds for subsequent idles
     const now = Date.now();
     
@@ -1491,7 +1491,6 @@ function handleIdlePrompt() {
         gameState.idlePromptVisible = false;
     }
 }
-
 function showIdlePrompt() {
     // Create prompt with same styling as game prompt
     const existingPrompt = document.getElementById('idle-prompt');
@@ -1523,7 +1522,6 @@ function showIdlePrompt() {
         cell.classList.add('adjacent-pulse');
     });
 }
-
 function hideIdlePrompt() {
     const promptContainer = document.getElementById('idle-prompt');
     if (promptContainer) {
@@ -1534,7 +1532,6 @@ function hideIdlePrompt() {
         cell.classList.remove('adjacent-pulse');
     });
 }
-
 function showGamePrompt(message) {
     const existingPrompt = document.getElementById('game-prompt');
     if (existingPrompt) {
@@ -1564,7 +1561,7 @@ function showGamePrompt(message) {
     setTimeout(() => {
         promptElement.style.opacity = '0';
         setTimeout(() => promptElement.remove(), 500);
-    }, 5000);
+    }, 4000);
 }
 
 // 8. PAUSE MENU

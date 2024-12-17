@@ -36,8 +36,18 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         <vstack gap="small">
           <text weight="bold" size="large" color="white">Objective</text>
           <text color="white" wrap={true}>
-          Navigate the maze, collect karma, and avoid traps to find the real exit.
+          Navigate the maze, collect karma, and avoid traps to find the exit. Finish quickly and efficiently to earn points and climb the leaderboard in Challenge mode, or just casually play in Casual mode. 
           </text>
+        </vstack>
+
+        {/* Controls Section */}
+        <vstack gap="small">
+          <text weight="bold" size="large" color="white">Controls</text>
+          <vstack gap="small">
+            <text color="white" wrap={true}>
+              Move by tapping/clicking adjacent tiles or use WASD keys on desktop
+            </text>
+          </vstack>
         </vstack>
 
         {/* Power-Ups Section */}
@@ -66,14 +76,6 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
                     </text>
                 </hstack>
             </vstack>
-        </vstack>
-
-        {/* Scoring Section */}
-        <vstack gap="small">
-          <text weight="bold" size="large" color="white">Scoring</text>
-          <text color="white" wrap={true}>
-            Finish quickly and efficiently to earn points and climb the leaderboard!
-          </text>
         </vstack>
       </vstack>
     </vstack>
