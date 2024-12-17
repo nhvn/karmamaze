@@ -442,14 +442,24 @@ Devvit.addCustomPostType({
   }));
 
     const onMessage = async (msg: WebViewMessage) => {
+
+      console.log('Received message in main:', msg);
+
       const message = ('data' in msg && 'message' in msg.data) 
-        ? (msg.data as any).message 
-        : msg;
-      
+      ? (msg.data as any).message 
+      : msg;
+  
       if (!gameState || !userData) {
-        console.error('Missing game state or user data');
-        return;
+          console.error('Missing game state or user data');
+          return;
       }    
+
+      // Add explicit ready message handling
+      if (message.type === 'ready') {
+          console.log('Received ready message from webview');
+          onStartGame(); // Reinitialize the game when ready message is received
+          return;
+      }
     
       switch (message.type) {
         case 'newGame':
@@ -719,6 +729,8 @@ Devvit.addCustomPostType({
           console.error('No user data available');
           return;
       }
+
+      console.log('Starting game initialization');
       
       const isCasualMode = currentLevel === 1;
       const newMaze = currentLevel === 1 
