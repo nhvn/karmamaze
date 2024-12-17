@@ -164,6 +164,30 @@ body {
   opacity: 0;
   transform: translateY(-10px); /* Moves up slightly before disappearing */
 }
+.win-announcement {
+  color: white;
+  font-size: 25px; 
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+.stat-item.smaller {
+  font-size: 16px;
+  color: #cccccc; 
+  margin: 5px 0;
+}
+.stat-item.error-announcement {
+  color: #ff5959; 
+  font-size: 25px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.stat-item.gameover-announcement {
+  color: #57b0e5; 
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
 
 /* 4. BUTTONS */
 #resumeButton, #quitButton {
@@ -309,8 +333,6 @@ body {
 .powerup-indicator {
   display: flex;
   align-items: center;
-}
-.powerup-indicator { /* DUPLICATE */
   width: 25px;
   height: 25px;
   position: relative;
@@ -1050,7 +1072,7 @@ body {
       transform: scale(1) rotate(var(--player-rotation));
   }
   50% {
-      transform: scale(1.04) rotate(var(--player-rotation));
+      transform: scale(1.05) rotate(var(--player-rotation));
   }
 }
 .cell.player {
@@ -1120,6 +1142,17 @@ body {
   }
   .top-right-message {
     font-size: 10px;
+  }
+  .powerup-indicator {
+    width: 18px;
+    height: 18px;
+  }
+  .key-stat {
+    width: 18px;
+    height: 18px;
+  }
+  #keys {
+    font-size: 7px;
   }
 }
 

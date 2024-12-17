@@ -86,6 +86,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
           borderColor="#4a4a4a"
           padding="none"
           gap="none"
+          cornerRadius="small"
         >
           {/* Table Header */}
           <hstack

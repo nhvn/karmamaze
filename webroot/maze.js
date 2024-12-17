@@ -1137,19 +1137,19 @@ function handleTimeUp() {
     // Check for game over
     if (newLives > 0) {
         // Still has lives left
-        showMessage("Time's up! You've been caught!", 'error', true);
+        const messageLines = [
+            "💔 Time's up!",
+            "Watch the timer next time!"
+        ];
+        showMessage(messageLines.join('\n'), 'error', true);
     } else {
         // No lives left - Game Over
-        const finalScore = playerStats.totalScore;
-        const gamesPlayed = playerStats.gamesPlayed;
-        
-        const gameOverMessage = [
+        const messageLines = [
             'Game Over!',
-            `Final Score: ${finalScore}`,
-            `Games Played: ${gamesPlayed}\n`
-        ].join('\n');
-
-        showMessage(gameOverMessage, 'error no-lives', true, true);
+            `Final Score: ${playerStats.totalScore}`,
+            `Games Played: ${playerStats.gamesPlayed}`
+        ];
+        showMessage(messageLines.join('\n'), 'error no-lives', true, true);
     }
 }
 function handleWin() {
@@ -1159,7 +1159,7 @@ function handleWin() {
     if (gameState.isCasualMode) {
         // Simple message for casual mode
         const messageLines = [
-            'You win!',
+            'Nice work!',
             `Games Played: ${playerStats.gamesPlayed + 1}`
         ];
         
@@ -1181,22 +1181,24 @@ function handleWin() {
         gameState.winStreak++;
 
         const messageLines = [
-            'You win!',
+            'Nice job!',
             `Total Score: ${result.totalScore}`,
             `Score: +${result.baseScore}`
         ];
-
+    
         if (result.streakBonus > 0) {
-            messageLines.push(`Win Streak Bonus: +${result.streakBonus} (${result.currentStreak} wins)`);
+            messageLines.push(
+                `Win Streak Bonus: +${result.streakBonus} (${result.currentStreak} wins)`
+            );
         }
-
+    
         messageLines.push(
             `Games Played: ${playerStats.gamesPlayed}`
         );
-
+    
         showMessage(messageLines.join('\n'), 'success');
         
-        // Send game over message after result is calculated
+        // Your existing postMessage code remains the same
         window.parent.postMessage({
             type: 'gameOver',
             data: { 
@@ -1235,31 +1237,28 @@ function handleTrap(trapType = '') {
     function getTrapLoseMessage(type) {
         switch (type) {
             case 'trap1':
-                return 'Oh no! You fell into a hole!\nWatch your step next time!';
+                return ['💔 You fell into a hole!', 'Watch your step next time!'];
             case 'trap2':
-                return 'Oh no! The snake got you!\nBe more careful around snakes!';
+                return ['💔 The snake bit you!', 'Be more careful around snakes!'];
             case 'trap3':
-                return 'Oh no! The spider caught you!\nKeep an eye out for webs!';
+                return ['💔 The spider bit you!', 'Keep an eye out for webs!'];
             default:
-                return 'Oh no! You fell into a trap!\nBe more careful next time!';
+                return ['Oh no! You fell into a trap!', 'Be more careful next time!'];
         }
     }
 
     if (newLives > 0) {
         // Still has lives left
-        showMessage(getTrapLoseMessage(trapType), 'error', true);
+        const messageLines = getTrapLoseMessage(trapType);
+        showMessage(messageLines.join('\n'), 'error', true);
     } else {
         // Game over - no lives left
-        const finalScore = playerStats.totalScore;
-        const gamesPlayed = playerStats.gamesPlayed;
-        
-        const gameOverMessage = [
+        const messageLines = [
             'Game Over!',
-            `Final Score: ${finalScore}`,
-            `Games Played: ${gamesPlayed}\n`
-        ].join('\n');
-
-        showMessage(gameOverMessage, 'error no-lives', true, true); 
+            `Final Score: ${playerStats.totalScore}`,
+            `Games Played: ${playerStats.gamesPlayed}`
+        ];
+        showMessage(messageLines.join('\n'), 'error no-lives', true, true);
     }
 }
 function retryLevel() {
@@ -1358,25 +1357,39 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
 
     const messageEl = document.getElementById('message');
     messageEl.innerHTML = '';
-    // messageEl.className = `pause-menu`; 
     messageEl.dataset.gameWon = 'false';
     messageEl.dataset.gameRetry = 'false';
     
-    // Create stats container
+    // Create stats container with win announcement
     const statsContainer = document.createElement('div');
     statsContainer.className = 'pause-stats';
     
-    // Add message text with styling
-    text.split('\n').forEach(line => {
+    // Split message into lines
+    const lines = text.split('\n');
+    
+    // First line styling based on message type
+    const announcementText = document.createElement('div');
+    if (type === 'success') {
+        announcementText.className = 'stat-item win-announcement';
+    } else if (type === 'error no-lives') {
+        announcementText.className = 'stat-item gameover-announcement';
+    } else {
+        announcementText.className = 'stat-item error-announcement';
+    }
+    announcementText.textContent = lines[0];
+    statsContainer.appendChild(announcementText);
+    
+    // Rest of the lines as smaller stats
+    lines.slice(1).forEach(line => {
         const textDiv = document.createElement('div');
-        textDiv.className = 'stat-item';
+        textDiv.className = 'stat-item smaller';
         textDiv.textContent = line;
         statsContainer.appendChild(textDiv);
     });
     
     messageEl.appendChild(statsContainer);
 
-    // Create button container with pause menu styling
+    // Rest of your button creation code...
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'pause-buttons';
 
