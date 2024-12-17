@@ -1,6 +1,7 @@
-# Key Maze
+# Karma Maze
 ![Karma Maze Cover](assets/Karma%20Maze.png)
-Key Maze is an interactive maze game built for Reddit using the Devvit platform. Players navigate through procedurally generated mazes while collecting karma, discovering powerups, and avoiding traps. The game features both a casual mode for practice and a challenge mode for competitive play.
+#### Karma Maze is an interactive maze game built for Reddit using the Devvit platform. Players navigate through procedurally generated mazes while collecting karma, discovering powerups, and avoiding traps. The game features both a casual mode for practice and a challenge mode for competitive play.
+---
 
 ## Game Overview
 
