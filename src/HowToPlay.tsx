@@ -29,8 +29,8 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         backgroundColor="#4a4a4a" 
         padding="large" 
         gap="medium"
-        // cornerRadius="small"
-        width='100%'
+        cornerRadius="small"
+        maxWidth="800px"
       >
         {/* Objective Section */}
         <vstack gap="small">
@@ -42,22 +42,30 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
 
         {/* Power-Ups Section */}
         <vstack gap="small">
-          <text weight="bold" size="large" color="white">Power-Ups</text>
-          
-          <hstack gap="small">
-            <image url="map.png" imageWidth={20} imageHeight={20} />
-            <text color="white" wrap={true}>Map: Expand your visible radius to plan your path.</text>
-          </hstack>
+            <text weight="bold" size="large" color="white">Power-Ups</text>
+            
+            <vstack gap="small">
+                <hstack gap="small" alignment="top start">
+                    <image url="map.png" imageWidth={20} imageHeight={20} />
+                    <text color="white" grow wrap={true} width="200px">
+                        Map: Expand your visible radius to plan your path.
+                    </text>
+                </hstack>
 
-          <hstack gap="small">
-            <image url="crystal.png" imageWidth={20} imageHeight={20} />
-            <text color="white" wrap={true}>Crystal Ball: Reveal the real exit and dangerous areas.</text>
-          </hstack>
+                <hstack gap="small" alignment="top start">
+                    <image url="crystal.png" imageWidth={20} imageHeight={20} />
+                    <text color="white" grow wrap={true} width="200px">
+                        Crystal Ball: Reveal the real exit and dangerous areas.
+                    </text>
+                </hstack>
 
-          <hstack gap="small">
-            <image url="karma.png" imageWidth={20} imageHeight={20} />
-            <text color="white" wrap={true}>Karma: Unlock doors and escape traps to stay alive.</text>
-          </hstack>
+                <hstack gap="small" alignment="top start">
+                    <image url="karma.png" imageWidth={20} imageHeight={20} />
+                    <text color="white" grow wrap={true} width="200px">
+                        Karma: Unlock doors and escape traps to stay alive.
+                    </text>
+                </hstack>
+            </vstack>
         </vstack>
 
         {/* Scoring Section */}
