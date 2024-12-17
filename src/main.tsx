@@ -1,7 +1,7 @@
 import { Devvit, useState } from '@devvit/public-api';
 import type { Context } from '@devvit/public-api';
 import { Leaderboard, LeaderboardManager, LEADERBOARD_KEY } from './leaderboard.js';
-import { HowToPlay } from './howToPlay.js';
+import { HowToPlay } from './HowToPlay.js';
 
 // 1. TYPES & INTERFACES
 type WebViewMessage =

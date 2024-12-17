@@ -45,7 +45,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
           <text weight="bold" size="large" color="white">Controls</text>
           <vstack gap="small">
             <text color="white" wrap={true}>
-              Move by tapping/clicking adjacent tiles or use WASD keys on desktop
+              Move by tapping/clicking adjacent tiles or use WASD keys on desktop.
             </text>
           </vstack>
         </vstack>
