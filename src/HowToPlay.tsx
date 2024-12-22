@@ -11,7 +11,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
   const pages = [
     // Page 1 - Introduction
     <vstack key="page-1" padding="medium" gap="medium" alignment="middle center">
-      <image url="temp.png" imageWidth={180} imageHeight={180} />
+      <image url="move.gif" imageWidth={180} imageHeight={180} />
       <text color="white" weight="bold" size="large" alignment="center">Explore The Maze</text>
       <vstack maxWidth="420px">
         <text color="white" wrap={true} alignment='center' grow>
@@ -83,10 +83,10 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
       </vstack>
 
       {/* Main Content Container with Navigation */}
-      <hstack grow cornerRadius="small">
+      <hstack grow>
         {/* Left Arrow */}
         <hstack
-          backgroundColor="#4a4a4a"
+          backgroundColor="#2a2a2a"
           width="32px"
           alignment="middle center"
           onPress={prevPage}
@@ -95,7 +95,11 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         </hstack>
 
         {/* Content with Page Indicators */}
-        <vstack alignment="center middle" backgroundColor="#4a4a4a" grow>
+        <vstack alignment="center middle" backgroundColor="#4a4a4a" cornerRadius="small" grow>
+          {/* Content */}
+          <vstack padding="none" gap="none" maxWidth="600px">
+            {pages[currentPage]}
+          </vstack>
           {/* Page Indicators */}
           <hstack padding="small" alignment="middle center" gap="small">
             {pages.map((_, index) => (
@@ -107,16 +111,12 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
                 // cornerRadius="full"
               />
             ))}
-          </hstack>
-          {/* Content */}
-          <vstack padding="none" gap="none" maxWidth="600px">
-            {pages[currentPage]}
-          </vstack>
+          </hstack>         
         </vstack>
 
         {/* Right Arrow */}
         <hstack
-          backgroundColor="#4a4a4a"
+          backgroundColor="#2a2a2a"
           width="32px"
           alignment="middle center"
           onPress={nextPage}

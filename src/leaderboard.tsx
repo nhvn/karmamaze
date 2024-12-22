@@ -48,7 +48,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
       <vstack alignment="middle center" padding="small">
         <hstack width="100%" alignment="middle center">
           <hstack width="10%" />
-          <text size="xlarge" weight="bold" color="white" grow alignment="middle center">Top Maze Masters</text>
+          <text size="xlarge" weight="bold" color="white" grow alignment="middle center">Legendary Adventurers</text>
           <hstack 
             width="10%" 
             alignment="end" 
@@ -94,8 +94,8 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
             gap="medium"
             backgroundColor="#57b0e5"
           >
-            <text width="5%" weight="bold" color="white">#</text>
-            <text width="65%" weight="bold" color="white">Player</text>
+            <text width="8%" weight="bold" color="white">#</text>
+            <text width="62%" weight="bold" color="white">Player</text>
             <text width="30%" weight="bold" alignment="end" color="white">Score</text>
           </hstack>
 
