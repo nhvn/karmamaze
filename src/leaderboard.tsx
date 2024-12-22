@@ -108,8 +108,8 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
                 gap="medium"
                 backgroundColor={index % 2 === 0 ? '#333333' : '#2a2a2a'}
               >
-                <text width="5%" color="white">{index + 1}</text>
-                <text width="65%" color="white">{entry.username}</text>
+                <text width="8%" color="white">{index + 1}</text>
+                <text width="62%" color="white">{entry.username}</text>
                 <text width="30%" alignment="end" color="white">{entry.score.toLocaleString()}</text>
               </hstack>
             ))

@@ -127,7 +127,7 @@ function initializeGame(data) {
 
     // Show prompt only for new games (not retries or next games)
     if (data.isFirstGame && !data.isCasualMode) {
-        showGamePrompt("Find karma and escape the maze!");
+        showGamePrompt("Escape the maze!");
     }
 
     if (data.isFirstGame && data.isCasualMode) {
