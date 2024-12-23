@@ -42,19 +42,19 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
       <vstack gap="none" width="100%" alignment='center'>
         <hstack gap="small" alignment="start" grow>
           <image url="karma.png" imageWidth={16} imageHeight={16} />
-          <text color="white" wrap={true} grow>
+          <text color="white" wrap={true} size='small' grow>
             Karma: Use to unlock doors/escape traps (doesn't affect Reddit Karma)
           </text>
         </hstack>
         <hstack gap="small" alignment="start" grow>
           <image url="map.png" imageWidth={16} imageHeight={16} />
-          <text color="white" wrap={true} grow>
+          <text color="white" wrap={true} size='small' grow>
             Map: Expand your visible radius to plan your path.
           </text>
         </hstack>
         <hstack gap="small" alignment="start" grow>
           <image url="crystal.png" imageWidth={16} imageHeight={16} />
-          <text color="white" wrap={true} grow>
+          <text color="white" wrap={true} size='small' grow>
             Crystal Ball: Reveal the true exit and dangerous areas.
           </text>
         </hstack>

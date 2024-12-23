@@ -188,8 +188,8 @@ function generateMaze(width: number, height: number): MazeCell[][] {
   return maze;
 }
 function generateLevel2Maze(width: number, height: number, gamesPlayed: number = 0, isCasualMode: boolean = false): MazeCell[][] {
-  console.log('Generating Level 2 maze with games played:', gamesPlayed);
-  console.log('Casual Mode:', isCasualMode);
+  // console.log('Generating Level 2 maze with games played:', gamesPlayed);
+  // console.log('Casual Mode:', isCasualMode);
   const maze = generateMaze(width, height);
 
   // Find existing exit and start positions
@@ -233,7 +233,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
         if (maze[y][width - 2] === 'path') {
           maze[y][width - 1] = 'fake-exit';
           fakeExitPlaced = true;
-          console.log('Placed first fake exit with connected path at:', y);
+          // console.log('Placed first fake exit with connected path at:', y);
         }
       }
       attempts++;
@@ -242,7 +242,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
 
   // Add second fake exit only if games played is 10 or more
   if (gamesPlayed >= 10) {
-    console.log('Attempting to add second fake exit (10+ games played)');
+    // console.log('Attempting to add second fake exit (10+ games played)');
     let secondFakeExitPlaced = false;
     attempts = 0;
 
@@ -256,7 +256,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
         if (maze[y][width - 2] === 'path') {
           maze[y][width - 1] = 'fake-exit';
           secondFakeExitPlaced = true;
-          console.log('Placed second fake exit with connected path at:', y);
+          // console.log('Placed second fake exit with connected path at:', y);
         }
       }
       attempts++;
@@ -280,7 +280,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
         if (isReachable) {
           maze[y][x] = 'crystal-ball';
           crystalBallPlaced = true;
-          console.log('Placed crystal ball at reachable position:', x, y);
+          // console.log('Placed crystal ball at reachable position:', x, y);
         }
       }
     }
@@ -302,7 +302,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
       if (isReachable) {
         maze[y][x] = 'map';
         mapPlaced = true;
-        console.log('Placed map at reachable position:', x, y);
+        // console.log('Placed map at reachable position:', x, y);
       }
     }
   }
@@ -327,7 +327,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
           maze[y][x] = 'key-powerup';
           position = { x, y };
           placed = true;
-          console.log('Placed key powerup at reachable position:', x, y);
+          // console.log('Placed key powerup at reachable position:', x, y);
         }
       }
     }
@@ -339,11 +339,11 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   if (gamesPlayed < 10) {
     // 70% chance of 1, 30% chance of 2
     numKeyPowerups = Math.random() < 0.7 ? 1 : 2;
-    console.log(`Games played ${gamesPlayed} (< 10): Placing ${numKeyPowerups} powerup(s)`);
+    // console.log(`Games played ${gamesPlayed} (< 10): Placing ${numKeyPowerups} powerup(s)`);
   } else {
     // 70% chance of 2, 30% chance of 3
     numKeyPowerups = Math.random() < 0.7 ? 2 : 3;
-    console.log(`Games played ${gamesPlayed} (>= 10): Placing ${numKeyPowerups} powerup(s)`);
+    // console.log(`Games played ${gamesPlayed} (>= 10): Placing ${numKeyPowerups} powerup(s)`);
   }
 
   // Place powerups
@@ -368,15 +368,15 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   let trapFrequency = 0;
   if (gamesPlayed >= 20) {
     trapFrequency = 0.18;
-    console.log('20+ games: Setting trap frequency to 18%');
+    // console.log('20+ games: Setting trap frequency to 18%');
   } else if (gamesPlayed >= 10) {
     trapFrequency = 0.12;
-    console.log('10+ games: Setting trap frequency to 12%');
+    // console.log('10+ games: Setting trap frequency to 12%');
   } else if (gamesPlayed >= 3) {
     trapFrequency = 0.05;
     console.log('3+ games: Setting trap frequency to 5%');
   }
-  console.log('Final trap frequency:', trapFrequency);
+  // console.log('Final trap frequency:', trapFrequency);
 
   // Only add traps if win streak is 3 or more
   if (gamesPlayed >= 3) {
@@ -399,7 +399,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
             }
         }
     }
-    console.log(`Placed ${trapCount} traps in the maze`);
+    // console.log(`Placed ${trapCount} traps in the maze`);
 }
 
 return maze;
@@ -443,7 +443,7 @@ Devvit.addCustomPostType({
 
     const onMessage = async (msg: WebViewMessage) => {
 
-      console.log('Received message in main:', msg);
+      // console.log('Received message in main:', msg);
 
       const message = ('data' in msg && 'message' in msg.data) 
       ? (msg.data as any).message 
@@ -456,7 +456,7 @@ Devvit.addCustomPostType({
 
       // Add explicit ready message handling
       if (message.type === 'ready') {
-          console.log('Received ready message from webview');
+          // console.log('Received ready message from webview');
           onStartGame(); // Reinitialize the game when ready message is received
           return;
       }
@@ -730,7 +730,7 @@ Devvit.addCustomPostType({
           return;
       }
 
-      console.log('Starting game initialization');
+      // console.log('Starting game initialization');
       
       const isCasualMode = currentLevel === 1;
       const newMaze = currentLevel === 1 

@@ -48,7 +48,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
       <vstack alignment="middle center" padding="small">
         <hstack width="100%" alignment="middle center">
           <hstack width="10%" />
-          <text size="xlarge" weight="bold" color="white" grow alignment="middle center">Legendary Adventurers</text>
+          <text size="xlarge" weight="bold" color="white" grow alignment="middle center">Leaderboard</text>
           <hstack 
             width="10%" 
             alignment="end" 
@@ -60,7 +60,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
         </hstack>
         <hstack gap="small" alignment="start" grow>
         <image url="hat.png" imageWidth={16} imageHeight={16} />
-          <text size="small" color="#888888">Top 10 Players</text>
+          <text size="small" color="#888888">Legendary Adventurers</text>
         </hstack>
       </vstack>
 

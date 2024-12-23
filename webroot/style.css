@@ -230,17 +230,17 @@ body {
   border-radius: 2px;
 }
 #pauseButton {
-    background-color: #4a4a4a;  /* Match pause menu buttons */
+    background-color: #1a1a1a;  
     color: white;
     border: none;
-    padding: 8px 16px;         /* Slightly smaller padding than menu buttons */
+    padding: 8px 16px; 
     border-radius: 5px;
-    font-size: 14px;          /* Slightly smaller than menu buttons */
+    font-size: 14px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 #pauseButton:hover {
-    background-color: #666;    /* Match pause menu button hover */
+    background-color: #666;
 }
 #retryButton, #newGameButton { /* Retry & New Game Button */
   background: #4a4a4a;
