@@ -58,7 +58,10 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
             <text size="large" weight="bold" color="white">✕</text>
           </hstack>
         </hstack>
-        <text size="small" color="#888888">Top 10 Players</text>
+        <hstack gap="small" alignment="start" grow>
+        <image url="hat.png" imageWidth={16} imageHeight={16} />
+          <text size="small" color="#888888">Top 10 Players</text>
+        </hstack>
       </vstack>
 
       {/* Error Message */}

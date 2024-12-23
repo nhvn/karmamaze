@@ -1,8 +1,7 @@
 # Karma Maze
 ![Karma Maze Cover](assets/Karma%20Maze.png)
 
-Karma Maze is an interactive maze game built for Reddit using the Devvit platform. Players navigate through procedurally generated mazes while collecting karma, discovering powerups, and avoiding traps. The game features both a casual mode for practice and a challenge mode for competitive play.
-
+Embark on an adventure as a daring Snoo, navigating through mysterious, procedurally generated mazes. Collect karma, uncover hidden power-ups, and avoid perilous traps as you explore. The game offers a Casual Mode for practice and a Challenge Mode for competitive play. Built on the Devvit platform, Karma Maze delivers an engaging interactive experience designed for Reddit.
 ## Game Modes
 
 ### Casual Mode

@@ -9,37 +9,41 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   
   const pages = [
-    // Page 1 - Introduction
+
+    // Page 1
     <vstack key="page-1" padding="medium" gap="medium" alignment="middle center">
-      <image url="move.gif" imageWidth={180} imageHeight={180} />
-      <text color="white" weight="bold" size="large" alignment="center">Explore The Maze</text>
+      <image url="modes.png" imageWidth={180} imageHeight={150} />
+      <text color="white" weight="bold" size="large" alignment="center">Choose Game Modes</text>
       <vstack maxWidth="420px">
         <text color="white" wrap={true} alignment='center' grow>
-          Play as an adventurous Snoo navigating through mysterious mazes, discover secrets and escape. Move by tapping on adjacent tiles or using the WASD keys when on a desktop.
+          Casual Mode: Enjoy a chill experience with unlimited karma and no time constraints.
+        </text>
+        <text color="white" wrap={true} alignment='center' grow>
+          Challenge Mode: Embark on an adventure, uncover hidden secrets, and prove your mastery.
         </text>
       </vstack>
     </vstack>,
 
-    // Page 2 - Game Modes
+    // Page 2
     <vstack key="page-2" padding="medium" gap="medium" alignment="middle center">
-      <image url="temp.png" imageWidth={180} imageHeight={180} />
-      <text color="white" weight="bold" size="large" alignment="center">Game Modes</text>
+      <image url="move.gif" imageWidth={150} imageHeight={150} />
+      <text color="white" weight="bold" size="large" alignment="center">Escape The Maze</text>
       <vstack maxWidth="420px">
         <text color="white" wrap={true} alignment='center' grow>
-          Choose Casual Mode for unlimited karma and no time pressure, perfect for learning, or Challenge Mode to race against time, manage karma wisely, and compete for high scores.
+          Navigate through the maze to find the exit. Move by tapping on adjacent tiles or using the WASD keys when on a desktop.
         </text>
       </vstack>
     </vstack>,
 
-    // Page 3 - Power-Ups
+    // Page 3 
     <vstack key="page-3" padding="medium" gap="medium" alignment="middle center">
-      <image url="temp.png" imageWidth={180} imageHeight={180} />
-      <text color="white" weight="bold" size="large" alignment="center">Power-Ups</text>
-      <vstack gap="none" width="100%">
+      <image url="powerups.png" imageWidth={150} imageHeight={150} />
+      <text color="white" weight="bold" size="large" alignment="center">Use Power-Ups</text>
+      <vstack gap="none" width="100%" alignment='center'>
         <hstack gap="small" alignment="start" grow>
           <image url="karma.png" imageWidth={16} imageHeight={16} />
           <text color="white" wrap={true} grow>
-            Karma: Collect karma to unlock doors or escape traps.
+            Karma: Use to unlock doors/escape traps (doesn't affect Reddit Karma)
           </text>
         </hstack>
         <hstack gap="small" alignment="start" grow>
@@ -99,19 +103,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
           {/* Content */}
           <vstack padding="none" gap="none" maxWidth="600px">
             {pages[currentPage]}
-          </vstack>
-          {/* Page Indicators */}
-          <hstack padding="small" alignment="middle center" gap="small">
-            {pages.map((_, index) => (
-              <hstack 
-                key={`dot-${index}`}
-                backgroundColor={currentPage === index ? "white" : "#666666"}
-                width="5px"
-                height="5px"
-                // cornerRadius="full"
-              />
-            ))}
-          </hstack>         
+          </vstack>       
         </vstack>
 
         {/* Right Arrow */}
@@ -124,6 +116,19 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
           <text color="white" size="large">›</text>
         </hstack>
       </hstack>
+
+      {/* Page Indicators */}
+      <hstack padding="small" alignment="middle center" gap="small">
+        {pages.map((_, index) => (
+          <hstack 
+            key={`dot-${index}`}
+            backgroundColor={currentPage === index ? "white" : "#666666"}
+            width="5px"
+            height="5px"
+            // cornerRadius="full"
+          />
+        ))}
+      </hstack>        
     </vstack>
   );
 };
