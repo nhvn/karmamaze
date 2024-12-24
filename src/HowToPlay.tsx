@@ -37,29 +37,43 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
 
     // Page 3     
     <vstack key="page-3" padding="medium" gap="medium" alignment="middle center">
-      <image url="powerups.png" imageWidth={150} imageHeight={150} />
+      <image url="powerups.png" imageWidth={250} imageHeight={150} />
       <text color="white" weight="bold" size="large" alignment="center">Use Power-Ups</text>
       <vstack gap="none" width="100%" alignment='center'>
-        <hstack gap="small" alignment="start" grow>
+        <hstack gap="small" alignment="middle start" grow>
           <image url="karma.png" imageWidth={16} imageHeight={16} />
           <text color="white" wrap={true} size='small' grow>
-            Karma: Use to unlock doors/escape traps.
+            Karma: Spend karma to unlock doors and escape traps.
           </text>
         </hstack>
-        <hstack gap="small" alignment="start" grow>
+        <hstack gap="small" alignment="middle start" grow>
           <image url="map.png" imageWidth={16} imageHeight={16} />
           <text color="white" wrap={true} size='small' grow>
             Map: Expand your visible radius to plan your path.
           </text>
         </hstack>
-        <hstack gap="small" alignment="start" grow>
+        <hstack gap="small" alignment="middle start" grow>
           <image url="crystal.png" imageWidth={16} imageHeight={16} />
           <text color="white" wrap={true} size='small' grow>
             Crystal Ball: Reveal the true exit and dangerous areas.
           </text>
         </hstack>
         <text color="white" wrap={true} size='small' grow>
-          Note: In-game Karma doesn't affect Reddit Karma
+          Note: In-game Karma doesn't affect Reddit Karma.
+        </text>
+      </vstack>
+    </vstack>,
+
+    // Page 4
+    <vstack key="page-4" padding="medium" gap="medium" alignment="middle center">
+      <image url="traps.png" imageWidth={220} imageHeight={150} />
+      <text color="white" weight="bold" size="large" alignment="center">Avoid Traps</text>
+      <vstack gap="none" maxWidth="420px" alignment='center'>
+        <text color="white" wrap={true} alignment='center' grow>
+          Keep an eye out for hidden pitfalls and traps as they'll slow your journey through the maze.
+          </text>
+        <text color="white" wrap={true} alignment='center' grow>
+          Tip: Use karma to escape traps instead of unlocking doors.
         </text>
       </vstack>
     </vstack>
@@ -102,7 +116,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         </hstack>
 
         {/* Content with Page Indicators */}
-        <vstack alignment="center middle" backgroundColor="#4a4a4a" cornerRadius="small" grow>
+        <vstack alignment="center middle" backgroundColor="#4a4a4a" grow>
           {/* Content */}
           <vstack padding="none" gap="none" maxWidth="600px">
             {pages[currentPage]}
