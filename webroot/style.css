@@ -239,9 +239,9 @@ body {
     cursor: pointer;
     transition: background-color 0.3s;
 }
-#pauseButton:hover {
+/* #pauseButton:hover {
     background-color: #666;
-}
+} */
 #retryButton, #newGameButton { /* Retry & New Game Button */
   background: #4a4a4a;
   color: white;
@@ -630,7 +630,8 @@ body {
 }
 .door-piece {
   position: absolute;
-  background: #1aa5ec;
+  /* background: #1aa5ec; */
+  background: #4b3515;
   border: 1px solid rgba(0, 0, 0, 0.2);
   transition: transform 0.5s ease, opacity 0.5s ease;
 }

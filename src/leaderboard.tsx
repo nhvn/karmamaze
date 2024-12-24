@@ -59,7 +59,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
           </hstack>
         </hstack>
         <hstack gap="small" alignment="start" grow>
-        <image url="hat.png" imageWidth={16} imageHeight={16} />
+        {/* <image url="hat.png" imageWidth={16} imageHeight={16} /> */}
           <text size="small" color="#888888">Legendary Adventurers</text>
         </hstack>
       </vstack>
@@ -112,7 +112,10 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
                 backgroundColor={index % 2 === 0 ? '#333333' : '#2a2a2a'}
               >
                 <text width="8%" color="white">{index + 1}</text>
-                <text width="62%" color="white">{entry.username}</text>
+                <hstack width="62%" gap="small" alignment="middle">
+                  {index === 0 && <image url="hat.png" imageWidth={16} imageHeight={16} />}
+                  <text color={index === 0 ? "#FFD700" : "white"}>{entry.username}</text>
+                </hstack>
                 <text width="30%" alignment="end" color="white">{entry.score.toLocaleString()}</text>
               </hstack>
             ))

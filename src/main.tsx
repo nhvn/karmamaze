@@ -855,8 +855,8 @@ Devvit.addCustomPostType({
                 <vstack alignment="middle center" width="80%" maxWidth="100%">
                   <text color="white" size="medium" wrap={true}>
                     {currentLevel === 2
-                      ? 'Race against time!'
-                      : 'Tired? I got you.'}
+                      ? "Adventure's out there!"
+                      : 'Easy and chill.'}
                   </text>
                 </vstack>
               </vstack>

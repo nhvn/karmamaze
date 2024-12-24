@@ -35,7 +35,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
       </vstack>
     </vstack>,
 
-    // Page 3 
+    // Page 3     
     <vstack key="page-3" padding="medium" gap="medium" alignment="middle center">
       <image url="powerups.png" imageWidth={150} imageHeight={150} />
       <text color="white" weight="bold" size="large" alignment="center">Use Power-Ups</text>
@@ -43,7 +43,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         <hstack gap="small" alignment="start" grow>
           <image url="karma.png" imageWidth={16} imageHeight={16} />
           <text color="white" wrap={true} size='small' grow>
-            Karma: Use to unlock doors/escape traps (doesn't affect Reddit Karma)
+            Karma: Use to unlock doors/escape traps.
           </text>
         </hstack>
         <hstack gap="small" alignment="start" grow>
@@ -58,6 +58,9 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
             Crystal Ball: Reveal the true exit and dangerous areas.
           </text>
         </hstack>
+        <text color="white" wrap={true} size='small' grow>
+          Note: In-game Karma doesn't affect Reddit Karma
+        </text>
       </vstack>
     </vstack>
   ];
