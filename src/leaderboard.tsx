@@ -89,7 +89,7 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
           borderColor="#4a4a4a"
           padding="none"
           gap="none"
-          // cornerRadius="small"
+          cornerRadius="small"
         >
           {/* Table Header */}
           <hstack
@@ -112,9 +112,10 @@ export const Leaderboard = ({ context, onBack }: { context: Context; onBack: () 
                 backgroundColor={index % 2 === 0 ? '#333333' : '#2a2a2a'}
               >
                 <text width="8%" color="white">{index + 1}</text>
-                <hstack width="62%" gap="small" alignment="middle">
-                  {index === 0 && <image url="hat.png" imageWidth={20} imageHeight={20} />}
-                  <text color={index < 3 ? "#FFD700" : "white"}>{entry.username}</text>
+                <hstack width="62%" gap="none" alignment="middle">
+                  {/* {index === 0 && <image url="hat.png" imageWidth={20} imageHeight={20} />} */}
+                  {/* <text color={index < 3 ? "#FFD700" : "white"}>{entry.username}</text> */}
+                  <text color={"white"}>{entry.username}</text>
                 </hstack>
                 <text width="30%" alignment="end" color="white">{entry.score.toLocaleString()}</text>
               </hstack>

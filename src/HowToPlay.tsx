@@ -116,7 +116,7 @@ export const HowToPlay = ({ onBack }: HowToPlayProps) => {
         </hstack>
 
         {/* Content with Page Indicators */}
-        <vstack alignment="center middle" backgroundColor="#4a4a4a" grow>
+        <vstack alignment="center middle" backgroundColor="#4a4a4a" grow cornerRadius='small'>
           {/* Content */}
           <vstack padding="none" gap="none" maxWidth="600px">
             {pages[currentPage]}
