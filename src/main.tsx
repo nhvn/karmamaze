@@ -871,6 +871,7 @@ Devvit.addCustomPostType({
                   alignment="middle center"
                   border="thin"
                   borderColor="#4a4a4a"
+                  cornerRadius='small'
                 >
                   <text color="white" weight="bold">
                     Play
@@ -884,6 +885,7 @@ Devvit.addCustomPostType({
                   alignment="middle center"
                   border="thin"
                   borderColor="#4a4a4a"
+                  cornerRadius='small'
                 >
                   <text color="white" weight="bold">
                     Leaderboard
@@ -897,6 +899,7 @@ Devvit.addCustomPostType({
                   alignment="middle center"
                   border="thin"
                   borderColor="#4a4a4a"
+                  cornerRadius='small'
                 >
                   <text color="white" weight="bold">
                     How to Play
