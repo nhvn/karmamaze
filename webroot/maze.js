@@ -1563,7 +1563,6 @@ function handleIdlePrompt() {
     }
 }
 function showIdlePrompt() {
-    // Create prompt with same styling as game prompt
     const existingPrompt = document.getElementById('idle-prompt');
     if (existingPrompt) {
         existingPrompt.remove();
@@ -1571,34 +1570,57 @@ function showIdlePrompt() {
 
     const promptElement = document.createElement('div');
     promptElement.id = 'idle-prompt';
+    
+    // Create a container for the shaded area
     promptElement.style.position = 'fixed';
-    promptElement.style.top = '90px';  // Below timer
-    promptElement.style.left = '50%';
-    promptElement.style.transform = 'translateX(-50%)';
-    promptElement.style.color = 'white';
-    promptElement.style.fontSize = '17px';
-    promptElement.style.padding = '10px';
-    promptElement.style.zIndex = '1000';
-    promptElement.style.textAlign = 'center';
+    promptElement.style.top = '0';
+    promptElement.style.left = '0';
+    promptElement.style.width = '100%';
+    promptElement.style.height = '40vh';
+    promptElement.style.background = 'linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.85) 85%, rgba(0, 0, 0, 0) 100%)';
+    promptElement.style.zIndex = '100';
     promptElement.style.opacity = '1';
     promptElement.style.transition = 'opacity 0.5s ease-in-out';
-    promptElement.style.backgroundColor = '#1a1a1a';
-    promptElement.style.borderRadius = '8px';
-    promptElement.textContent = 'Interact to move!';
-
+    promptElement.style.pointerEvents = 'none';
+    
+    // Create text container at original position
+    const textContainer = document.createElement('div');
+    textContainer.style.position = 'fixed';
+    textContainer.style.top = '90px';  // Original position below timer
+    textContainer.style.left = '50%';
+    textContainer.style.transform = 'translateX(-50%)';
+    textContainer.style.color = 'white';
+    textContainer.style.fontSize = '17px';
+    textContainer.style.padding = '10px';
+    textContainer.style.textAlign = 'center';
+    textContainer.style.borderRadius = '8px';
+    textContainer.style.zIndex = '101';
+    textContainer.textContent = 'Interact to move!';
+    
     document.body.appendChild(promptElement);
+    document.body.appendChild(textContainer);
 
     // Add pulse effect to adjacent cells
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.add('adjacent-pulse');
     });
+
+    return { promptElement, textContainer };  // Return both elements for hideIdlePrompt
 }
+
 function hideIdlePrompt() {
     const promptContainer = document.getElementById('idle-prompt');
+    const textContainer = document.querySelector('#idle-prompt + div');  // Get the text container
+    
     if (promptContainer) {
         promptContainer.style.opacity = '0';
-        setTimeout(() => promptContainer.remove(), 500);
+        if (textContainer) textContainer.style.opacity = '0';
+        setTimeout(() => {
+            promptContainer.remove();
+            if (textContainer) textContainer.remove();
+        }, 500);
     }
+    
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.remove('adjacent-pulse');
     });
@@ -1611,27 +1633,44 @@ function showGamePrompt(message) {
 
     const promptElement = document.createElement('div');
     promptElement.id = 'game-prompt';
+    
+    // Create a container for the shaded area
     promptElement.style.position = 'fixed';
-    promptElement.style.top = '90px';  // Below timer
-    promptElement.style.left = '50%';
-    promptElement.style.transform = 'translateX(-50%)';
-    promptElement.style.color = 'white';
-    promptElement.style.fontSize = '17px';
-    promptElement.style.padding = '10px';
-    promptElement.style.zIndex = '2';
-    promptElement.style.textAlign = 'center';
+    promptElement.style.top = '0';
+    promptElement.style.left = '0';
+    promptElement.style.width = '100%';
+    promptElement.style.height = '40vh';
+    promptElement.style.background = 'linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.85) 85%, rgba(0, 0, 0, 0) 100%)';
+    promptElement.style.zIndex = '100';
     promptElement.style.opacity = '1';
     promptElement.style.transition = 'opacity 0.5s ease-in-out';
-    promptElement.style.backgroundColor = '#1a1a1a';
-    promptElement.style.borderRadius = '8px';
-    promptElement.textContent = message;
-
+    promptElement.style.pointerEvents = 'none';
+    
+    // Create text container at original position
+    const textContainer = document.createElement('div');
+    textContainer.style.position = 'fixed';
+    textContainer.style.top = '90px';  // Original position below timer
+    textContainer.style.left = '50%';
+    textContainer.style.transform = 'translateX(-50%)';
+    textContainer.style.color = 'white';
+    textContainer.style.fontSize = '17px';
+    textContainer.style.padding = '10px';
+    textContainer.style.textAlign = 'center';
+    textContainer.style.borderRadius = '8px';
+    textContainer.style.zIndex = '101'
+    textContainer.textContent = message;
+    
     document.body.appendChild(promptElement);
+    document.body.appendChild(textContainer);
 
-    // Fade out and remove after 5 seconds
+    // Fade out and remove after delay
     setTimeout(() => {
         promptElement.style.opacity = '0';
-        setTimeout(() => promptElement.remove(), 500);
+        textContainer.style.opacity = '0';
+        setTimeout(() => {
+            promptElement.remove();
+            textContainer.remove();
+        }, 500);
     }, 4000);
 }
 
