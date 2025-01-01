@@ -1380,61 +1380,119 @@ function showMessage(text, type, permanent = false, showQuitOnly = false) {
     statsContainer.appendChild(announcementText);
     
     // Rest of the lines as smaller stats
+    const statsElements = [];  // Store elements for animation
     lines.slice(1).forEach(line => {
         const textDiv = document.createElement('div');
         textDiv.className = 'stat-item smaller';
         textDiv.textContent = line;
+        statsElements.push(textDiv);
         statsContainer.appendChild(textDiv);
     });
     
     messageEl.appendChild(statsContainer);
 
-    // Rest of your button creation code...
+    // Create button container
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'pause-buttons';
 
-    if (showQuitOnly) {
-        const quitButton = document.createElement('button');
-        quitButton.className = 'pause-button';
-        quitButton.textContent = 'Quit Game';
-        quitButton.onclick = newGame;
-        buttonContainer.appendChild(quitButton);
-    } else if (type === 'success') {
-        const nextButton = document.createElement('button');
-        nextButton.className = 'pause-button';
-        nextButton.textContent = 'Next Game';
-        nextButton.onclick = handleNextGame;
-        buttonContainer.appendChild(nextButton);
-        messageEl.dataset.gameWon = 'true';
+    // Create buttons based on message type, with initial disabled state
+    const createButtons = () => {
+        if (showQuitOnly) {
+            const quitButton = document.createElement('button');
+            quitButton.className = 'pause-button disabled';
+            quitButton.textContent = 'Quit Game';
+            quitButton.onclick = newGame;
+            quitButton.disabled = true;
+            buttonContainer.appendChild(quitButton);
+        } else if (type === 'success') {
+            const nextButton = document.createElement('button');
+            nextButton.className = 'pause-button disabled';
+            nextButton.textContent = 'Next Game';
+            nextButton.onclick = handleNextGame;
+            nextButton.disabled = true;
+            buttonContainer.appendChild(nextButton);
+            messageEl.dataset.gameWon = 'true';
 
-        const quitButton = document.createElement('button');
-        quitButton.className = 'pause-button';
-        quitButton.textContent = 'Quit Game';
-        quitButton.onclick = newGame;
-        buttonContainer.appendChild(quitButton);
-    } else if (type === 'error' && permanent && !showQuitOnly) {
-        const retryButton = document.createElement('button');
-        retryButton.className = 'pause-button';
-        retryButton.textContent = 'Try Again';
-        retryButton.onclick = () => {
-            retryLevel();
-            messageEl.style.display = 'none';
-            messageOverlay.style.display = 'none';
-            clearGameEndState();
-        };
-        buttonContainer.appendChild(retryButton);
-        messageEl.dataset.gameRetry = 'true';
+            const quitButton = document.createElement('button');
+            quitButton.className = 'pause-button disabled';
+            quitButton.textContent = 'Quit Game';
+            quitButton.onclick = newGame;
+            quitButton.disabled = true;
+            buttonContainer.appendChild(quitButton);
+        } else if (type === 'error' && permanent && !showQuitOnly) {
+            const retryButton = document.createElement('button');
+            retryButton.className = 'pause-button disabled';
+            retryButton.textContent = 'Try Again';
+            retryButton.disabled = true;
+            retryButton.onclick = () => {
+                retryLevel();
+                messageEl.style.display = 'none';
+                messageOverlay.style.display = 'none';
+                clearGameEndState();
+            };
+            buttonContainer.appendChild(retryButton);
+            messageEl.dataset.gameRetry = 'true';
 
-        const quitButton = document.createElement('button');
-        quitButton.className = 'pause-button';
-        quitButton.textContent = 'Quit Game';
-        quitButton.onclick = newGame;
-        buttonContainer.appendChild(quitButton);
-    }
+            const quitButton = document.createElement('button');
+            quitButton.className = 'pause-button disabled';
+            quitButton.textContent = 'Quit Game';
+            quitButton.onclick = newGame;
+            quitButton.disabled = true;
+            buttonContainer.appendChild(quitButton);
+        }
+    };
 
+    createButtons();
     messageEl.appendChild(buttonContainer);
     messageEl.style.display = 'block';
     messageOverlay.style.display = 'flex';
+
+    // Function to enable buttons
+    const enableButtons = () => {
+        buttonContainer.querySelectorAll('button').forEach(button => {
+            button.disabled = false;
+            button.classList.remove('disabled');
+        });
+    };
+
+    // Handle score animation for success messages
+    if (type === 'success') {
+        const totalScoreEl = statsElements.find(el => el.textContent.startsWith('Total Score:'));
+        const baseScoreEl = statsElements.find(el => el.textContent.startsWith('Score: +'));
+
+        if (totalScoreEl && baseScoreEl) {
+            const totalScore = parseInt(totalScoreEl.textContent.split(': ')[1]);
+            const baseScore = parseInt(baseScoreEl.textContent.split('+')[1]);
+            const startScore = totalScore - baseScore;
+
+            // Start with initial score
+            totalScoreEl.textContent = `Total Score: ${startScore}`;
+
+            // Animate score increment
+            let currentScore = startScore;
+            const fps = 60;
+            const duration = 1500; // 1.5 seconds
+            const increment = baseScore / (fps * (duration / 1000));
+
+            const scoreInterval = setInterval(() => {
+                currentScore += increment;
+                if (currentScore >= totalScore) {
+                    currentScore = totalScore;
+                    clearInterval(scoreInterval);
+                    
+                    // Enable buttons after score animation
+                    setTimeout(enableButtons, 500);
+                }
+                totalScoreEl.textContent = `Total Score: ${Math.floor(currentScore)}`;
+            }, 1000 / fps);
+        } else {
+            // No score to animate, enable buttons after delay
+            setTimeout(enableButtons, 1000);
+        }
+    } else {
+        // For non-success messages, enable buttons after delay
+        setTimeout(enableButtons, 1000);
+    }
 }
 function clearGameEndState() {
     const messageEl = document.getElementById('message');
@@ -1560,7 +1618,7 @@ function showGamePrompt(message) {
     promptElement.style.color = 'white';
     promptElement.style.fontSize = '17px';
     promptElement.style.padding = '10px';
-    promptElement.style.zIndex = '1000';
+    promptElement.style.zIndex = '2';
     promptElement.style.textAlign = 'center';
     promptElement.style.opacity = '1';
     promptElement.style.transition = 'opacity 0.5s ease-in-out';

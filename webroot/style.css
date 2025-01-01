@@ -90,17 +90,43 @@ body {
   gap: 10px;
 }
 .pause-button {
-  /* background-color: #4a4a4a; */
+  background-color: #4a4a4a;
   color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  pointer-events: auto;  /* Explicitly enable pointer events by default */
 }
+
 .pause-button:hover {
   background-color: #666;
+}
+
+.pause-button.disabled {
+  background-color: #333333;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.7;
+  pointer-events: none;  /* Completely disable pointer events */
+}
+
+/* Optional animation when buttons become enabled */
+.pause-button:not(.disabled) {
+  animation: buttonEnable 0.3s ease-out;
+}
+
+@keyframes buttonEnable {
+  from {
+      opacity: 0.7;
+      transform: scale(0.95);
+  }
+  to {
+      opacity: 1;
+      transform: scale(1);
+  }
 }
 #message-overlay {
   position: fixed;
