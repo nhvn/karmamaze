@@ -576,7 +576,7 @@ body {
 #maze-grid {
   position: relative;
   display: grid;
-  gap: 1px;
+  gap: 0;
   padding: 10px;
   border-radius: 8px;
   overflow: visible;
@@ -594,6 +594,9 @@ body {
   justify-content: center;
   position: relative;
   overflow: visible;
+  border-right: 0.5px solid #111111;
+  border-bottom: 0.5px solid #111111;
+  border-left: 0.5px solid #111111;
 }
 .cell.player {
   z-index: 2; /* Ensure player is above other elements */
@@ -787,10 +790,6 @@ body {
   z-index: 2;
 }
 
-
-
-
-
 /* REVALED */
 .exit1::before {
   content: '';
@@ -967,7 +966,8 @@ body {
     opacity: 1 !important;
     visibility: visible !important;
 }
-.cell.visible.trap1.crystal-ball-revealed::before, /* Red overlay for visible/explored traps with crystal ball */
+/* Red overlay for visible/explored traps with crystal ball */
+/* .cell.visible.trap1.crystal-ball-revealed::before, 
 .cell.visible.trap2.crystal-ball-revealed::before,
 .cell.visible.trap3.crystal-ball-revealed::before,
 .cell.explored.trap1.crystal-ball-revealed::before,
@@ -979,7 +979,7 @@ body {
     background: rgba(255, 0, 0, 0.3);
     z-index: 1;
     pointer-events: none;
-}
+} */
 .fog.trap1.crystal-ball-revealed::after, /* Red dot for fog traps with crystal ball */
 .fog.trap2.crystal-ball-revealed::after,
 .fog.trap3.crystal-ball-revealed::after {

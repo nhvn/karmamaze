@@ -874,20 +874,65 @@ function unlockDoor(x, y) {
 
 // 4. GAME STATE MANAGEMENT
 function updateVisibility() {
-    const { x, y } = gameState.playerPosition;
+    const { x: playerX, y: playerY } = gameState.playerPosition;
     const newVisible = new Set();
     const viewRadius = gameState.mapUsed ? 2 : 1;
-    
-    // Add current position and adjacent tiles to visible set
+
+    // Helper to check if a cell blocks vision - now includes doors
+    const isBlocker = (cell) => cell === 'wall' || cell === 'door';
+
+    // First pass: Add all cells within radius to be checked
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
         for (let dx = -viewRadius; dx <= viewRadius; dx++) {
-            const newX = x + dx;
-            const newY = y + dy;
-            if (newX >= 0 && newX < gameState.maze[0].length && 
+            const newX = playerX + dx;
+            const newY = playerY + dy;
+
+            // Check bounds
+            if (newX >= 0 && newX < gameState.maze[0].length &&
                 newY >= 0 && newY < gameState.maze.length) {
-                newVisible.add(`${newX},${newY}`);
-                // Always add to explored tiles
-                gameState.exploredTiles.add(`${newX},${newY}`);
+
+                const cell = gameState.maze[newY][newX];
+                const key = `${newX},${newY}`;
+
+                // If it's within direct radius (non-diagonal), check visibility
+                if (Math.abs(dx) + Math.abs(dy) <= viewRadius) {
+                    // For direct adjacent cells, always visible
+                    if (Math.abs(dx) + Math.abs(dy) === 1) {
+                        newVisible.add(key);
+                        gameState.exploredTiles.add(key);
+                        continue;
+                    }
+
+                    // Check both possible paths for diagonal vision blocking
+                    let path1Clear = true;
+                    let path2Clear = true;
+
+                    // Path 1: horizontal then vertical
+                    if (dx !== 0) {
+                        const cell1 = gameState.maze[playerY][playerX + (dx > 0 ? 1 : -1)];
+                        path1Clear = !isBlocker(cell1);
+                    }
+                    if (dy !== 0 && path1Clear) {
+                        const cell2 = gameState.maze[playerY + (dy > 0 ? 1 : -1)][playerX + dx];
+                        path1Clear = !isBlocker(cell2);
+                    }
+
+                    // Path 2: vertical then horizontal
+                    if (dy !== 0) {
+                        const cell1 = gameState.maze[playerY + (dy > 0 ? 1 : -1)][playerX];
+                        path2Clear = !isBlocker(cell1);
+                    }
+                    if (dx !== 0 && path2Clear) {
+                        const cell2 = gameState.maze[playerY + dy][playerX + (dx > 0 ? 1 : -1)];
+                        path2Clear = !isBlocker(cell2);
+                    }
+
+                    // If either path is clear, add to visible
+                    if (path1Clear || path2Clear) {
+                        newVisible.add(key);
+                        gameState.exploredTiles.add(key);
+                    }
+                }
             }
         }
     }
@@ -899,39 +944,30 @@ function updateVisibility() {
             if (cellElement) {
                 const key = `${x},${y}`;
                 const isPowerup = cell === 'crystal-ball' || cell === 'map' || cell === 'key-powerup';
-                
+
                 if (isPowerup) {
-                    // Ensure we have a powerup icon element
                     let powerupIcon = cellElement.querySelector('.powerup-icon');
                     if (!powerupIcon) {
-                        // Create powerup icon if it doesn't exist
                         powerupIcon = document.createElement('div');
                         powerupIcon.className = 'powerup-icon';
                         cellElement.appendChild(powerupIcon);
                     }
-                    
-                    // Keep the powerup icon visible and glowing
                     powerupIcon.classList.add('powerup-glow');
                 }
 
-                // Handle base tile visibility
+                // Handle visibility states
                 if (newVisible.has(key)) {
-                    // Currently visible tiles
                     cellElement.classList.remove('fog', 'explored');
                     cellElement.classList.add('visible');
                 } else if (gameState.exploredTiles.has(key)) {
                     if (isPowerup) {
-                        // For powerup tiles: dim the background but keep powerup visible
                         cellElement.classList.remove('fog');
                         cellElement.classList.add('explored');
-                        // Don't add to newVisible set anymore - let background be dimmed
                     } else {
-                        // Normal explored tile behavior
                         cellElement.classList.remove('fog', 'visible');
                         cellElement.classList.add('explored');
                     }
                 } else {
-                    // Unexplored tiles
                     cellElement.classList.remove('visible', 'explored');
                     cellElement.classList.add('fog');
                 }
