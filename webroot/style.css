@@ -786,6 +786,12 @@ body {
   pointer-events: none;
   z-index: 2;
 }
+
+
+
+
+
+/* REVALED */
 .exit1::before {
   content: '';
   position: absolute;
@@ -793,7 +799,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to left, rgba(0, 255, 0, 0.7), rgba(0, 255, 0, 0));
+  background: linear-gradient(to left, rgba(207, 207, 207, 0.450), rgba(0, 255, 0, 0));
   pointer-events: none;
   z-index: 2;
 }
@@ -804,7 +810,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to left, rgba(255, 17, 0, 0.7), rgba(0, 255, 0, 0));
+  background: linear-gradient(to left, rgba(255, 17, 0, 0.450), rgba(0, 255, 0, 0));
   pointer-events: none;
   z-index: 2;
 }
@@ -922,8 +928,6 @@ body {
   50% { opacity: 0.5; }
   100% { opacity: 0.3; }
 }
-
-/* FIX EVENTUALLY: CRYSTAL BALL FULL FEATURES NOT WORKING */
 .cell.trap1,
 .cell.trap2,
 .cell.trap3 {
@@ -931,7 +935,8 @@ body {
     position: relative;
     overflow: visible;
 }
-.cell.visible.trap1::after,
+/* Crystal ball effects */
+.cell.visible.trap1::after, /* Base trap images - handles both visible and explored */
 .cell.visible.trap2::after,
 .cell.visible.trap3::after,
 .cell.explored.trap1::after,
@@ -949,73 +954,47 @@ body {
     background-repeat: no-repeat;
     z-index: 2;
 }
-.cell.visible.trap1::after,
+.cell.visible.trap1::after, /* Specific trap images */
 .cell.explored.trap1::after { background-image: var(--trap1-image-url); }
 .cell.visible.trap2::after,
 .cell.explored.trap2::after { background-image: var(--trap2-image-url); }
 .cell.visible.trap3::after,
 .cell.explored.trap3::after { background-image: var(--trap3-image-url); }
-.cell.fog.trap1.crystal-ball-revealed,
-.cell.fog.trap2.crystal-ball-revealed,
-.cell.fog.trap3.crystal-ball-revealed {
+.fog.trap1.crystal-ball-revealed, /* Crystal Ball Effects */
+.fog.trap2.crystal-ball-revealed,
+.fog.trap3.crystal-ball-revealed {
     background: #1a1a1a !important;
     opacity: 1 !important;
     visibility: visible !important;
-    position: relative;
 }
-.cell.fog.trap1.crystal-ball-revealed::after,
-.cell.fog.trap2.crystal-ball-revealed::after,
-.cell.fog.trap3.crystal-ball-revealed::after {
+.cell.visible.trap1.crystal-ball-revealed::before, /* Red overlay for visible/explored traps with crystal ball */
+.cell.visible.trap2.crystal-ball-revealed::before,
+.cell.visible.trap3.crystal-ball-revealed::before,
+.cell.explored.trap1.crystal-ball-revealed::before,
+.cell.explored.trap2.crystal-ball-revealed::before,
+.cell.explored.trap3.crystal-ball-revealed::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 0, 0, 0.3);
+    z-index: 1;
+    pointer-events: none;
+}
+.fog.trap1.crystal-ball-revealed::after, /* Red dot for fog traps with crystal ball */
+.fog.trap2.crystal-ball-revealed::after,
+.fog.trap3.crystal-ball-revealed::after {
     content: '';
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 8px !important;
-    height: 8px !important;
-    background: rgba(255, 0, 0, 0.6) !important;
-    background-image: none !important;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 0, 0, 0.6);
     border-radius: 50%;
     box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
-    z-index: 20;
+    z-index: 4;
     animation: enemyPulse 2s infinite;
-}
-.cell.visible.trap1.crystal-ball-revealed,
-.cell.visible.trap2.crystal-ball-revealed,
-.cell.visible.trap3.crystal-ball-revealed,
-.cell.explored.trap1.crystal-ball-revealed,
-.cell.explored.trap2.crystal-ball-revealed,
-.cell.explored.trap3.crystal-ball-revealed {
-    background: rgba(255, 0, 0, 0.3) !important;
-}
-.cell.fog.exit.crystal-ball-revealed,
-.cell.fog.fake-exit.crystal-ball-revealed {
-    background: #1a1a1a !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    position: relative;
-}
-.cell.fog.exit.crystal-ball-revealed::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to left, rgba(0, 255, 0, 0.4), rgba(0, 255, 0, 0)) !important;
-    z-index: 5;
-    animation: exitGlow 2s infinite;
-}
-.cell.fog.fake-exit.crystal-ball-revealed::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to left, rgba(255, 0, 0, 0.4), rgba(0, 255, 0, 0)) !important;
-    z-index: 5;
-    animation: exitGlow 2s infinite;
 }
 
 /* 7. PLAYER */

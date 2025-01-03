@@ -215,14 +215,12 @@ function renderMaze(movementClass = '') {
     const cellSize = 40;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
-    // Use Math.round for precise pixel values
-    gameState.cameraOffset = { // Had to manually make the player in center
+
+    gameState.cameraOffset = { 
         x: Math.round((viewportWidth / 2) - (gameState.playerPosition.x * cellSize) - (cellSize / 2) - 7),
         y: Math.round((viewportHeight / 2) - (gameState.playerPosition.y * cellSize) - (cellSize / 2) - 32)
     };
 
-    // Important: Apply transform before rendering cells
     grid.style.transform = `translate(${gameState.cameraOffset.x}px, ${gameState.cameraOffset.y}px)`;
     grid.style.gridTemplateColumns = `repeat(${gameState.maze[0].length}, ${cellSize}px)`;
     grid.innerHTML = '';
@@ -230,36 +228,42 @@ function renderMaze(movementClass = '') {
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
             const cellElement = document.createElement('div');
-            cellElement.className = `cell ${cell} fog`;
-            cellElement.dataset.x = x;
-            cellElement.dataset.y = y;
+            let baseClass = `cell ${cell} fog`;
+            
+            // Handle traps revealed by crystal ball
+            if (cell.startsWith('trap') && gameState.crystalBallUsed) {
+                baseClass += ' crystal-ball-revealed';
+            }
 
-            // In renderMaze function
+            // Handle doors with cracks
             if (cell === 'door') {
                 const doorKey = `${x},${y}`;
                 const hits = gameState.doorHits.get(doorKey) || 0;
-                
+
                 if (hits + 1 >= 8) {
-                    cellElement.classList.add('cracked3');
+                    baseClass += ' cracked3';
                 } else if (hits + 1 >= 5) {
-                    cellElement.classList.add('cracked2');
+                    baseClass += ' cracked2';
                 } else if (hits + 1 >= 3) {
-                    cellElement.classList.add('cracked1');
+                    baseClass += ' cracked1';
                 }
             }
 
+            // Handle exits and fake exits with crystal ball
             if (cell === 'exit' && gameState.crystalBallUsed) {
-                cellElement.classList.add('exit1');
-                cellElement.classList.add('revealed-exit');
+                baseClass += ' exit1 revealed-exit';
             }
-
             if (cell === 'fake-exit' && gameState.crystalBallUsed) {
-                cellElement.classList.add('fake-exit1');
+                baseClass += ' fake-exit1';
             }
 
+            cellElement.className = baseClass;
+            cellElement.dataset.x = x;
+            cellElement.dataset.y = y;
+
+            // Handle player position
             if (y === gameState.playerPosition.y && x === gameState.playerPosition.x) {
                 cellElement.classList.add('player');
-                // Add orientation class if it exists
                 if (gameState.playerOrientation) {
                     cellElement.classList.add(gameState.playerOrientation);
                 }
@@ -276,17 +280,17 @@ function renderMaze(movementClass = '') {
         });
     });
 
-    // After creating the player cell, check if we should add the idle animation
+    // Add idle animation if player is idle
     if (gameState.isPlayerIdle) {
         const playerCell = document.querySelector('.cell.player');
         if (playerCell) {
             playerCell.classList.add('idle-animation');
         }
     }
-    
 
     updateVisibility();
 }
+
 function movePlayer(x, y) {
     gameState.lastMoveTime = Date.now();
     if (gameState.isPlayerIdle) {
@@ -689,34 +693,35 @@ function activateMap() {
 }
 function activateCrystalBall() {
     gameState.crystalBallUsed = true;
-    
+
+    // Display crystal ball indicator
     const crystalIndicator = document.getElementById('crystal-indicator');
     if (crystalIndicator) {
         crystalIndicator.style.display = 'flex';
     }
 
+    // Reveal traps using crystal ball
     gameState.maze.forEach((row, y) => {
         row.forEach((cell, x) => {
             const cellElement = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
-            if (!cellElement) return;
-            
-            if (cell === 'exit' || cell === 'fake-exit') {
+            if (!cellElement) {
+                console.warn(`No DOM element found for cell at (${x}, ${y})`);
+                return;
+            }
+
+            // Check if cell is a trap and reveal it
+            if (typeof cell === 'string' && cell.startsWith('trap')) {
+                console.log(`Trap at (${x}, ${y}):`, cellElement.classList.toString());
                 cellElement.classList.add('crystal-ball-revealed');
-                if (cell === 'exit') {
-                    cellElement.classList.add('revealed-exit');
-                }
-            } else if (cell.startsWith('trap')) {
-                cellElement.classList.add('crystal-ball-revealed');
-                // Keep fog/explored state if not directly visible
-                if (!cellElement.classList.contains('visible')) {
-                    cellElement.classList.add('fog');
-                }
             }
         });
     });
 
+    // Show message and re-render the maze
     showTopRightMessage('Found a crystal ball!');
+    renderMaze();
 }
+
 function activateKeyPowerup() {
     if (gameState.keys >= MAX_KEYS) {
         showTopRightMessage('Bag full!');
@@ -1563,6 +1568,7 @@ function handleIdlePrompt() {
     }
 }
 function showIdlePrompt() {
+    // Create prompt with same styling as game prompt
     const existingPrompt = document.getElementById('idle-prompt');
     if (existingPrompt) {
         existingPrompt.remove();
@@ -1570,42 +1576,27 @@ function showIdlePrompt() {
 
     const promptElement = document.createElement('div');
     promptElement.id = 'idle-prompt';
-    
-    // Create a container for the shaded area
     promptElement.style.position = 'fixed';
-    promptElement.style.top = '0';
-    promptElement.style.left = '0';
-    promptElement.style.width = '100%';
-    promptElement.style.height = '40vh';
-    promptElement.style.background = 'linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.85) 85%, rgba(0, 0, 0, 0) 100%)';
-    promptElement.style.zIndex = '100';
+    promptElement.style.top = '90px';  // Below timer
+    promptElement.style.left = '50%';
+    promptElement.style.transform = 'translateX(-50%)';
+    promptElement.style.color = 'white';
+    promptElement.style.fontSize = '17px';
+    promptElement.style.padding = '10px';
+    promptElement.style.zIndex = '1000';
+    promptElement.style.textAlign = 'center';
     promptElement.style.opacity = '1';
     promptElement.style.transition = 'opacity 0.5s ease-in-out';
-    promptElement.style.pointerEvents = 'none';
-    
-    // Create text container at original position
-    const textContainer = document.createElement('div');
-    textContainer.style.position = 'fixed';
-    textContainer.style.top = '90px';  // Original position below timer
-    textContainer.style.left = '50%';
-    textContainer.style.transform = 'translateX(-50%)';
-    textContainer.style.color = 'white';
-    textContainer.style.fontSize = '17px';
-    textContainer.style.padding = '10px';
-    textContainer.style.textAlign = 'center';
-    textContainer.style.borderRadius = '8px';
-    textContainer.style.zIndex = '101';
-    textContainer.textContent = 'Interact to move!';
-    
+    promptElement.style.backgroundColor = '#1a1a1a';
+    promptElement.style.borderRadius = '8px';
+    promptElement.textContent = 'Interact to move!';
+
     document.body.appendChild(promptElement);
-    document.body.appendChild(textContainer);
 
     // Add pulse effect to adjacent cells
     document.querySelectorAll('.adjacent').forEach(cell => {
         cell.classList.add('adjacent-pulse');
     });
-
-    return { promptElement, textContainer };  // Return both elements for hideIdlePrompt
 }
 
 function hideIdlePrompt() {
@@ -1633,44 +1624,27 @@ function showGamePrompt(message) {
 
     const promptElement = document.createElement('div');
     promptElement.id = 'game-prompt';
-    
-    // Create a container for the shaded area
     promptElement.style.position = 'fixed';
-    promptElement.style.top = '0';
-    promptElement.style.left = '0';
-    promptElement.style.width = '100%';
-    promptElement.style.height = '40vh';
-    promptElement.style.background = 'linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.85) 85%, rgba(0, 0, 0, 0) 100%)';
-    promptElement.style.zIndex = '100';
+    promptElement.style.top = '90px';  // Below timer
+    promptElement.style.left = '50%';
+    promptElement.style.transform = 'translateX(-50%)';
+    promptElement.style.color = 'white';
+    promptElement.style.fontSize = '17px';
+    promptElement.style.padding = '10px';
+    promptElement.style.zIndex = '1000';
+    promptElement.style.textAlign = 'center';
     promptElement.style.opacity = '1';
     promptElement.style.transition = 'opacity 0.5s ease-in-out';
-    promptElement.style.pointerEvents = 'none';
-    
-    // Create text container at original position
-    const textContainer = document.createElement('div');
-    textContainer.style.position = 'fixed';
-    textContainer.style.top = '90px';  // Original position below timer
-    textContainer.style.left = '50%';
-    textContainer.style.transform = 'translateX(-50%)';
-    textContainer.style.color = 'white';
-    textContainer.style.fontSize = '17px';
-    textContainer.style.padding = '10px';
-    textContainer.style.textAlign = 'center';
-    textContainer.style.borderRadius = '8px';
-    textContainer.style.zIndex = '101'
-    textContainer.textContent = message;
-    
-    document.body.appendChild(promptElement);
-    document.body.appendChild(textContainer);
+    promptElement.style.backgroundColor = '#1a1a1a';
+    promptElement.style.borderRadius = '8px';
+    promptElement.textContent = message;
 
-    // Fade out and remove after delay
+    document.body.appendChild(promptElement);
+
+    // Fade out and remove after 5 seconds
     setTimeout(() => {
         promptElement.style.opacity = '0';
-        textContainer.style.opacity = '0';
-        setTimeout(() => {
-            promptElement.remove();
-            textContainer.remove();
-        }, 500);
+        setTimeout(() => promptElement.remove(), 500);
     }, 4000);
 }
 
