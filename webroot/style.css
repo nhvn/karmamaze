@@ -594,9 +594,9 @@ body {
   justify-content: center;
   position: relative;
   overflow: visible;
-  border-right: 0.5px solid #111111;
-  border-bottom: 0.5px solid #111111;
-  border-left: 0.5px solid #111111;
+  border-right: 0.5px solid #1a1a1a;
+  border-bottom: 0.5px solid #1a1a1a;
+  border-left: 0.5px solid #1a1a1a;
 }
 .cell.player {
   z-index: 2; /* Ensure player is above other elements */

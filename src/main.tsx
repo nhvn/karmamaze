@@ -337,13 +337,11 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   // Determine number of key powerups based on games played
   let numKeyPowerups;
   if (gamesPlayed < 10) {
-    // 70% chance of 1, 30% chance of 2
-    numKeyPowerups = Math.random() < 0.7 ? 1 : 2;
-    // console.log(`Games played ${gamesPlayed} (< 10): Placing ${numKeyPowerups} powerup(s)`);
-  } else {
     // 70% chance of 2, 30% chance of 3
     numKeyPowerups = Math.random() < 0.7 ? 2 : 3;
-    // console.log(`Games played ${gamesPlayed} (>= 10): Placing ${numKeyPowerups} powerup(s)`);
+  } else {
+    // 70% chance of 3, 30% chance of 4
+    numKeyPowerups = Math.random() < 0.7 ? 3 : 4;
   }
 
   // Place powerups
@@ -354,15 +352,13 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
   }
 
   // Store key powerup rewards
-  const keyPowerupRewards = keyPowerupPositions.map(() => {
-    if (gamesPlayed < 10) {
-      // Games 1-9: Each powerup gives 1-2 keys randomly
-      return Math.floor(Math.random() * 2 + 1); // Will give either 1 or 2
-    } else {
-      // Games 10+: Each powerup gives 1-3 keys randomly
-      return Math.floor(Math.random() * 3 + 1); // Will give 1, 2, or 3
-    }
-  });
+  // const keyPowerupRewards = keyPowerupPositions.map(() => {
+  //   if (gamesPlayed < 10) {
+  //     return Math.floor(Math.random() * 2 + 1);
+  //   } else {
+  //     return Math.floor(Math.random() * 3 + 1);
+  //   }
+  // });
 
   // Update trap frequency based on games played
   let trapFrequency = 0;
@@ -374,7 +370,7 @@ function generateLevel2Maze(width: number, height: number, gamesPlayed: number =
     // console.log('10+ games: Setting trap frequency to 12%');
   } else if (gamesPlayed >= 3) {
     trapFrequency = 0.05;
-    console.log('3+ games: Setting trap frequency to 5%');
+    // console.log('3+ games: Setting trap frequency to 5%');
   }
   // console.log('Final trap frequency:', trapFrequency);
 

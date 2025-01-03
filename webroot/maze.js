@@ -878,7 +878,7 @@ function updateVisibility() {
     const newVisible = new Set();
     const viewRadius = gameState.mapUsed ? 2 : 1;
 
-    // Helper to check if a cell blocks vision - now includes doors
+    // Helper to check if a cell blocks vision
     const isBlocker = (cell) => cell === 'wall' || cell === 'door';
 
     // First pass: Add all cells within radius to be checked
@@ -894,7 +894,7 @@ function updateVisibility() {
                 const cell = gameState.maze[newY][newX];
                 const key = `${newX},${newY}`;
 
-                // If it's within direct radius (non-diagonal), check visibility
+                // Strict "+" pattern check - this ensures no diagonals are visible
                 if (Math.abs(dx) + Math.abs(dy) <= viewRadius) {
                     // For direct adjacent cells, always visible
                     if (Math.abs(dx) + Math.abs(dy) === 1) {
