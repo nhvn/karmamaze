@@ -97,6 +97,11 @@ function initializeGame(data) {
         messageEl.textContent = '';
     }
 
+    const gamesPlayedCount = document.getElementById('gamesPlayedCount');
+    if (gamesPlayedCount) {
+        gamesPlayedCount.textContent = data.gamesPlayed || 0;
+    }
+
     // Get start position first
     const startPosition = findStartPosition(data.maze);
 
@@ -109,8 +114,8 @@ function initializeGame(data) {
         maze: data.maze,
         playerPosition: startPosition,
         isGameOver: false,
-        visibleTiles: new Set(),
-        exploredTiles: new Set(),
+        visibleTiles: new Set(),  
+        exploredTiles: new Set(), 
         crystalBallUsed: false,
         mapUsed: false,
         doorHits: new Map(),
@@ -120,10 +125,42 @@ function initializeGame(data) {
         totalScore: gameState.totalScore,
         lives: playerStats.currentLives || 3,
         playerOrientation: 'face-right',
-        gamesPlayed: data.gamesPlayed || 0
-    };    
+        gamesPlayed: data.gamesPlayed || 0,
+        isCasualMode: data.isCasualMode
+    };
+    
+    // Setup grid before rendering
+    const grid = document.getElementById('maze-grid');
+    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, 40px)`;
+    grid.innerHTML = '';  // Clear the grid
 
-    gameState.isCasualMode = data.isCasualMode;
+    // Initial render with everything in fog
+    renderMaze();
+
+    // Create a promise to handle the sequence
+    const initSequence = async () => {
+        // First move to center - everything still in fog
+        movePlayer(startPosition.x, startPosition.y);
+        
+        // Wait a frame
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        
+        // Apply initial visibility
+        updateVisibility();
+        
+        // Wait another frame
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        
+        // Final position and visibility update
+        movePlayer(startPosition.x, startPosition.y);
+        updateVisibility();
+        
+        // Hide loading after everything is set
+        hideLoading();
+    };
+
+    // Start the sequence
+    initSequence();
 
     // Show prompt only for new games (not retries or next games)
     if (data.isFirstGame && !data.isCasualMode) {
@@ -133,10 +170,6 @@ function initializeGame(data) {
     if (data.isFirstGame && data.isCasualMode) {
         showGamePrompt("Breeze through the maze with endless karma.");
     }
-
-    // Setup basic grid
-    const grid = document.getElementById('maze-grid');
-    grid.style.gridTemplateColumns = `repeat(${data.maze[0].length}, 40px)`;
 
     updateLives(gameState.lives);
     const usernameEl = document.getElementById('username');
@@ -172,11 +205,15 @@ function initializeGame(data) {
         crystalIndicator.style.display = 'none';
     }
 
-    // Initial render
-    renderMaze();
+    // Force all cells to start with fog
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('visible', 'explored');
+        cell.classList.add('fog');
+    });
     
     // Trigger a "fake" move to the starting position to force centering
     requestAnimationFrame(() => {
+        const startPosition = findStartPosition(data.maze);
         movePlayer(startPosition.x, startPosition.y);
         
         // Add a second move after a short delay
@@ -258,6 +295,8 @@ function renderMaze(movementClass = '') {
             }
 
             cellElement.className = baseClass;
+            cellElement.classList.add('fog');  // Extra insurance
+            cellElement.classList.remove('visible', 'explored');  // Make sure these are removed
             cellElement.dataset.x = x;
             cellElement.dataset.y = y;
 
@@ -659,6 +698,7 @@ function stopPlayerIdleAnimation() {
 
 // 3. POWERUPS & MECHANICS
 function activateMap() {
+    // Set map used flag to enable expanded radius
     gameState.mapUsed = true;
     
     // Show map indicator
@@ -667,27 +707,9 @@ function activateMap() {
         mapIndicator.style.display = 'flex';
     }
 
-    const { x, y } = gameState.playerPosition;
-    const viewRadius = 2;
-
-    for (let dy = -viewRadius; dy <= viewRadius; dy++) {
-        for (let dx = -viewRadius; dx <= viewRadius; dx++) {
-            const newX = x + dx;
-            const newY = y + dy;
-
-            if (newX >= 0 && newX < gameState.maze[0].length &&
-                newY >= 0 && newY < gameState.maze.length) {
-                const key = `${newX},${newY}`;
-                gameState.visibleTiles.add(key);
-
-                const cell = document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`);
-                if (cell) {
-                    cell.classList.remove('fog');
-                    cell.classList.add('visible');
-                }
-            }
-        }
-    }
+    // We still need to call updateVisibility() to apply the expanded radius
+    // updateVisibility() checks gameState.mapUsed to determine radius size (1 vs 2)
+    updateVisibility();
 
     showTopRightMessage('Found a map!');
 }
@@ -881,7 +903,7 @@ function updateVisibility() {
     // Helper to check if a cell blocks vision
     const isBlocker = (cell) => cell === 'wall' || cell === 'door';
 
-    // First pass: Add all cells within radius to be checked
+    // First pass: Check all cells in square radius
     for (let dy = -viewRadius; dy <= viewRadius; dy++) {
         for (let dx = -viewRadius; dx <= viewRadius; dx++) {
             const newX = playerX + dx;
@@ -894,41 +916,65 @@ function updateVisibility() {
                 const cell = gameState.maze[newY][newX];
                 const key = `${newX},${newY}`;
 
-                // Strict "+" pattern check - this ensures no diagonals are visible
-                if (Math.abs(dx) + Math.abs(dy) <= viewRadius) {
-                    // For direct adjacent cells, always visible
-                    if (Math.abs(dx) + Math.abs(dy) === 1) {
+                // If it's in box radius (using Math.abs for square pattern)
+                if (Math.abs(dx) <= viewRadius && Math.abs(dy) <= viewRadius) {
+                    // For direct adjacent cells or player position, always visible
+                    if ((Math.abs(dx) <= 1 && Math.abs(dy) <= 1) && (dx === 0 || dy === 0 || (dx === 0 && dy === 0))) {
                         newVisible.add(key);
                         gameState.exploredTiles.add(key);
                         continue;
                     }
 
-                    // Check both possible paths for diagonal vision blocking
-                    let path1Clear = true;
-                    let path2Clear = true;
+                    // Calculate path to this cell from player
+                    let isVisible = true;
+                    let currX = playerX;
+                    let currY = playerY;
 
-                    // Path 1: horizontal then vertical
-                    if (dx !== 0) {
-                        const cell1 = gameState.maze[playerY][playerX + (dx > 0 ? 1 : -1)];
-                        path1Clear = !isBlocker(cell1);
-                    }
-                    if (dy !== 0 && path1Clear) {
-                        const cell2 = gameState.maze[playerY + (dy > 0 ? 1 : -1)][playerX + dx];
-                        path1Clear = !isBlocker(cell2);
+                    // Determine the primary path to check
+                    const useHorizontalFirst = Math.abs(dx) > Math.abs(dy);
+
+                    if (useHorizontalFirst) {
+                        // Move horizontally first
+                        while (currX !== newX) {
+                            currX += dx > 0 ? 1 : -1;
+                            if (isBlocker(gameState.maze[currY][currX])) {
+                                isVisible = false;
+                                break;
+                            }
+                        }
+                        if (isVisible) {
+                            // Then vertically
+                            while (currY !== newY) {
+                                currY += dy > 0 ? 1 : -1;
+                                if (isBlocker(gameState.maze[currY][currX])) {
+                                    isVisible = false;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        // Move vertically first
+                        while (currY !== newY) {
+                            currY += dy > 0 ? 1 : -1;
+                            if (isBlocker(gameState.maze[currY][currX])) {
+                                isVisible = false;
+                                break;
+                            }
+                        }
+                        if (isVisible) {
+                            // Then horizontally
+                            while (currX !== newX) {
+                                currX += dx > 0 ? 1 : -1;
+                                if (isBlocker(gameState.maze[currY][currX])) {
+                                    isVisible = false;
+                                    break;
+                                }
+                            }
+                        }
                     }
 
-                    // Path 2: vertical then horizontal
-                    if (dy !== 0) {
-                        const cell1 = gameState.maze[playerY + (dy > 0 ? 1 : -1)][playerX];
-                        path2Clear = !isBlocker(cell1);
-                    }
-                    if (dx !== 0 && path2Clear) {
-                        const cell2 = gameState.maze[playerY + dy][playerX + (dx > 0 ? 1 : -1)];
-                        path2Clear = !isBlocker(cell2);
-                    }
-
-                    // If either path is clear, add to visible
-                    if (path1Clear || path2Clear) {
+                    // If the cell is visible, add it
+                    if (isVisible) {
                         newVisible.add(key);
                         gameState.exploredTiles.add(key);
                     }
@@ -1198,12 +1244,15 @@ function handleWin() {
     stopTimer();
 
     if (gameState.isCasualMode) {
-        // Simple message for casual mode
+        // Increment the counter immediately when winning in casual mode
+        playerStats.gamesPlayed++;
+        document.getElementById('pauseGamesPlayedCasual').textContent = playerStats.gamesPlayed;
+        document.getElementById('gamesPlayedCount').textContent = playerStats.gamesPlayed;
+
         const messageLines = [
             'Nice work!',
-            `Games Played: ${playerStats.gamesPlayed + 1}`
+            `Games Played: ${playerStats.gamesPlayed}`
         ];
-        
         showMessage(messageLines.join('\n'), 'success');
     } else {
         // Full stats for normal mode
@@ -1221,11 +1270,20 @@ function handleWin() {
         const result = playerStats.addGameResult(`level${gameState.level}`, gameData);
         gameState.winStreak++;
 
+        // Update games played display
+        document.getElementById('gamesPlayedCount').textContent = playerStats.gamesPlayed;
+        document.getElementById('pauseGamesPlayed').textContent = playerStats.gamesPlayed;
+
         const messageLines = [
             'Nice job!',
             `Total Score: ${result.totalScore}`,
             `Score: +${result.baseScore}`
         ];
+
+        const gamesPlayedCount = document.getElementById('gamesPlayedCount');
+        if (gamesPlayedCount) {
+            gamesPlayedCount.textContent = playerStats.gamesPlayed;
+        }
     
         if (result.streakBonus > 0) {
             messageLines.push(
@@ -1364,14 +1422,15 @@ function handleNextGame() {
     if (gameState.keys < MAX_KEYS) {
         showTopRightMessage('Gained bonus karma!');
     }
+
     window.parent.postMessage({
         type: 'nextGame',
         data: { 
             lives: gameState.lives,
-            isFirstGame: false 
+            isFirstGame: false,
+            gamesPlayed: playerStats.gamesPlayed
         }
     }, '*');
-    
 }
 function newGame() {
     console.log('New Game button clicked');
@@ -1699,11 +1758,13 @@ function pauseGame() {
             normalStats.style.display = 'none';
             casualStats.style.display = 'block';
             document.getElementById('pauseGamesPlayedCasual').textContent = playerStats.gamesPlayed;
+            document.getElementById('gamesPlayedCount').textContent = playerStats.gamesPlayed;  // Update top-right counter too
         } else {
             normalStats.style.display = 'block';
             casualStats.style.display = 'none';
             document.getElementById('pauseTotalScore').textContent = playerStats.totalScore;
             document.getElementById('pauseGamesPlayed').textContent = playerStats.gamesPlayed;
+            document.getElementById('gamesPlayedCount').textContent = playerStats.gamesPlayed;  // Update top-right counter too
         }
 
         document.getElementById('pause-overlay').style.display = 'flex';

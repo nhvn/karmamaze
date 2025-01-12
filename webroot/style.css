@@ -84,6 +84,26 @@ body {
   font-size: 18px;
   margin: 10px 0;
 }
+.games-played {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: black;
+  font-size: 14px;
+  margin-right: 10px;
+  background-color: rgba(255, 255, 255, 0.357);
+  padding: 0px 4px;
+  border-radius: 30%;
+}
+#gamesPlayedCount {
+  font-weight: bold;
+}
+.button-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+}
 .pause-buttons { /* Pause Button */
   display: flex;
   flex-direction: column;
@@ -98,13 +118,11 @@ body {
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  pointer-events: auto;  /* Explicitly enable pointer events by default */
+  pointer-events: auto;  
 }
-
 .pause-button:hover {
   background-color: #666;
 }
-
 .pause-button.disabled {
   background-color: #333333;
   color: #666666;
@@ -243,14 +261,14 @@ body {
   background-color: #66666699;
 }
 .pause-icon {
-  width: 13px;
+  width: 12px;
   height: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .pause-bar {
-  width: 5px;
+  width: 4px;
   height: 16px;
   background-color: white;
   border-radius: 2px;
@@ -429,7 +447,7 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  font-size: 14px;
+  /* font-size: 10px; */
   color: white;
   z-index: 2;
   text-shadow: 
@@ -449,7 +467,7 @@ body {
   filter: drop-shadow(0 0 5px rgba(0, 191, 255, 0.3));
 }
 #keys:not([data-count="infinity"]) { /* Special styling for infinity symbol */
-  font-size: 18px; /* Slightly larger for the infinity symbol */
+  font-size: 14px; /* Slightly larger for the infinity symbol */
 }
 .map::after { /* Map */
   content: '';
@@ -766,6 +784,7 @@ body {
   background: #4a4a4a;
   position: relative;
   overflow: hidden;
+  border-right: nones;
 }
 .start::before { /* Shadow overlays for all special cells */
   content: '';
@@ -798,7 +817,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to left, rgba(207, 207, 207, 0.450), rgba(0, 255, 0, 0));
+  /* background: linear-gradient(to left, rgba(207, 207, 207, 0.450), rgba(0, 255, 0, 0)); */
   pointer-events: none;
   z-index: 2;
 }
@@ -1132,13 +1151,18 @@ body {
   }
   .key-stat {
     gap: 0;
+    width: 18px;
+    height: 18px;
+  }
+  #keys {
+    font-size: 7px;
   }
   .heart-icon {
-    font-size: 13px;
+    font-size: 11px;
   }
   .key-orb, .map-orb, .crystal-orb {
-    width: 15px;
-    height: 15px;
+    width: 12px;
+    height: 12px;
   }
   .pause-menu {
     padding: 20px 2px;
@@ -1152,13 +1176,6 @@ body {
   .powerup-indicator {
     width: 18px;
     height: 18px;
-  }
-  .key-stat {
-    width: 18px;
-    height: 18px;
-  }
-  #keys {
-    font-size: 7px;
   }
 }
 
