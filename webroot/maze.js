@@ -99,7 +99,7 @@ function initializeGame(data) {
 
     const gamesPlayedCount = document.getElementById('gamesPlayedCount');
     if (gamesPlayedCount) {
-        gamesPlayedCount.textContent = data.gamesPlayed || 0;
+        gamesPlayedCount.textContent = data.gamesPlayed || '';
     }
 
     // Get start position first
